@@ -1,0 +1,323 @@
+/* VinIA - Estilos globales */
+
+/* Importar Tailwind CSS v4 */
+@import "tailwindcss";
+
+/* Importar fuentes de Google */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+/* Configuración de tema de Tailwind v4 */
+@theme {
+  /* Colores personalizados - Paleta vinícola */
+  --color-primary-50: #faf8f3;
+  --color-primary-100: #f5f0e6;
+  --color-primary-200: #e8dcc4;
+  --color-primary-300: #d9c5a0;
+  --color-primary-400: #c9ad7c;
+  --color-primary-500: #b8945a;
+  --color-primary-600: #a07d48;
+  --color-primary-700: #7d6238;
+  --color-primary-800: #5a462a;
+  --color-primary-900: #3d2f1c;
+
+  --color-secondary-50: #fafaf9;
+  --color-secondary-100: #f5f5f4;
+  --color-secondary-200: #e7e5e4;
+  --color-secondary-300: #d6d3d1;
+  --color-secondary-400: #a8a29e;
+  --color-secondary-500: #78716c;
+  --color-secondary-600: #57534e;
+  --color-secondary-700: #44403c;
+  --color-secondary-800: #292524;
+  --color-secondary-900: #1c1917;
+
+  --color-accent-50: #fefce8;
+  --color-accent-100: #fef9c3;
+  --color-accent-200: #fef08a;
+  --color-accent-300: #fde047;
+  --color-accent-400: #facc15;
+  --color-accent-500: #d4a574;
+  --color-accent-600: #b8885c;
+  --color-accent-700: #92704a;
+  --color-accent-800: #6b5439;
+  --color-accent-900: #4a3b28;
+
+  /* Fuentes */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+
+  /* Sombras personalizadas */
+  --shadow-elegant: 0 4px 6px -1px rgba(120, 113, 108, 0.1), 0 2px 4px -1px rgba(120, 113, 108, 0.06);
+  --shadow-elegant-lg: 0 10px 15px -3px rgba(120, 113, 108, 0.1), 0 4px 6px -2px rgba(120, 113, 108, 0.05);
+}
+
+/* Estilos base personalizados */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #faf8f3;
+  color: #1c1917;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: #1c1917;
+}
+
+/* Componentes personalizados */
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(120, 113, 108, 0.1), 0 2px 4px -1px rgba(120, 113, 108, 0.06);
+  padding: 1.5rem;
+  transition: all 0.3s;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(120, 113, 108, 0.1), 0 4px 6px -2px rgba(120, 113, 108, 0.05);
+}
+
+/* Botón principal */
+.btn-primary {
+  background-color: #b8945a;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #a07d48;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Botón secundario */
+.btn-secondary {
+  background-color: #e7e5e4;
+  color: #292524;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #d6d3d1;
+}
+
+.btn-secondary:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Botón outline */
+.btn-outline {
+  border: 2px solid #b8945a;
+  color: #a07d48;
+  background-color: transparent;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background-color: #faf8f3;
+}
+
+.btn-outline:active {
+  transform: scale(0.95);
+}
+
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Input elegante */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  background-color: white;
+  color: #1c1917;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #b8945a;
+  box-shadow: 0 0 0 3px rgba(184, 148, 90, 0.1);
+}
+
+.input::placeholder {
+  color: #a8a29e;
+}
+
+/* Badge/Etiqueta */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-warning {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+.badge-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-info {
+  background-color: #f5f0e6;
+  color: #5a462a;
+}
+
+/* Tabla elegante */
+.table {
+  width: 100%;
+  text-align: left;
+}
+
+.table thead {
+  background-color: #faf8f3;
+  border-bottom: 2px solid #e8dcc4;
+}
+
+.table th {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #44403c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e7e5e4;
+  color: #292524;
+}
+
+.table tbody tr {
+  transition: colors 0.15s;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(250, 248, 243, 0.5);
+}
+
+/* Sidebar navigation */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: #44403c;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background-color: #f5f0e6;
+  color: #7d6238;
+}
+
+.nav-item.active {
+  background-color: #b8945a;
+  color: white;
+}
+
+.nav-item.active:hover {
+  background-color: #a07d48;
+  color: white;
+}
+
+/* Utilidades personalizadas */
+.text-balance {
+  text-wrap: balance;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Animaciones suaves */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f5f5f4;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #a8a29e;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #78716c;
+}
