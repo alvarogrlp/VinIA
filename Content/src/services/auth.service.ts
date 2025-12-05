@@ -1,10 +1,4 @@
-/**
- * Servicio de Autenticación
- * 
- * Gestiona la autenticación de usuarios con sistema propio (username/password)
- */
-
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface LoginResponse {
   id: string;
@@ -19,23 +13,16 @@ export const authService = {
    * Iniciar sesión con username y contraseña
    */
   async signIn(username: string, password: string): Promise<LoginResponse> {
-    const { data, error } = await supabase.rpc('login_usuario', {
-      p_username: username,
-      p_password: password
-    });
+    const response = await api.post('/auth/login', { username, password });
 
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      throw new Error('Usuario o contraseña incorrectos');
-    }
+    const user = response.user;
+    const token = response.token;
 
-    const user = data[0];
-    
     // Guardar en localStorage para persistencia entre sesiones
     localStorage.setItem('vinia_user', JSON.stringify(user));
+    localStorage.setItem('vinia_token', token);
     localStorage.setItem('vinia_session_timestamp', Date.now().toString());
-    
+
     return user;
   },
 
@@ -49,15 +36,13 @@ export const authService = {
     apellidos: string,
     rol: 'Administración' | 'Comercial' | 'Almacén'
   ) {
-    const { data, error } = await supabase.rpc('crear_usuario', {
-      p_username: username,
-      p_password: password,
-      p_nombre: nombre,
-      p_apellidos: apellidos,
-      p_rol: rol
+    const data = await api.post('/auth/register', {
+      username,
+      password,
+      nombre,
+      apellidos,
+      rol
     });
-
-    if (error) throw error;
     return data;
   },
 
@@ -65,13 +50,11 @@ export const authService = {
    * Cambiar contraseña
    */
   async changePassword(userId: string, oldPassword: string, newPassword: string) {
-    const { data, error } = await supabase.rpc('cambiar_password', {
-      p_user_id: userId,
-      p_old_password: oldPassword,
-      p_new_password: newPassword
+    const data = await api.post('/auth/change-password', {
+      userId,
+      oldPassword,
+      newPassword
     });
-
-    if (error) throw error;
     return data;
   },
 
@@ -80,6 +63,7 @@ export const authService = {
    */
   async signOut() {
     localStorage.removeItem('vinia_user');
+    localStorage.removeItem('vinia_token');
     localStorage.removeItem('vinia_session_timestamp');
   },
 
@@ -89,23 +73,23 @@ export const authService = {
   async getCurrentUser(): Promise<LoginResponse | null> {
     const userStr = localStorage.getItem('vinia_user');
     if (!userStr) return null;
-    
+
     try {
       const user = JSON.parse(userStr);
-      
+
       // Verificar que la sesión no haya expirado (opcional: 7 días)
       const timestamp = localStorage.getItem('vinia_session_timestamp');
       if (timestamp) {
         const sessionAge = Date.now() - Number.parseInt(timestamp, 10);
         const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 días en milisegundos
-        
+
         if (sessionAge > maxAge) {
           // Sesión expirada
           await this.signOut();
           return null;
         }
       }
-      
+
       return user;
     } catch {
       return null;
@@ -124,12 +108,7 @@ export const authService = {
    * Obtener todos los usuarios (solo administración)
    */
   async getAllUsers() {
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('id, username, nombre, apellidos, rol, activo, ultimo_acceso, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
+    const data = await api.get('/users');
     return data;
   },
 
@@ -137,12 +116,14 @@ export const authService = {
    * Activar/desactivar usuario (solo administración)
    */
   async toggleUserStatus(userId: string, activo: boolean) {
-    const { error } = await supabase
-      .from('usuarios')
-      .update({ activo })
-      .eq('id', userId);
+    await api.post(`/users/${userId}/status`, { activo });
+  },
 
-    if (error) throw error;
+  /**
+   * Eliminar usuario permanentemente (solo administración)
+   */
+  async deleteUser(userId: string) {
+    await api.delete(`/users/${userId}`);
   },
 
   /**
@@ -156,11 +137,6 @@ export const authService = {
       rol?: 'Administración' | 'Comercial' | 'Almacén';
     }
   ) {
-    const { error } = await supabase
-      .from('usuarios')
-      .update(datos)
-      .eq('id', userId);
-
-    if (error) throw error;
+    await api.post(`/users/${userId}`, datos);
   }
 };

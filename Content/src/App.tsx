@@ -13,6 +13,7 @@ import { Dashboard } from './screens/Dashboard';
 import { Catalogo } from './screens/Catalogo';
 import { Clientes } from './screens/Clientes';
 import { NuevoCliente } from './screens';
+import { NuevoVino } from './screens/NuevoVino';
 import { Pedidos } from './screens/Pedidos';
 import { Facturas } from './screens/Facturas';
 import { Inventario } from './screens/Inventario';
@@ -26,7 +27,7 @@ import { DetalleComercial } from './screens/DetalleComercial';
  */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuthStore();
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-primary-50">
@@ -34,11 +35,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -57,7 +58,7 @@ function App() {
       <Routes>
         {/* Ruta de login (pública) */}
         <Route path="/login" element={<Login />} />
-        
+
         {/* Rutas protegidas */}
         <Route
           path="/"
@@ -75,6 +76,7 @@ function App() {
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
           <Route path="facturas" element={<Facturas />} />
           <Route path="inventario" element={<Inventario />} />
+          <Route path="inventario/nuevo" element={<NuevoVino />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="administracion" element={<Administracion />} />
           <Route path="administracion/comercial/:id" element={<DetalleComercial />} />

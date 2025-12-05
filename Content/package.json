@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.78.0",
     "autoprefixer": "^10.4.21",
     "date-fns": "^4.1.0",
     "expo": "^54.0.23",

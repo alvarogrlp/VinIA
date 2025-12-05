@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Users, Plus, Trash2, AlertTriangle, UserPlus } from 'lucide-react';
+import { Users, Plus, Trash2, AlertTriangle, UserPlus, Ban } from 'lucide-react';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store';
 import { AsignacionClientesModal } from '../components/AsignacionClientesModal';
@@ -30,6 +30,7 @@ export const Usuarios = () => {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<UsuarioSistema | null>(null);
+  const [tipoAccion, setTipoAccion] = useState<'eliminar' | 'desactivar'>('desactivar');
   const [usuarioParaAsignar, setUsuarioParaAsignar] = useState<UsuarioSistema | null>(null);
 
   // Formulario
@@ -38,6 +39,7 @@ export const Usuarios = () => {
   const [formNombre, setFormNombre] = useState('');
   const [formApellidos, setFormApellidos] = useState('');
   const [formRol, setFormRol] = useState<'Administración' | 'Comercial' | 'Almacén'>('Comercial');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (usuario?.rol === 'Administración') {
@@ -74,7 +76,7 @@ export const Usuarios = () => {
 
   const handleCrearUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setFormError('');
 
     try {
       await authService.createUser(
@@ -84,7 +86,7 @@ export const Usuarios = () => {
         formApellidos,
         formRol
       );
-      
+
       // Limpiar formulario y recargar
       setFormUsername('');
       setFormPassword('');
@@ -94,12 +96,19 @@ export const Usuarios = () => {
       setMostrarModal(false);
       await cargarUsuarios();
     } catch (err: any) {
-      setError(err.message || 'Error al crear usuario');
+      setFormError(err.message || 'Error al crear usuario');
     }
   };
 
   const abrirConfirmacionEliminar = (user: UsuarioSistema) => {
     setUsuarioAEliminar(user);
+    setTipoAccion('eliminar');
+    setMostrarConfirmacion(true);
+  };
+
+  const abrirConfirmacionDesactivar = (user: UsuarioSistema) => {
+    setUsuarioAEliminar(user);
+    setTipoAccion('desactivar');
     setMostrarConfirmacion(true);
   };
 
@@ -107,8 +116,15 @@ export const Usuarios = () => {
     if (!usuarioAEliminar) return;
 
     try {
-      // Desactivar el usuario permanentemente
-      await authService.toggleUserStatus(usuarioAEliminar.id, false);
+      if (tipoAccion === 'eliminar') {
+        // Eliminar permanentemente
+        await authService.deleteUser(usuarioAEliminar.id);
+      } else {
+        // Desactivar/Activar (Toggle)
+        // Si está activo, lo desactivamos. Si está inactivo, lo activamos.
+        await authService.toggleUserStatus(usuarioAEliminar.id, !usuarioAEliminar.activo);
+      }
+
       setMostrarConfirmacion(false);
       setUsuarioAEliminar(null);
       await cargarUsuarios();
@@ -160,7 +176,10 @@ export const Usuarios = () => {
         </div>
 
         <button
-          onClick={() => setMostrarModal(true)}
+          onClick={() => {
+            setFormError('');
+            setMostrarModal(true);
+          }}
           className="btn-primary"
         >
           <Plus className="w-5 h-5" />
@@ -257,9 +276,16 @@ export const Usuarios = () => {
                           </button>
                         )}
                         <button
+                          onClick={() => abrirConfirmacionDesactivar(user)}
+                          className={`p-2 transition-colors rounded-lg ${user.activo ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                          title={user.activo ? "Desactivar usuario" : "Activar usuario"}
+                        >
+                          <Ban className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => abrirConfirmacionEliminar(user)}
                           className="p-2 text-red-600 transition-colors rounded-lg hover:bg-red-50"
-                          title="Eliminar usuario"
+                          title="Eliminar usuario permanentemente"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -296,6 +322,14 @@ export const Usuarios = () => {
                   className="input"
                 />
               </div>
+
+              {/* Error dentro del modal */}
+              {formError && (
+                <div className="p-3 text-sm text-red-800 bg-red-100 rounded-lg animate-fade-in flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  {formError}
+                </div>
+              )}
 
               <div>
                 <label htmlFor="password" className="block mb-2 text-sm font-medium text-secondary-700">
@@ -372,65 +406,73 @@ export const Usuarios = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div >
       )}
 
       {/* Modal de confirmación de eliminación */}
-      {mostrarConfirmacion && usuarioAEliminar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-xl animate-fade-in">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
-                <AlertTriangle className="w-6 h-6 text-red-600" />
+      {
+        mostrarConfirmacion && usuarioAEliminar && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm">
+            <div className="w-full max-w-md p-6 bg-white shadow-xl rounded-xl animate-fade-in">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-secondary-900">
+                    Confirmar {tipoAccion === 'eliminar' ? 'Eliminación' : (usuarioAEliminar.activo ? 'Desactivación' : 'Activación')}
+                  </h2>
+                  <p className="text-sm text-secondary-600">
+                    {tipoAccion === 'eliminar' ? 'Esta acción no se puede deshacer' : 'Gestionar acceso del usuario'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-secondary-900">
-                  Confirmar Eliminación
-                </h2>
-                <p className="text-sm text-secondary-600">
-                  Esta acción desactivará al usuario
+
+              <div className="p-4 mb-6 rounded-lg bg-secondary-50">
+                <p className="text-sm text-secondary-700">
+                  ¿Estás seguro de que deseas {tipoAccion === 'eliminar' ? 'eliminar permanentemente' : (usuarioAEliminar.activo ? 'desactivar' : 'activar')} al usuario{' '}
+                  <span className="font-semibold text-secondary-900">
+                    {usuarioAEliminar.username}
+                  </span>
+                  {' '}({usuarioAEliminar.nombre} {usuarioAEliminar.apellidos})?
+                </p>
+                <p className="mt-2 text-xs text-secondary-600">
+                  {tipoAccion === 'eliminar'
+                    ? 'Esta acción es irreversible y eliminará todos los datos asociados.'
+                    : (usuarioAEliminar.activo
+                      ? 'El usuario no podrá iniciar sesión mientras esté desactivado.'
+                      : 'El usuario podrá volver a iniciar sesión.')}
                 </p>
               </div>
-            </div>
 
-            <div className="p-4 mb-6 rounded-lg bg-secondary-50">
-              <p className="text-sm text-secondary-700">
-                ¿Estás seguro de que deseas eliminar al usuario{' '}
-                <span className="font-semibold text-secondary-900">
-                  {usuarioAEliminar.username}
-                </span>
-                {' '}({usuarioAEliminar.nombre} {usuarioAEliminar.apellidos})?
-              </p>
-              <p className="mt-2 text-xs text-secondary-600">
-                El usuario será desactivado y no podrá iniciar sesión.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={cancelarEliminar}
-                className="flex-1 btn-secondary"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarEliminar}
-                className="flex-1 px-4 py-2 font-semibold text-white transition-all bg-red-600 rounded-lg hover:bg-red-700 active:scale-95"
-              >
-                Eliminar Usuario
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={cancelarEliminar}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarEliminar}
+                  className="flex-1 px-4 py-2 font-semibold text-white transition-all bg-red-600 rounded-lg hover:bg-red-700 active:scale-95"
+                >
+                  {tipoAccion === 'eliminar' ? 'Eliminar Usuario' : (usuarioAEliminar.activo ? 'Desactivar' : 'Activar')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Modal de asignación de clientes */}
-      {usuarioParaAsignar && (
-        <AsignacionClientesModal
-          comercial={usuarioParaAsignar}
-          onClose={() => setUsuarioParaAsignar(null)}
-        />
-      )}
-    </div>
+      {
+        usuarioParaAsignar && (
+          <AsignacionClientesModal
+            comercial={usuarioParaAsignar}
+            onClose={() => setUsuarioParaAsignar(null)}
+          />
+        )
+      }
+    </div >
   );
 };

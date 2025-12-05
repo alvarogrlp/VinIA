@@ -6,10 +6,12 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Search, Package, AlertTriangle, Save, RefreshCw } from 'lucide-react';
+import { Search, Package, AlertTriangle, Save, RefreshCw, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useVinosStore, useAuthStore } from '../store';
 
 export const Inventario = () => {
+  const navigate = useNavigate();
   const { vinos, cargando, cargarVinos, actualizarVino } = useVinosStore();
   const { usuario } = useAuthStore();
   const [busqueda, setBusqueda] = useState('');
@@ -23,11 +25,11 @@ export const Inventario = () => {
 
   // Filtrar vinos
   const vinosFiltrados = vinos.filter(vino => {
-    const cumpleBusqueda = 
+    const cumpleBusqueda =
       vino.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       vino.bodega.toLowerCase().includes(busqueda.toLowerCase()) ||
       vino.codigo_interno.toLowerCase().includes(busqueda.toLowerCase());
-    
+
     const cumpleStock = soloBajoStock ? vino.stock <= (vino.stock_minimo || 0) : true;
 
     return cumpleBusqueda && cumpleStock;
@@ -47,7 +49,7 @@ export const Inventario = () => {
     try {
       setGuardando(prev => ({ ...prev, [id]: true }));
       await actualizarVino(id, { stock: nuevoStock });
-      
+
       // Limpiar estado de edición para este item
       setStockEditado(prev => {
         const newState = { ...prev };
@@ -86,7 +88,16 @@ export const Inventario = () => {
             Control y actualización de stock en tiempo real
           </p>
         </div>
-        <button 
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => navigate('/inventario/nuevo')}
+          className="btn-primary"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Nuevo Vino
+        </button>
+        <button
           onClick={() => cargarVinos()}
           className="btn-outline"
           title="Recargar datos"
@@ -94,6 +105,7 @@ export const Inventario = () => {
           <RefreshCw className={`w-5 h-5 ${cargando ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
 
       {/* Filtros y Métricas */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -111,7 +123,7 @@ export const Inventario = () => {
               className="w-full pl-10 input"
             />
           </div>
-          <button 
+          <button
             onClick={() => setSoloBajoStock(!soloBajoStock)}
             className={`btn-outline ${soloBajoStock ? 'bg-red-50 border-red-200 text-red-700' : ''}`}
           >
@@ -195,9 +207,8 @@ export const Inventario = () => {
                             min="0"
                             value={currentStock}
                             onChange={(e) => handleStockChange(vino.id, e.target.value)}
-                            className={`w-20 text-center input py-1 ${
-                              isLowStock ? 'border-red-300 text-red-700 bg-red-50' : ''
-                            } ${hasChanges ? 'border-primary-500 ring-1 ring-primary-500' : ''}`}
+                            className={`w-20 text-center input py-1 ${isLowStock ? 'border-red-300 text-red-700 bg-red-50' : ''
+                              } ${hasChanges ? 'border-primary-500 ring-1 ring-primary-500' : ''}`}
                           />
                         </div>
                       </td>
@@ -222,7 +233,7 @@ export const Inventario = () => {
                 })}
               </tbody>
             </table>
-            
+
             {vinosFiltrados.length === 0 && (
               <div className="py-12 text-center text-secondary-500">
                 No se encontraron productos que coincidan con los filtros.
@@ -231,6 +242,6 @@ export const Inventario = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
