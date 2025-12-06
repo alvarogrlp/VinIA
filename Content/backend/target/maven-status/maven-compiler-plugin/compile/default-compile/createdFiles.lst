@@ -23,5 +23,6 @@ com\vinia\backend\repository\VinoRepository.class
 com\vinia\backend\model\LineaPedido.class
 com\vinia\backend\BackendApplication.class
 com\vinia\backend\service\ClienteService.class
+com\vinia\backend\controller\SeedDataController.class
 com\vinia\backend\controller\ClienteController.class
 com\vinia\backend\config\SecurityConfig.class

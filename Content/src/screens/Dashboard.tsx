@@ -7,15 +7,15 @@
 
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ShoppingCart, 
-  Users, 
+import {
+  ShoppingCart,
+  Users,
   Wine,
   ArrowRight,
   Euro,
   Package
 } from 'lucide-react';
-import { useVinosStore, useClientesStore, usePedidosStore } from '../store';
+import { useVinosStore, useClientesStore, usePedidosStore, useAuthStore } from '../store';
 import { formatearPrecio } from '../utils/helpers';
 
 const getBadgeEstado = (estado: string) => {
@@ -30,12 +30,15 @@ export const Dashboard = () => {
   const { vinos, cargarVinos } = useVinosStore();
   const { clientes, cargarClientes } = useClientesStore();
   const { pedidos, cargarPedidos } = usePedidosStore();
+  const { usuario } = useAuthStore();
 
   useEffect(() => {
     cargarVinos();
     cargarClientes();
     cargarPedidos();
   }, [cargarVinos, cargarClientes, cargarPedidos]);
+
+  const pedidosPendientes = pedidos.filter(p => p.estado === 'Pendiente');
 
   // Calcular métricas reales
   const metricas = useMemo(() => {
@@ -137,6 +140,28 @@ export const Dashboard = () => {
         })}
       </div>
 
+      {/* Almacén Workflow: Pedidos Pendientes */}
+      {usuario?.rol === 'Almacén' && pedidosPendientes.length > 0 && (
+        <div className="p-4 mb-8 border-l-4 border-yellow-500 bg-yellow-50 rounded-r-xl">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-yellow-800">
+                ⚠ Tienes {pedidosPendientes.length} pedidos pendientes de preparación
+              </h2>
+              <p className="mt-1 text-yellow-700">
+                Revisa el listado de pedidos para comenzar la preparación.
+              </p>
+            </div>
+            <Link
+              to="/pedidos?estado=Pendiente"
+              className="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 shadow-sm"
+            >
+              Ver pendientes
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Accesos rápidos */}
       <div>
         <h2 className="mb-4 text-xl font-semibold text-secondary-900">
@@ -184,7 +209,7 @@ export const Dashboard = () => {
             Ver todos
           </Link>
         </div>
-        
+
         {/* Tabla simple de pedidos recientes */}
         <div className="overflow-x-auto">
           {pedidos.length === 0 ? (

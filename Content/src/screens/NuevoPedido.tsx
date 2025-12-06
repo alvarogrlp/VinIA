@@ -7,13 +7,13 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Plus, 
-  Trash2, 
-  Save, 
-  User, 
-  ShoppingCart, 
+import {
+  Search,
+  Plus,
+  Trash2,
+  Save,
+  User,
+  ShoppingCart,
   ArrowLeft
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useVinosStore } from '../store';
@@ -21,18 +21,20 @@ import { formatearPrecio } from '../utils/helpers';
 
 export const NuevoPedido = () => {
   const navigate = useNavigate();
-  const { 
-    pedidoActual, 
-    crearPedido, 
-    agregarLineaPedido, 
-    eliminarLineaPedido, 
+  const {
+    pedidoActual,
+    crearPedido,
+    agregarLineaPedido,
+    eliminarLineaPedido,
     actualizarLineaPedido,
     setDescuento,
+    setIva,
+    actualizarPedido,
     guardarPedido,
     cancelarPedido,
     cargando: cargandoPedido
   } = usePedidosStore();
-  
+
   const { clientes, cargarClientes } = useClientesStore();
   const { vinos, cargarVinos } = useVinosStore();
 
@@ -44,22 +46,29 @@ export const NuevoPedido = () => {
   useEffect(() => {
     cargarClientes();
     cargarVinos();
-    
+
     // Limpiar pedido anterior al entrar
     cancelarPedido();
   }, [cargarClientes, cargarVinos, cancelarPedido]);
 
   // Filtrar clientes
-  const clientesFiltrados = clientes.filter(c => 
+  const clientesFiltrados = clientes.filter(c =>
     c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
     c.cif.toLowerCase().includes(busquedaCliente.toLowerCase())
   ).slice(0, 5);
 
   // Filtrar vinos
-  const vinosFiltrados = vinos.filter(v => 
-    v.nombre.toLowerCase().includes(busquedaVino.toLowerCase()) ||
-    v.bodega.toLowerCase().includes(busquedaVino.toLowerCase())
-  ).slice(0, 5);
+  const vinosFiltrados = vinos.filter(v => {
+    const term = busquedaVino.toLowerCase();
+    return (
+      v.nombre.toLowerCase().includes(term) ||
+      v.bodega.toLowerCase().includes(term) ||
+      v.tipo.toLowerCase().includes(term) ||
+      (v.ano && v.ano.toString().includes(term)) ||
+      (v.denominacion_origen && v.denominacion_origen.toLowerCase().includes(term)) ||
+      (v.variedad_uva && v.variedad_uva.toLowerCase().includes(term))
+    );
+  }).slice(0, 10);
 
   const handleSeleccionarCliente = (id: string) => {
     setClienteSeleccionadoId(id);
@@ -70,10 +79,26 @@ export const NuevoPedido = () => {
   const handleAgregarVino = (vino: any) => {
     if (!pedidoActual) return;
 
+    // Verificar stock
+    if (vino.stock <= 0) {
+      alert('No hay stock disponible para este producto');
+      return;
+    }
+
     // Verificar si ya existe
     const existe = pedidoActual.lineas.find(l => l.vinoId === vino.id);
     if (existe) {
-      actualizarLineaPedido(existe.id, { cantidad: existe.cantidad + 1 });
+      if (existe.cantidad + 1 > vino.stock) {
+        alert('No hay suficiente stock disponible');
+        return;
+      }
+      actualizarLineaPedido(existe.id, {
+        cantidad: existe.cantidad + 1,
+        cantidadBultos: (existe.cantidadBultos || 0) + 1
+        // Nota: Esto asume suma simple, pero si mezcla cajas y botellas es complejo.
+        // Simplificación: Al agregar desde buscador, siempre suma 1 unidad del tipo configurado actualmente?
+        // Mejor: Al agregar desde buscador, siempre agrega 1 BOTELLA extra al total.
+      });
     } else {
       agregarLineaPedido({
         vinoId: vino.id,
@@ -81,20 +106,55 @@ export const NuevoPedido = () => {
         cantidad: 1,
         precioUnitario: vino.precio_unitario,
         descuento: 0,
-        subtotal: vino.precio_unitario
+        subtotal: vino.precio_unitario,
+        anada: vino.ano,
+        tipoBulto: 'BOTELLA',
+        cantidadBultos: 1
       });
     }
     setBusquedaVino('');
     setMostrarBuscadorVinos(false);
   };
 
+  const handleUpdateBultos = (linea: any, nuevoTipo: 'BOTELLA' | 'CAJA', nuevosBultos: number) => {
+    const vino = vinos.find(v => v.id === linea.vinoId);
+    if (!vino) return;
+
+    const botellasPorBulto = nuevoTipo === 'CAJA' ? (vino.botellas_por_caja || 6) : 1;
+    const totalBotellas = nuevosBultos * botellasPorBulto;
+
+    if (totalBotellas > vino.stock) {
+      alert(`Stock insuficiente. Necesitas ${totalBotellas} botellas, hay ${vino.stock}.`);
+      return;
+    }
+
+    actualizarLineaPedido(linea.id, {
+      tipoBulto: nuevoTipo,
+      cantidadBultos: nuevosBultos,
+      cantidad: totalBotellas
+    });
+  };
   const handleGuardar = async () => {
+    if (!pedidoActual) return;
+
+    // Validar stock antes de enviar
+    const lineasSinStock = pedidoActual.lineas.filter(linea => {
+      const vino = vinos.find(v => v.id === linea.vinoId);
+      return !vino || linea.cantidad > vino.stock;
+    });
+
+    if (lineasSinStock.length > 0) {
+      const nombres = lineasSinStock.map(l => l.vinoNombre).join(', ');
+      alert(`No hay stock suficiente para los siguientes vinos: ${nombres}. Por favor, ajuste las cantidades.`);
+      return;
+    }
+
     try {
       await guardarPedido();
       navigate('/pedidos');
     } catch (error) {
       console.error('Error guardando pedido:', error);
-      alert('Error al guardar el pedido');
+      alert('Error al guardar el pedido: ' + (error as Error).message);
     }
   };
 
@@ -118,7 +178,8 @@ export const NuevoPedido = () => {
               placeholder="Buscar cliente por nombre o CIF..."
               value={busquedaCliente}
               onChange={(e) => setBusquedaCliente(e.target.value)}
-              className="w-full pl-10 input"
+              className="w-full input"
+              style={{ paddingLeft: '3rem' }}
               autoFocus
             />
           </div>
@@ -168,7 +229,7 @@ export const NuevoPedido = () => {
             </p>
           </div>
         </div>
-        <button 
+        <button
           onClick={handleGuardar}
           disabled={!pedidoActual?.lineas.length || cargandoPedido}
           className="btn-primary"
@@ -194,16 +255,17 @@ export const NuevoPedido = () => {
               </div>
               <input
                 type="text"
-                placeholder="Buscar vinos..."
+                placeholder="Buscar por nombre, bodega, tipo, año..."
                 value={busquedaVino}
                 onChange={(e) => {
                   setBusquedaVino(e.target.value);
                   setMostrarBuscadorVinos(true);
                 }}
                 onFocus={() => setMostrarBuscadorVinos(true)}
-                className="w-full pl-10 input"
+                className="w-full input"
+                style={{ paddingLeft: '3rem' }}
               />
-              
+
               {/* Dropdown de resultados */}
               {mostrarBuscadorVinos && busquedaVino && (
                 <div className="absolute z-10 w-full mt-1 bg-white border shadow-lg rounded-xl border-secondary-200 max-h-96 overflow-y-auto">
@@ -221,7 +283,9 @@ export const NuevoPedido = () => {
                         </div>
                         <div>
                           <p className="font-medium text-secondary-900">{vino.nombre}</p>
-                          <p className="text-xs text-secondary-500">{vino.bodega} • Stock: {vino.stock}</p>
+                          <p className="text-xs text-secondary-500">
+                            {vino.bodega} • {vino.tipo} {vino.ano} • Stock: {vino.stock}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -243,7 +307,7 @@ export const NuevoPedido = () => {
             <h2 className="mb-4 text-lg font-semibold text-secondary-900">
               Productos en el pedido ({pedidoActual?.lineas.length || 0})
             </h2>
-            
+
             {(!pedidoActual?.lineas || pedidoActual.lineas.length === 0) ? (
               <div className="py-12 text-center border-2 border-dashed rounded-lg border-secondary-200">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-secondary-300" />
@@ -252,64 +316,133 @@ export const NuevoPedido = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {pedidoActual.lineas.map(linea => (
-                  <div key={linea.id} className="flex items-center justify-between p-4 border rounded-lg border-secondary-100 bg-secondary-50/50">
-                    <div className="flex-1">
-                      <p className="font-medium text-secondary-900">{linea.vinoNombre}</p>
-                      <p className="text-sm text-secondary-500">{formatearPrecio(linea.precioUnitario)} / ud.</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => actualizarLineaPedido(linea.id, { cantidad: Math.max(1, linea.cantidad - 1) })}
-                          className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-secondary-200 hover:bg-secondary-100"
+                {pedidoActual.lineas.map(linea => {
+                  const vino = vinos.find(v => v.id === linea.vinoId);
+                  const stock = vino?.stock || 0;
+
+                  return (
+                    <div key={linea.id} className="flex flex-col gap-4 p-4 border rounded-lg border-secondary-100 bg-secondary-50/50">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-secondary-900">{linea.vinoNombre}</p>
+                          <div className="flex items-center gap-2 text-sm text-secondary-500">
+                            <span className="bg-primary-100 text-primary-700 px-2 py-0.5 rounded text-xs font-semibold">
+                              Añada {linea.anada}
+                            </span>
+                            <span>•</span>
+                            <span>{formatearPrecio(linea.precioUnitario)} / botella</span>
+                          </div>
+                          <p className={`text-xs mt-1 ${stock - linea.cantidad < 10 ? 'text-amber-600 font-medium' : 'text-secondary-400'}`}>
+                            Stock disponible: {stock} botellas
+                          </p>
+                        </div>
+                        <div className="font-bold text-secondary-900">
+                          {formatearPrecio(linea.subtotal)}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        {/* Selector de Tipo de Bulto */}
+                        <div className="flex items-center gap-2 bg-white rounded-lg border border-secondary-200 p-1">
+                          <button
+                            onClick={() => handleUpdateBultos(linea, 'BOTELLA', linea.cantidadBultos || linea.cantidad)}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${linea.tipoBulto === 'BOTELLA' ? 'bg-primary-100 text-primary-700' : 'text-secondary-500 hover:bg-secondary-50'}`}
+                          >
+                            Botella
+                          </button>
+                          <button
+                            onClick={() => handleUpdateBultos(linea, 'CAJA', Math.max(1, Math.floor(linea.cantidad / (vino?.botellas_por_caja || 6))))}
+                            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${linea.tipoBulto === 'CAJA' ? 'bg-primary-100 text-primary-700' : 'text-secondary-500 hover:bg-secondary-50'}`}
+                          >
+                            Caja x{vino?.botellas_por_caja || 6}
+                          </button>
+                        </div>
+
+                        {/* Control de Cantidad (Bultos) */}
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-secondary-500 font-medium uppercase min-w-[3rem]">
+                            {linea.tipoBulto === 'CAJA' ? 'Cajas' : 'Botellas'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleUpdateBultos(linea, linea.tipoBulto || 'BOTELLA', Math.max(1, (linea.cantidadBultos || 0) - 1))}
+                              className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-secondary-200 hover:bg-secondary-100"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center font-medium">{linea.cantidadBultos || linea.cantidad}</span>
+                            <button
+                              onClick={() => handleUpdateBultos(linea, linea.tipoBulto || 'BOTELLA', (linea.cantidadBultos || 0) + 1)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-secondary-200 hover:bg-secondary-100"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => eliminarLineaPedido(linea.id)}
+                          className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50"
                         >
-                          -
-                        </button>
-                        <span className="w-8 text-center font-medium">{linea.cantidad}</span>
-                        <button 
-                          onClick={() => actualizarLineaPedido(linea.id, { cantidad: linea.cantidad + 1 })}
-                          className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-secondary-200 hover:bg-secondary-100"
-                        >
-                          +
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
-                      
-                      <div className="w-24 text-right font-bold text-secondary-900">
-                        {formatearPrecio(linea.subtotal)}
-                      </div>
-                      
-                      <button 
-                        onClick={() => eliminarLineaPedido(linea.id)}
-                        className="p-2 text-red-500 transition-colors rounded-lg hover:bg-red-50"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
 
-        {/* Columna Derecha: Resumen */}
-        <div className="lg:col-span-1">
+        {/* Columna Derecha: Datos de Entrega y Resumen */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Datos de Entrega */}
+          <div className="card bg-white border-secondary-100">
+            <h2 className="mb-4 text-lg font-semibold text-secondary-900">Datos de Entrega</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-1 text-sm font-medium text-secondary-700">Dirección de Envío</label>
+                <textarea
+                  rows={3}
+                  value={pedidoActual?.direccionEnvioSnapshot || ''}
+                  onChange={(e) => actualizarPedido({ direccionEnvioSnapshot: e.target.value })}
+                  placeholder="Dirección completa de entrega..."
+                  className="w-full input text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1 text-sm font-medium text-secondary-700">Instrucciones de Entrega</label>
+                <textarea
+                  rows={2}
+                  value={pedidoActual?.instruccionesEntrega || ''}
+                  onChange={(e) => actualizarPedido({ instruccionesEntrega: e.target.value })}
+                  placeholder="Ej: Entregar de 9:00 a 11:30..."
+                  className="w-full input text-sm"
+                />
+                <p className="mt-1 text-xs text-secondary-400">
+                  Especifique horario o detalles de recepción.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="sticky top-6 card bg-primary-50 border-primary-100">
             <h2 className="mb-4 text-lg font-semibold text-primary-900">Resumen del Pedido</h2>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-secondary-600">
                 <span>Subtotal</span>
                 <span>{formatearPrecio(pedidoActual?.subtotal || 0)}</span>
               </div>
-              
+
               <div className="flex items-center justify-between text-secondary-600">
                 <span>Descuento (%)</span>
-                <input 
-                  type="number" 
-                  min="0" 
+                <input
+                  type="number"
+                  min="0"
                   max="100"
                   value={pedidoActual?.descuento || 0}
                   onChange={(e) => setDescuento(Number(e.target.value))}
@@ -317,9 +450,36 @@ export const NuevoPedido = () => {
                 />
               </div>
 
+              {/* Selector de Impuestos */}
+              <div className="py-2 border-t border-b border-primary-200/50 my-2">
+                <span className="block mb-2 text-secondary-600">Impuestos</span>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="iva"
+                      checked={pedidoActual?.iva === 21}
+                      onChange={() => setIva(21)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span>IVA (21%)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="iva"
+                      checked={pedidoActual?.iva === 7}
+                      onChange={() => setIva(7)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span>IGIC (7%)</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="flex justify-between text-secondary-600">
-                <span>IVA (21%)</span>
-                <span>{formatearPrecio(((pedidoActual?.subtotal || 0) * (1 - (pedidoActual?.descuento || 0) / 100)) * 0.21)}</span>
+                <span>{pedidoActual?.iva === 7 ? 'IGIC' : 'IVA'} ({pedidoActual?.iva}%)</span>
+                <span>{formatearPrecio(((pedidoActual?.subtotal || 0) * (1 - (pedidoActual?.descuento || 0) / 100)) * ((pedidoActual?.iva || 0) / 100))}</span>
               </div>
               <div className="pt-3 mt-3 border-t border-primary-200 flex justify-between items-end">
                 <span className="font-bold text-primary-900">Total</span>
@@ -330,14 +490,14 @@ export const NuevoPedido = () => {
             </div>
 
             <div className="mt-6 space-y-3">
-              <button 
+              <button
                 onClick={handleGuardar}
                 disabled={!pedidoActual?.lineas.length || cargandoPedido}
                 className="w-full btn-primary py-3 justify-center"
               >
                 Confirmar Pedido
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/pedidos')}
                 className="w-full btn-outline bg-white justify-center"
               >

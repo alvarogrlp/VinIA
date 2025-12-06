@@ -120,7 +120,8 @@ export const Inventario = () => {
               placeholder="Buscar por nombre, bodega o código..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full pl-10 input"
+              className="w-full input"
+              style={{ paddingLeft: '3rem' }}
             />
           </div>
           <button

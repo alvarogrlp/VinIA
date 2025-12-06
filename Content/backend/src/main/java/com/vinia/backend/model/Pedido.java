@@ -53,7 +53,14 @@ public class Pedido {
     @Column(name = "direccion_entrega", columnDefinition = "TEXT")
     private String direccionEntrega;
 
+    @Column(name = "direccion_envio_snapshot", columnDefinition = "TEXT")
+    private String direccionEnvioSnapshot;
+
+    @Column(name = "instrucciones_entrega", columnDefinition = "TEXT")
+    private String instruccionesEntrega;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("pedido")
     private List<LineaPedido> lineas;
 
     @Column(name = "created_at")

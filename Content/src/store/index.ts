@@ -125,7 +125,7 @@ export const useVinosStore = create<VinosState>((set, get) => ({
       const data = await vinosService.getAll();
       console.log('✅ Vinos cargados:', data.length, 'vinos');
       console.log('📦 Primeros 3 vinos:', data.slice(0, 3));
-      
+
       // Los datos ya vienen con la estructura correcta de Supabase
       set({ vinos: data, cargando: false });
     } catch (error: any) {
@@ -138,10 +138,10 @@ export const useVinosStore = create<VinosState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       console.log('🔍 Búsqueda de vinos:', query);
-      
+
       // Usar búsqueda avanzada para mejor precisión y scoring
       const data = await vinosService.advancedSearch(query);
-      
+
       console.log('✅ Resultados de búsqueda:', data.length, 'vinos');
       set({ vinos: data, cargando: false });
     } catch (error: any) {
@@ -169,9 +169,9 @@ export const useVinosStore = create<VinosState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       const nuevoVino = await vinosService.create(vino as any);
-      set((state) => ({ 
+      set((state) => ({
         vinos: [...state.vinos, nuevoVino],
-        cargando: false 
+        cargando: false
       }));
     } catch (error: any) {
       set({ error: error.message, cargando: false });
@@ -241,12 +241,12 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
   cargarClientes: async () => {
     try {
       set({ cargando: true, error: null });
-      
+
       // Obtener usuario actual para filtrar si es comercial
       const { usuario } = useAuthStore.getState();
-      
+
       const data = await clientesService.getAll(usuario?.id, usuario?.rol);
-      
+
       const clientes: Cliente[] = data.map(c => ({
         id: c.id,
         nombre: c.nombre,
@@ -254,17 +254,17 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         tipo: c.tipo as any || 'Particular',
         direccion: c.direccion || '',
         ciudad: c.ciudad || '',
-        codigoPostal: c.codigo_postal || '',
+        codigoPostal: c.codigoPostal || '',
         provincia: c.ciudad || '',
         telefono: c.telefono || '',
         email: c.email || '',
         personaContacto: c.nombre,
-        descuento: c.descuento_habitual,
+        descuento: c.descuento || 0,
         activo: c.activo,
         created_at: c.created_at,
         updated_at: c.updated_at
       }));
-      
+
       set({ clientes, cargando: false });
     } catch (error: any) {
       set({ error: error.message, cargando: false });
@@ -275,7 +275,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       const data = await clientesService.search(query);
-      
+
       const clientes: Cliente[] = data.map(c => ({
         id: c.id,
         nombre: c.nombre,
@@ -283,17 +283,17 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         tipo: c.tipo as any || 'Particular',
         direccion: c.direccion || '',
         ciudad: c.ciudad || '',
-        codigoPostal: c.codigo_postal || '',
+        codigoPostal: c.codigoPostal || '',
         provincia: c.ciudad || '',
         telefono: c.telefono || '',
         email: c.email || '',
         personaContacto: c.nombre,
-        descuento: c.descuento_habitual,
+        descuento: c.descuento || 0,
         activo: c.activo,
         created_at: c.created_at,
         updated_at: c.updated_at
       }));
-      
+
       set({ clientes, cargando: false });
     } catch (error: any) {
       set({ error: error.message, cargando: false });
@@ -308,27 +308,29 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
   agregarCliente: async (cliente) => {
     try {
       set({ cargando: true, error: null });
-      
+
       // Concatenar persona de contacto en notas si existe, ya que no hay campo específico en BD
       let notasFinal = cliente.notas || '';
       if (cliente.personaContacto) {
         notasFinal = `Persona de contacto: ${cliente.personaContacto}\n${notasFinal}`;
       }
-      
+
       const nuevoCliente = await clientesService.create({
         nombre: cliente.nombre,
         cif: cliente.cif,
-        email: cliente.email || null,
-        telefono: cliente.telefono || null,
-        direccion: cliente.direccion || null,
-        ciudad: cliente.ciudad || null,
-        codigo_postal: cliente.codigoPostal || null,
-        tipo: cliente.tipo || null,
-        descuento_habitual: cliente.descuento || 0,
+        email: cliente.email || '',
+        telefono: cliente.telefono || '',
+        direccion: cliente.direccion || '',
+        ciudad: cliente.ciudad || '',
+        provincia: cliente.ciudad || '',
+        codigoPostal: cliente.codigoPostal || '',
+        personaContacto: cliente.personaContacto || cliente.nombre,
+        tipo: cliente.tipo || 'Particular',
+        descuento: cliente.descuento || 0,
         activo: true,
-        notas: notasFinal || null
+        notas: notasFinal || undefined
       });
-      
+
       const clienteConvertido: Cliente = {
         id: nuevoCliente.id,
         nombre: nuevoCliente.nombre,
@@ -336,18 +338,18 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         tipo: nuevoCliente.tipo as any || 'Particular',
         direccion: nuevoCliente.direccion || '',
         ciudad: nuevoCliente.ciudad || '',
-        codigoPostal: nuevoCliente.codigo_postal || '',
+        codigoPostal: nuevoCliente.codigoPostal || '',
         provincia: nuevoCliente.ciudad || '',
         telefono: nuevoCliente.telefono || '',
         email: nuevoCliente.email || '',
         personaContacto: cliente.personaContacto || nuevoCliente.nombre, // Usar el dato original o el nombre como fallback
-        descuento: nuevoCliente.descuento_habitual,
+        descuento: nuevoCliente.descuento || 0,
         activo: nuevoCliente.activo,
         created_at: nuevoCliente.created_at,
         updated_at: nuevoCliente.updated_at,
         notas: nuevoCliente.notas || ''
       };
-      
+
       set((state) => ({
         clientes: [...state.clientes, clienteConvertido],
         cargando: false
@@ -361,7 +363,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
   actualizarCliente: async (id, datos) => {
     try {
       set({ cargando: true, error: null });
-      
+
       const datosSupabase: any = {};
       if (datos.nombre) datosSupabase.nombre = datos.nombre;
       if (datos.cif) datosSupabase.cif = datos.cif;
@@ -369,12 +371,12 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
       if (datos.telefono !== undefined) datosSupabase.telefono = datos.telefono;
       if (datos.direccion !== undefined) datosSupabase.direccion = datos.direccion;
       if (datos.ciudad !== undefined) datosSupabase.ciudad = datos.ciudad;
-      if (datos.codigoPostal !== undefined) datosSupabase.codigo_postal = datos.codigoPostal;
+      if (datos.codigoPostal !== undefined) datosSupabase.codigoPostal = datos.codigoPostal;
       if (datos.tipo !== undefined) datosSupabase.tipo = datos.tipo;
-      if (datos.descuento !== undefined) datosSupabase.descuento_habitual = datos.descuento;
-      
+      if (datos.descuento !== undefined) datosSupabase.descuento = datos.descuento;
+
       const clienteActualizado = await clientesService.update(id, datosSupabase);
-      
+
       const clienteConvertido: Cliente = {
         id: clienteActualizado.id,
         nombre: clienteActualizado.nombre,
@@ -382,17 +384,17 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         tipo: clienteActualizado.tipo as any || 'Particular',
         direccion: clienteActualizado.direccion || '',
         ciudad: clienteActualizado.ciudad || '',
-        codigoPostal: clienteActualizado.codigo_postal || '',
+        codigoPostal: clienteActualizado.codigoPostal || '',
         provincia: clienteActualizado.ciudad || '',
         telefono: clienteActualizado.telefono || '',
         email: clienteActualizado.email || '',
         personaContacto: clienteActualizado.nombre,
-        descuento: clienteActualizado.descuento_habitual,
+        descuento: clienteActualizado.descuento || 0,
         activo: clienteActualizado.activo,
         created_at: clienteActualizado.created_at,
         updated_at: clienteActualizado.updated_at
       };
-      
+
       set((state) => ({
         clientes: state.clientes.map((cliente) =>
           cliente.id === id ? clienteConvertido : cliente
@@ -440,6 +442,8 @@ interface PedidosState {
   actualizarLineaPedido: (lineaId: string, datos: Partial<LineaPedido>) => void;
   eliminarLineaPedido: (lineaId: string) => void;
   setDescuento: (descuento: number) => void;
+  setIva: (iva: number) => void;
+  actualizarPedido: (datos: Partial<Pedido>) => void;
   calcularTotales: () => void;
   guardarPedido: () => Promise<void>;
   cancelarPedido: () => void;
@@ -456,11 +460,11 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       const data = await pedidosService.getAll();
-      
+
       const pedidos: Pedido[] = data.map(p => ({
         id: p.id,
-        numero: p.numero_pedido,
-        clienteId: p.cliente_id,
+        numero: p.numero,
+        clienteId: p.cliente.id,
         clienteNombre: p.cliente.nombre,
         fecha: p.fecha,
         estado: p.estado,
@@ -471,7 +475,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
         total: p.total,
         created_at: p.created_at
       }));
-      
+
       set({ pedidos, cargando: false });
     } catch (error: any) {
       set({ error: error.message, cargando: false });
@@ -484,18 +488,24 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   crearPedido: (clienteId: string) => {
+    const { clientes } = useClientesStore.getState();
+    const cliente = clientes.find(c => c.id === clienteId);
+
     const nuevoPedido: Pedido = {
       id: `temp-${Date.now()}`,
       numero: `PED-${Date.now()}`,
       clienteId,
-      clienteNombre: '',
+      clienteNombre: cliente?.nombre || '',
       fecha: new Date().toISOString(),
       estado: 'Borrador',
       lineas: [],
       subtotal: 0,
       descuento: 0,
-      iva: 21,
+      iva: 7, // IGIC por defecto
       total: 0,
+      instruccionesEntrega: '',
+      direccionEnvioSnapshot: cliente?.direccionEnvio || cliente?.direccion || '',
+      direccionEntrega: cliente?.direccionEnvio || cliente?.direccion || '' // Legacy field support
     };
     set({ pedidoActual: nuevoPedido });
   },
@@ -527,9 +537,14 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       return {
         pedidoActual: {
           ...state.pedidoActual,
-          lineas: state.pedidoActual.lineas.map((linea) =>
-            linea.id === lineaId ? { ...linea, ...datos } : linea
-          ),
+          lineas: state.pedidoActual.lineas.map((linea) => {
+            if (linea.id !== lineaId) return linea;
+
+            const updatedLinea = { ...linea, ...datos };
+            updatedLinea.subtotal = updatedLinea.cantidad * updatedLinea.precioUnitario * (1 - updatedLinea.descuento / 100);
+
+            return updatedLinea;
+          }),
         },
       };
     });
@@ -563,6 +578,31 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     get().calcularTotales();
   },
 
+  setIva: (iva) => {
+    set((state) => {
+      if (!state.pedidoActual) return state;
+      return {
+        pedidoActual: {
+          ...state.pedidoActual,
+          iva
+        }
+      };
+    });
+    get().calcularTotales();
+  },
+
+  actualizarPedido: (datos) => {
+    set((state) => {
+      if (!state.pedidoActual) return state;
+      return {
+        pedidoActual: {
+          ...state.pedidoActual,
+          ...datos
+        }
+      };
+    });
+  },
+
   calcularTotales: () => {
     set((state) => {
       if (!state.pedidoActual) return state;
@@ -591,49 +631,52 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
 
     try {
       set({ cargando: true, error: null });
-      
-      // Generar número de pedido automático
-      const numeroPedido = await pedidosService.generateNumeroPedido();
-      
+
       // Crear pedido en Supabase
       const pedidoCreado = await pedidosService.create(
         {
-          numero_pedido: numeroPedido,
-          cliente_id: pedidoActual.clienteId,
+          numero: "GENERATED_BY_BACKEND", // El backend genera el número definitivo
+          clienteId: pedidoActual.clienteId,
           fecha: pedidoActual.fecha,
           estado: 'Pendiente',
           subtotal: pedidoActual.subtotal,
           descuento: pedidoActual.descuento,
           iva: pedidoActual.iva,
           total: pedidoActual.total,
-          notas: null
+          notas: undefined,
+          instruccionesEntrega: pedidoActual.instruccionesEntrega,
+          direccionEnvioSnapshot: pedidoActual.direccionEnvioSnapshot
         },
         pedidoActual.lineas.map(linea => ({
-          vino_id: linea.vinoId,
+          vinoId: linea.vinoId,
           cantidad: linea.cantidad,
-          precio_unitario: linea.precioUnitario,
+          precioUnitario: linea.precioUnitario,
           descuento: linea.descuento,
-          subtotal: linea.subtotal
+          subtotal: linea.subtotal,
+          anada: linea.anada,
+          lote: linea.lote,
+          tipoBulto: linea.tipoBulto,
+          cantidadBultos: linea.cantidadBultos
         }))
       );
-      
+
       // Agregar a la lista de pedidos
       set((state) => ({
         pedidos: [
           ...state.pedidos,
           {
             id: pedidoCreado.id,
-            numero: pedidoCreado.numero_pedido,
-            clienteId: pedidoCreado.cliente_id,
+            numero: pedidoCreado.numero,
+            clienteId: pedidoCreado.cliente.id,
             clienteNombre: pedidoCreado.cliente.nombre,
             fecha: pedidoCreado.fecha,
             estado: pedidoCreado.estado,
             lineas: pedidoCreado.lineas.map(l => ({
               id: l.id,
-              vinoId: l.vino_id,
+              vinoId: l.vinoId, // Accessing flat property on LineaPedido
               vinoNombre: l.vino.nombre,
               cantidad: l.cantidad,
-              precioUnitario: l.precio_unitario,
+              precioUnitario: l.precioUnitario,
               descuento: l.descuento,
               subtotal: l.subtotal
             })),

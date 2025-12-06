@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Mail, Phone, MapPin } from 'lucide-react';
 import { useClientesStore, usePedidosStore, useAuthStore } from '../store';
-import { ClienteDetallesModal } from '../components/ClienteDetallesModal';
 
 export const Clientes = () => {
   const navigate = useNavigate();
@@ -16,7 +15,7 @@ export const Clientes = () => {
   const { crearPedido } = usePedidosStore();
   const { usuario } = useAuthStore();
   const [busqueda, setBusqueda] = useState('');
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<any>(null);
+
 
   useEffect(() => {
     cargarClientes();
@@ -40,7 +39,7 @@ export const Clientes = () => {
           </p>
         </div>
         {usuario?.rol === 'Administración' && (
-          <button 
+          <button
             onClick={() => navigate('/clientes/nuevo')}
             className="btn-primary"
           >
@@ -62,7 +61,7 @@ export const Clientes = () => {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="input w-full"
-            style={{ paddingLeft: '2.5rem' }}
+            style={{ paddingLeft: '3rem' }}
           />
         </div>
       </div>
@@ -82,74 +81,66 @@ export const Clientes = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {clientesFiltrados.map((cliente) => (
-            <div key={cliente.id} className="card">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-secondary-900">
-                    {cliente.nombre}
-                  </h3>
-                  <p className="text-sm text-secondary-600">
-                    {cliente.tipo} • {cliente.cif}
-                  </p>
-                </div>
-                <span
-                  className={`badge ${
-                    cliente.activo ? 'badge-success' : 'badge-error'
-                  }`}
-                >
-                  {cliente.activo ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
+              {clientesFiltrados.map((cliente) => (
+                <div key={cliente.id} className="card">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-secondary-900">
+                        {cliente.nombre}
+                      </h3>
+                      <p className="text-sm text-secondary-600">
+                        {cliente.tipo} • {cliente.cif}
+                      </p>
+                    </div>
+                    <span
+                      className={`badge ${cliente.activo ? 'badge-success' : 'badge-error'
+                        }`}
+                    >
+                      {cliente.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
 
-              <div className="space-y-2">
-                <div className="flex items-start gap-2 text-sm text-secondary-700">
-                  <MapPin className="w-4 h-4 mt-0.5 text-secondary-500" />
-                  <span>
-                    {cliente.direccion}, {cliente.ciudad} ({cliente.provincia})
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-secondary-700">
-                  <Phone className="w-4 h-4 text-secondary-500" />
-                  <span>{cliente.telefono}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-secondary-700">
-                  <Mail className="w-4 h-4 text-secondary-500" />
-                  <span>{cliente.email}</span>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2 text-sm text-secondary-700">
+                      <MapPin className="w-4 h-4 mt-0.5 text-secondary-500" />
+                      <span>
+                        {cliente.direccion}, {cliente.ciudad} ({cliente.provincia})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-secondary-700">
+                      <Phone className="w-4 h-4 text-secondary-500" />
+                      <span>{cliente.telefono}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-secondary-700">
+                      <Mail className="w-4 h-4 text-secondary-500" />
+                      <span>{cliente.email}</span>
+                    </div>
+                  </div>
 
-              <div className="flex gap-2 pt-4 mt-4 border-t border-secondary-200">
-                <button 
-                  onClick={() => setClienteSeleccionado(cliente)}
-                  className="btn-outline flex-1 !py-2"
-                >
-                  Ver detalles
-                </button>
-                <button 
-                  onClick={() => {
-                    crearPedido(cliente.id);
-                    navigate('/pedidos');
-                  }}
-                  className="btn-primary flex-1 !py-2"
-                >
-                  Nuevo pedido
-                </button>
-              </div>
+                  <div className="flex gap-2 pt-4 mt-4 border-t border-secondary-200">
+                    <button
+                      onClick={() => navigate(`/clientes/${cliente.id}`)}
+                      className="btn-outline flex-1 !py-2"
+                    >
+                      Ver detalles
+                    </button>
+                    <button
+                      onClick={() => {
+                        crearPedido(cliente.id);
+                        navigate('/pedidos');
+                      }}
+                      className="btn-primary flex-1 !py-2"
+                    >
+                      Nuevo pedido
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
           )}
         </>
       )}
 
-      {/* Modal de Detalles */}
-      {clienteSeleccionado && (
-        <ClienteDetallesModal 
-          cliente={clienteSeleccionado} 
-          onClose={() => setClienteSeleccionado(null)} 
-        />
-      )}
     </div>
   );
 };

@@ -58,11 +58,44 @@ export const pedidosService = {
   /**
    * Crear un nuevo pedido con sus líneas
    */
+  /**
+   * Crear un nuevo pedido con sus líneas
+   */
+  /**
+   * Crear un nuevo pedido con sus líneas
+   */
   async create(
-    pedido: PedidoInsert,
-    lineas: Omit<LineaPedidoInsert, 'pedido_id'>[]
+    pedidoData: PedidoInsert,
+    lineasData: Omit<LineaPedidoInsert, 'pedido_id'>[]
   ) {
-    const data = await api.post('/pedidos', { pedido, lineas });
+    // Transformar datos para que coincidan con la estructura del Backend (JPA/Hibernate)
+    const pedidoBackend = {
+      numero: pedidoData.numero,
+      cliente: { id: pedidoData.clienteId },
+      fecha: pedidoData.fecha,
+      estado: pedidoData.estado || 'Pendiente',
+      subtotal: pedidoData.subtotal,
+      descuento: pedidoData.descuento,
+      iva: pedidoData.iva,
+      total: pedidoData.total,
+      notas: pedidoData.notas,
+      instruccionesEntrega: pedidoData.instruccionesEntrega,
+      direccionEnvioSnapshot: pedidoData.direccionEnvioSnapshot,
+      lineas: lineasData.map(linea => ({
+        vino: { id: linea.vinoId },
+        cantidad: linea.cantidad,
+        precioUnitario: linea.precioUnitario,
+        descuento: linea.descuento,
+        subtotal: linea.subtotal,
+        anada: linea.anada,
+        lote: linea.lote,
+        tipoBulto: linea.tipoBulto,
+        cantidadBultos: linea.cantidadBultos
+      }))
+    };
+
+    // El backend espera un único objeto Pedido que contiene la lista de líneas
+    const data = await api.post('/pedidos', pedidoBackend);
     return data as PedidoCompleto;
   },
 

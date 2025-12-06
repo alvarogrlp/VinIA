@@ -59,7 +59,7 @@ export const Pedidos = () => {
             Gestiona todos tus pedidos y su estado
           </p>
         </div>
-        <button 
+        <button
           onClick={() => navigate('/pedidos/nuevo')}
           className="btn-primary"
         >
@@ -81,7 +81,7 @@ export const Pedidos = () => {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="input w-full"
-              style={{ paddingLeft: '2.5rem' }}
+              style={{ paddingLeft: '3rem' }}
             />
           </div>
           <button className="btn-outline">
@@ -104,7 +104,7 @@ export const Pedidos = () => {
                 <p className="text-lg text-secondary-600">
                   No hay pedidos registrados
                 </p>
-                <button 
+                <button
                   onClick={() => navigate('/pedidos/nuevo')}
                   className="mt-4 btn-primary"
                 >
@@ -114,66 +114,66 @@ export const Pedidos = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Nº Pedido</th>
-                  <th>Cliente</th>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                  <th className="text-right">Total</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {pedidosConCliente.map((pedido) => (
-                  <tr key={pedido.id}>
-                    <td className="font-medium text-secondary-900">
-                      {pedido.numero}
-                    </td>
-                    <td>{pedido.clienteNombre}</td>
-                    <td>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-secondary-500" />
-                        {new Date(pedido.fecha).toLocaleDateString('es-ES')}
-                      </div>
-                    </td>
-                    <td>
-                      <select
-                        value={pedido.estado}
-                        onChange={(e) => cambiarEstadoPedido(pedido.id, e.target.value as EstadoPedido)}
-                        className={`${getEstadoBadgeClass(pedido.estado)} !px-2 !py-1 text-xs font-medium border-none cursor-pointer`}
-                      >
-                        <option value="Borrador">Borrador</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Confirmado">Confirmado</option>
-                        <option value="Enviado">Enviado</option>
-                        <option value="Entregado">Entregado</option>
-                        <option value="Cancelado">Cancelado</option>
-                      </select>
-                    </td>
-                    <td className="font-semibold text-right text-secondary-900">
-                      {formatearPrecio(pedido.total)}
-                    </td>
-                    <td>
-                      <button 
-                        onClick={() => {
-                          const detalles = pedido.lineas.map(linea => 
-                            `- ${linea.vinoNombre}: ${linea.cantidad} uds. x ${formatearPrecio(linea.precioUnitario)} = ${formatearPrecio(linea.subtotal)}`
-                          ).join('\n');
-                          alert(`Pedido: ${pedido.numero}\nCliente: ${pedido.clienteNombre}\n\nDetalle:\n${detalles}\n\nSubtotal: ${formatearPrecio(pedido.subtotal)}\nIVA (${pedido.iva}%): ${formatearPrecio(pedido.total - pedido.subtotal)}\nTotal: ${formatearPrecio(pedido.total)}`);
-                        }}
-                        className="btn-outline !py-1 !px-3 text-sm flex items-center gap-1"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Nº Pedido</th>
+                      <th>Cliente</th>
+                      <th>Fecha</th>
+                      <th>Estado</th>
+                      <th className="text-right">Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pedidosConCliente.map((pedido) => (
+                      <tr key={pedido.id}>
+                        <td className="font-medium text-secondary-900">
+                          {pedido.numero}
+                        </td>
+                        <td>{pedido.clienteNombre}</td>
+                        <td>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-secondary-500" />
+                            {new Date(pedido.fecha).toLocaleDateString('es-ES')}
+                          </div>
+                        </td>
+                        <td>
+                          <select
+                            value={pedido.estado}
+                            onChange={(e) => cambiarEstadoPedido(pedido.id, e.target.value as EstadoPedido)}
+                            className={`${getEstadoBadgeClass(pedido.estado)} !px-2 !py-1 text-xs font-medium border-none cursor-pointer`}
+                          >
+                            <option value="Borrador">Borrador</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Confirmado">Confirmado</option>
+                            <option value="Enviado">Enviado</option>
+                            <option value="Entregado">Entregado</option>
+                            <option value="Cancelado">Cancelado</option>
+                          </select>
+                        </td>
+                        <td className="font-semibold text-right text-secondary-900">
+                          {formatearPrecio(pedido.total)}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => {
+                              const detalles = pedido.lineas.map(linea =>
+                                `- ${linea.vinoNombre}: ${linea.cantidad} uds. x ${formatearPrecio(linea.precioUnitario)} = ${formatearPrecio(linea.subtotal)}`
+                              ).join('\n');
+                              alert(`Pedido: ${pedido.numero}\nCliente: ${pedido.clienteNombre}\n\nDetalle:\n${detalles}\n\nSubtotal: ${formatearPrecio(pedido.subtotal)}\nIVA (${pedido.iva}%): ${formatearPrecio(pedido.total - pedido.subtotal)}\nTotal: ${formatearPrecio(pedido.total)}`);
+                            }}
+                            className="btn-outline !py-1 !px-3 text-sm flex items-center gap-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </>
         )}

@@ -33,8 +33,18 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 
+    @Autowired
+    private com.vinia.backend.repository.ClienteRepository clienteRepository;
+
     @Transactional
     public Pedido createPedido(Pedido pedido) {
+        // Fetch existing client ref to avoid transient error
+        if (pedido.getCliente() != null && pedido.getCliente().getId() != null) {
+            com.vinia.backend.model.Cliente clienteRef = clienteRepository.findById(pedido.getCliente().getId())
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + pedido.getCliente().getId()));
+            pedido.setCliente(clienteRef);
+        }
+
         // Generate number
         String lastNum = pedidoRepository.findLastNumeroPedido();
         int nextSeq = 1;
@@ -47,10 +57,6 @@ public class PedidoService {
         }
         pedido.setNumero(String.format("PED-%06d", nextSeq));
 
-        // Calculate totals and update stock
-        BigDecimal total = BigDecimal.ZERO;
-        BigDecimal subtotal = BigDecimal.ZERO;
-
         if (pedido.getLineas() != null) {
             for (LineaPedido linea : pedido.getLineas()) {
                 Vino vino = vinoRepository.findById(linea.getVino().getId())
@@ -60,17 +66,20 @@ public class PedidoService {
                     throw new RuntimeException("Stock insuficiente para vino: " + vino.getNombre());
                 }
 
+                // Update stock
                 vino.setStock(vino.getStock() - linea.getCantidad());
                 vinoRepository.save(vino);
 
                 linea.setPedido(pedido);
-                subtotal = subtotal.add(linea.getSubtotal());
+                // Trust frontend for subtotal/total to handle discounts correctly
             }
         }
 
-        pedido.setSubtotal(subtotal);
-        // Assuming IVA is already handled or simple calculation
-        pedido.setTotal(subtotal.multiply(new BigDecimal("1.21"))); // Simple 21% IVA
+        // If totals are null (should not be from frontend), initialize them
+        if (pedido.getSubtotal() == null)
+            pedido.setSubtotal(BigDecimal.ZERO);
+        if (pedido.getTotal() == null)
+            pedido.setTotal(BigDecimal.ZERO);
 
         return pedidoRepository.save(pedido);
     }

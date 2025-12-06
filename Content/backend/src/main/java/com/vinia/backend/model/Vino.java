@@ -56,6 +56,14 @@ public class Vino {
     @com.fasterxml.jackson.annotation.JsonProperty("imagen_url")
     private String imagenUrl;
 
+    @Column(name = "botellas_por_caja")
+    @com.fasterxml.jackson.annotation.JsonProperty("botellas_por_caja")
+    private Integer botellasPorCaja = 6;
+
+    @Column(name = "formato_venta", length = 20)
+    @com.fasterxml.jackson.annotation.JsonProperty("formato_venta")
+    private String formatoVenta = "BOTELLA";
+
     @ElementCollection
     @CollectionTable(name = "vino_maridajes", joinColumns = @JoinColumn(name = "vino_id"))
     @Column(name = "maridaje")

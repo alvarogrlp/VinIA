@@ -21,12 +21,13 @@ import { NuevoPedido } from './screens/NuevoPedido';
 import { Usuarios } from './screens/Usuarios';
 import { Administracion } from './screens/Administracion';
 import { DetalleComercial } from './screens/DetalleComercial';
+import { DetalleCliente } from './screens/DetalleCliente';
 
 /**
  * Componente que protege rutas que requieren autenticación
  */
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuthStore();
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
+  const { isAuthenticated, isLoading, usuario } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -38,6 +39,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && usuario && !allowedRoles.includes(usuario.rol)) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
@@ -72,11 +77,26 @@ function App() {
           <Route path="catalogo" element={<Catalogo />} />
           <Route path="clientes" element={<Clientes />} />
           <Route path="clientes/nuevo" element={<NuevoCliente />} />
+          <Route path="clientes/:id" element={<DetalleCliente />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
           <Route path="facturas" element={<Facturas />} />
-          <Route path="inventario" element={<Inventario />} />
-          <Route path="inventario/nuevo" element={<NuevoVino />} />
+          <Route
+            path="inventario"
+            element={
+              <ProtectedRoute allowedRoles={['Almacén']}>
+                <Inventario />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventario/nuevo"
+            element={
+              <ProtectedRoute allowedRoles={['Almacén']}>
+                <NuevoVino />
+              </ProtectedRoute>
+            }
+          />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="administracion" element={<Administracion />} />
           <Route path="administracion/comercial/:id" element={<DetalleComercial />} />

@@ -17,12 +17,12 @@ export type TipoVino = 'Tinto' | 'Blanco' | 'Rosado' | 'Espumoso' | 'Fortificado
 /**
  * Denominación de origen
  */
-export type DO = 
-  | 'Rioja' 
-  | 'Ribera del Duero' 
-  | 'Priorat' 
-  | 'Rías Baixas' 
-  | 'Jerez' 
+export type DO =
+  | 'Rioja'
+  | 'Ribera del Duero'
+  | 'Priorat'
+  | 'Rías Baixas'
+  | 'Jerez'
   | 'Cava'
   | 'Toro'
   | 'Rueda'
@@ -70,6 +70,8 @@ export interface Vino {
   unidades_por_caja?: number;
   stock: number;
   stock_minimo?: number;
+  botellas_por_caja?: number;
+  formato_venta?: 'BOTELLA' | 'CAJA';
   imagen_url?: string | null;
   imagen_etiqueta?: string | null;
   descripcion?: string | null;
@@ -125,7 +127,9 @@ export interface Cliente {
   nombre: string;
   cif: string;
   tipo: TipoCliente;
-  direccion: string;
+  direccion: string; // Dirección principal / fiscal
+  direccionFacturacion?: string;
+  direccionEnvio?: string;
   ciudad: string;
   codigoPostal: string;
   provincia: string;
@@ -146,7 +150,16 @@ export interface Cliente {
 /**
  * Estado de un pedido
  */
-export type EstadoPedido = 'Borrador' | 'Pendiente' | 'Procesando' | 'Enviado' | 'Entregado' | 'Cancelado';
+export type EstadoPedido =
+  | 'Borrador'
+  | 'Pendiente'
+  | 'Confirmado'
+  | 'En Preparación'
+  | 'En Reparto'
+  | 'Entregado'
+  | 'Facturado'
+  | 'Cobrado'
+  | 'Cancelado';
 
 /**
  * Línea de pedido (detalle de producto en pedido)
@@ -154,12 +167,17 @@ export type EstadoPedido = 'Borrador' | 'Pendiente' | 'Procesando' | 'Enviado' |
 export interface LineaPedido {
   id: string;
   vinoId: string;
-  vinoNombre?: string; // Nombre del vino para mostrar en listados
-  vino?: Vino; // Datos completos del vino para mostrar
-  cantidad: number;
+  vinoNombre?: string;
+  vino?: Vino;
+  cantidad: number; // Total botellas (calculado si es por cajas)
   precioUnitario: number;
-  descuento: number; // Porcentaje
+  descuento: number;
   subtotal: number;
+  // Nuevos campos
+  anada?: number;
+  lote?: string;
+  tipoBulto?: 'BOTELLA' | 'CAJA';
+  cantidadBultos?: number;
 }
 
 /**
@@ -167,10 +185,10 @@ export interface LineaPedido {
  */
 export interface Pedido {
   id: string;
-  numero: string; // Número de pedido único
+  numero: string;
   clienteId: string;
-  clienteNombre?: string; // Nombre del cliente para mostrar en listados
-  cliente?: Cliente; // Datos del cliente para mostrar
+  clienteNombre?: string;
+  cliente?: Cliente;
   fecha: string;
   estado: EstadoPedido;
   lineas: LineaPedido[];
@@ -180,7 +198,9 @@ export interface Pedido {
   total: number;
   notas?: string;
   fechaEntrega?: string;
-  direccionEntrega?: string;
+  direccionEntrega?: string; // Ahora se usa como snapshot o dirección final
+  instruccionesEntrega?: string;
+  direccionEnvioSnapshot?: string;
   created_at?: string;
   updated_at?: string;
 }

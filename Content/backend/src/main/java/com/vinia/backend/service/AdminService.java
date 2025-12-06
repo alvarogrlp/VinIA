@@ -35,27 +35,59 @@ public class AdminService {
             throw new RuntimeException("No autorizado");
         }
 
-        // Deactivate existing assignment
+        // 1. Deactivate ANY active assignment for this client
         asignacionRepository.findByClienteIdAndActivoTrue(clienteId)
                 .ifPresent(a -> {
-                    a.setActivo(false);
-                    asignacionRepository.save(a);
+                    // Optimized: Only deactivate if it's a different commercial
+                    if (!a.getComercial().getId().equals(comercialId)) {
+                        a.setActivo(false);
+                        asignacionRepository.save(a);
+                    }
                 });
 
-        Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
-        Usuario comercial = usuarioRepository.findById(comercialId)
-                .orElseThrow(() -> new RuntimeException("Comercial no encontrado"));
+        // 2. Check if relationship with THIS commercial already exists
+        return asignacionRepository.findByClienteIdAndComercialId(clienteId, comercialId)
+                .map(existing -> {
+                    // Reactivate if needed
+                    if (!existing.isActivo()) {
+                        existing.setActivo(true);
+                        existing.setFechaAsignacion(java.time.LocalDateTime.now());
+                        return asignacionRepository.save(existing);
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    // Create new
+                    Cliente cliente = clienteRepository.findById(clienteId)
+                            .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                    Usuario comercial = usuarioRepository.findById(comercialId)
+                            .orElseThrow(() -> new RuntimeException("Comercial no encontrado"));
 
-        Asignacion nueva = new Asignacion();
-        nueva.setCliente(cliente);
-        nueva.setComercial(comercial);
-        return asignacionRepository.save(nueva);
+                    Asignacion nueva = new Asignacion();
+                    nueva.setCliente(cliente);
+                    nueva.setComercial(comercial);
+                    return asignacionRepository.save(nueva);
+                });
     }
 
     public List<Cliente> getClientesComercial(String comercialId) {
         return asignacionRepository.findByComercialIdAndActivoTrue(comercialId).stream()
                 .map(Asignacion::getCliente)
+                .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getClientesComercialDTO(String comercialId) {
+        return asignacionRepository.findByComercialIdAndActivoTrue(comercialId).stream()
+                .map(asignacion -> {
+                    Map<String, Object> map = new HashMap<>();
+                    Cliente c = asignacion.getCliente();
+                    map.put("cliente_id", c.getId());
+                    map.put("cliente_nombre", c.getNombre());
+                    map.put("cliente_cif", c.getCif());
+                    map.put("cliente_tipo", c.getTipo());
+                    map.put("fecha_asignacion", asignacion.getFechaAsignacion());
+                    return map;
+                })
                 .collect(Collectors.toList());
     }
 

@@ -25,6 +25,12 @@ public class Cliente {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String direccion;
 
+    @Column(name = "direccion_facturacion", columnDefinition = "TEXT")
+    private String direccionFacturacion;
+
+    @Column(name = "direccion_envio", columnDefinition = "TEXT")
+    private String direccionEnvio;
+
     @Column(nullable = false, length = 100)
     private String ciudad;
 

@@ -32,15 +32,26 @@ export const api = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const url = `${API_URL}${endpoint}`;
+    console.log('API Request:', url, 'POST', body);
+
+    const response = await fetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', response.status, response.statusText, errorText);
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.message || `Error ${response.status}: ${response.statusText}`);
+      } catch (e: any) {
+        // If it wasn't JSON or message wasn't there
+        if (e.message && e.message.startsWith('Error ')) throw e;
+        throw new Error(`Error ${response.status}: ${response.statusText} - ${errorText.substring(0, 100)}`);
+      }
     }
 
     const text = await response.text();

@@ -6,10 +6,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { 
-  FileText, 
-  Download, 
-  Search, 
+import {
+  FileText,
+  Download,
+  Search,
   Calendar,
   DollarSign,
   Eye
@@ -28,7 +28,7 @@ export const Facturas = () => {
   // Filtrar solo pedidos entregados (que consideramos facturados)
   const facturas = pedidos
     .filter(p => p.estado === 'Entregado')
-    .filter(p => 
+    .filter(p =>
       p.numero.toLowerCase().includes(busqueda.toLowerCase()) ||
       (p.clienteNombre || '').toLowerCase().includes(busqueda.toLowerCase())
     );
@@ -87,13 +87,13 @@ export const Facturas = () => {
         </td>
         <td className="px-6 py-4 text-right">
           <div className="flex items-center justify-end gap-2">
-            <button 
+            <button
               className="p-2 text-secondary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
               title="Ver detalles"
             >
               <Eye className="w-5 h-5" />
             </button>
-            <button 
+            <button
               onClick={() => handleDescargar(factura.numero)}
               className="p-2 text-secondary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
               title="Descargar PDF"
@@ -126,7 +126,8 @@ export const Facturas = () => {
             placeholder="Buscar por número o cliente..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-10 input"
+            className="w-full input"
+            style={{ paddingLeft: '3rem' }}
           />
         </div>
       </div>

@@ -12,5 +12,7 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, String> 
 
     Optional<Asignacion> findByClienteIdAndActivoTrue(String clienteId);
 
+    Optional<Asignacion> findByClienteIdAndComercialId(String clienteId, String comercialId);
+
     List<Asignacion> findByActivoTrue();
 }

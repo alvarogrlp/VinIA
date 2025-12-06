@@ -32,8 +32,8 @@ public class AdminController {
     }
 
     @GetMapping("/comercial/{id}/clientes")
-    public List<Cliente> getClientesComercial(@PathVariable String id) {
-        return adminService.getClientesComercial(id);
+    public List<Map<String, Object>> getClientesComercial(@PathVariable String id) {
+        return adminService.getClientesComercialDTO(id);
     }
 
     @GetMapping("/comercial/{id}/stats-full")

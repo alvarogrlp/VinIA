@@ -43,7 +43,7 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
 
   const handleAsignar = async (clienteId: string) => {
     if (!usuario?.id) return;
-    
+
     try {
       setProcesando(true);
       await asignacionesService.asignarCliente(clienteId, comercial.id, usuario.id);
@@ -76,11 +76,11 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
   // Filtrar clientes disponibles (no asignados a este comercial)
   const clientesDisponibles = clientes.filter(cliente => {
     const estaAsignado = asignados.some(a => a.cliente_id === cliente.id);
-    const coincideBusqueda = 
+    const coincideBusqueda =
       cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.cif.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.ciudad.toLowerCase().includes(busqueda.toLowerCase());
-    
+
     return !estaAsignado && coincideBusqueda;
   });
 
@@ -118,11 +118,12 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
                   placeholder="Buscar cliente..."
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  className="w-full pl-9 input"
+                  className="w-full input"
+                  style={{ paddingLeft: '3rem' }}
                 />
               </div>
             </div>
-            
+
             <div className="flex-1 p-4 overflow-y-auto">
               {cargando ? (
                 <div className="flex justify-center py-8">

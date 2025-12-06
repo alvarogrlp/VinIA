@@ -29,7 +29,7 @@ export const Catalogo = () => {
 
       // Filtrar por búsqueda (si hay búsqueda, ya se habrá llamado a buscarVinos)
       // Los resultados ya están en el store en vinos
-      
+
       // Filtrar por tipo
       if (tipoFiltro !== 'Todos') {
         resultados = resultados.filter((vino) => vino.tipo === tipoFiltro);
@@ -55,10 +55,10 @@ export const Catalogo = () => {
 
       setVinosFiltrados(resultados);
     };
-    
+
     filtrarYOrdenar();
   }, [tipoFiltro, ordenamiento, vinos]);
-  
+
   // Efecto separado para búsqueda
   useEffect(() => {
     const realizarBusqueda = async () => {
@@ -68,7 +68,7 @@ export const Catalogo = () => {
         await cargarVinos();
       }
     };
-    
+
     const timeoutId = setTimeout(realizarBusqueda, 300); // Debounce de 300ms
     return () => clearTimeout(timeoutId);
   }, [busqueda]);
@@ -91,7 +91,7 @@ export const Catalogo = () => {
           </p>
         </div>
         {usuario?.rol === 'Administración' && (
-          <button 
+          <button
             onClick={() => alert('Función de añadir vino: Aquí se abrirá un formulario para añadir un nuevo vino al catálogo con todos sus detalles (nombre, bodega, tipo, año, precio, DO, etc.)')}
             className="btn-primary"
           >
@@ -115,7 +115,7 @@ export const Catalogo = () => {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="input w-full"
-              style={{ paddingLeft: '2.5rem' }}
+              style={{ paddingLeft: '3rem' }}
             />
             {busqueda && (
               <button
@@ -129,7 +129,7 @@ export const Catalogo = () => {
           </div>
 
           {/* Botón filtros */}
-          <button 
+          <button
             onClick={() => setMostrarFiltros(!mostrarFiltros)}
             className="btn-outline flex items-center justify-center"
           >
@@ -175,11 +175,10 @@ export const Catalogo = () => {
             <button
               key={tipo}
               onClick={() => setTipoFiltro(tipo)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                tipo === tipoFiltro
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tipo === tipoFiltro
                   ? 'bg-primary-500 text-white'
                   : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
+                }`}
             >
               {tipo}
             </button>
@@ -193,7 +192,7 @@ export const Catalogo = () => {
           <p className="text-sm text-secondary-600">
             Mostrando <span className="font-medium text-secondary-900">{vinosFiltrados.length}</span> vinos
           </p>
-          <select 
+          <select
             value={ordenamiento}
             onChange={(e) => setOrdenamiento(e.target.value)}
             className="px-4 py-2 text-sm border rounded-lg border-secondary-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -244,14 +243,14 @@ export const Catalogo = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {vinosFiltrados.map((vino) => (
-              <VinoCard
-                key={vino.id}
-                vino={vino}
-                onClick={() => handleVinoClick(vino.id)}
-              />
-            ))}
-          </div>
+                {vinosFiltrados.map((vino) => (
+                  <VinoCard
+                    key={vino.id}
+                    vino={vino}
+                    onClick={() => handleVinoClick(vino.id)}
+                  />
+                ))}
+              </div>
             )}
           </>
         )}

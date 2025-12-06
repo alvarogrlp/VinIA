@@ -11,6 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/pedidos")
 @CrossOrigin(origins = "*")
+// Controller for managing orders (Pedidos)
 public class PedidoController {
 
     @Autowired
@@ -42,7 +43,7 @@ public class PedidoController {
         }
     }
 
-    @PatchMapping("/{id}/estado")
+    @PostMapping("/{id}/estado")
     public ResponseEntity<Pedido> updateStatus(@PathVariable String id, @RequestBody String estado) {
         try {
             // Simple parsing if body is just the string or JSON

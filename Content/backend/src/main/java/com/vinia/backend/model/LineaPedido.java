@@ -33,6 +33,18 @@ public class LineaPedido {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
+    @Column(name = "anada")
+    private Integer anada;
+
+    @Column(name = "lote", length = 50)
+    private String lote;
+
+    @Column(name = "tipo_bulto", length = 20)
+    private String tipoBulto = "BOTELLA"; // BOTELLA o CAJA
+
+    @Column(name = "cantidad_bultos")
+    private Integer cantidadBultos;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

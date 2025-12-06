@@ -16,8 +16,29 @@ public class ClienteController {
     @Autowired
     private ClienteService clienteService;
 
+    @Autowired
+    private com.vinia.backend.service.AdminService adminService;
+
+    @Autowired
+    private com.vinia.backend.repository.PedidoRepository pedidoRepository;
+
     @GetMapping
-    public List<Cliente> getAll(@RequestParam(required = false) String search) {
+    public List<Cliente> getAll(@RequestParam(required = false) String search,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String role) {
+        if ("Comercial".equals(role) && userId != null) {
+            List<Cliente> clientes = adminService.getClientesComercial(userId);
+            if (search != null && !search.isEmpty()) {
+                String q = search.toLowerCase();
+                return clientes.stream()
+                        .filter(c -> (c.getNombre() != null && c.getNombre().toLowerCase().contains(q)) ||
+                                (c.getCif() != null && c.getCif().toLowerCase().contains(q)) ||
+                                (c.getEmail() != null && c.getEmail().toLowerCase().contains(q)))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+            return clientes;
+        }
+
         if (search != null && !search.isEmpty()) {
             return clienteService.search(search);
         }
@@ -54,6 +75,15 @@ public class ClienteController {
         try {
             clienteService.deleteById(id);
             return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/pedidos")
+    public ResponseEntity<?> getPedidosByCliente(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok(pedidoRepository.findByClienteIdOrderByFechaDesc(id));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

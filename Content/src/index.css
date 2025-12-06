@@ -84,6 +84,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Botón principal */
 .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #b8945a;
   color: white;
   padding: 0.75rem 1.5rem;
@@ -111,6 +114,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Botón secundario */
 .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #e7e5e4;
   color: #292524;
   padding: 0.75rem 1.5rem;
@@ -136,6 +142,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Botón outline */
 .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 2px solid #b8945a;
   color: #a07d48;
   background-color: transparent;
