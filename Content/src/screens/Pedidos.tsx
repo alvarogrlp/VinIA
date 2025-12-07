@@ -1,183 +1,331 @@
 /**
- * VinIA - Pantalla de Pedidos
+ * VinIA - Gestión de Pedidos (ERP Dashboard)
  * 
- * Listado y gestión de pedidos.
+ * Dashboard centralizado para la gestión del ciclo de vida de los pedidos.
+ * Filtra y muestra acciones según el rol del usuario (Comercial, Admin, Almacén, Repartidor).
  */
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Calendar, Filter, Eye } from 'lucide-react';
-import { usePedidosStore, useClientesStore } from '../store';
-import type { EstadoPedido } from '../types';
+import {
+  Search, Plus, Calendar, Filter, Eye, CheckCircle,
+  Truck, Package, FileText, AlertTriangle
+} from 'lucide-react';
+import { usePedidosStore, useClientesStore, useAuthStore } from '../store';
+import { PedidoModal } from '../components/PedidoModal';
 import { formatearPrecio } from '../utils/helpers';
+import type { Pedido, EstadoPedido } from '../types';
 
 export const Pedidos = () => {
   const navigate = useNavigate();
+  const { usuario } = useAuthStore();
   const { pedidos, cargando, cargarPedidos, cambiarEstadoPedido } = usePedidosStore();
   const { clientes, cargarClientes } = useClientesStore();
+
   const [busqueda, setBusqueda] = useState('');
+  const [tabActiva, setTabActiva] = useState<string>('todos');
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<Pedido | null>(null);
 
   useEffect(() => {
     cargarPedidos();
     cargarClientes();
   }, [cargarPedidos, cargarClientes]);
 
-  // Pedidos con información del cliente
-  const pedidosConCliente = useMemo(() => {
-    return pedidos.map(pedido => {
-      const cliente = clientes.find(c => c.id === pedido.clienteId);
-      return {
-        ...pedido,
-        clienteNombre: cliente?.nombre || 'Cliente no encontrado'
-      };
-    });
-  }, [pedidos, clientes]);
+  // Determinar tabs disponibles según rol
+  const tabs = useMemo(() => {
+    const role = usuario?.rol;
+    const common = [{ id: 'todos', label: 'Todos', icon: FileText }];
 
-  const getEstadoBadgeClass = (estado: EstadoPedido) => {
-    switch (estado) {
-      case 'Entregado':
-        return 'badge-success';
-      case 'Procesando':
-      case 'Enviado':
-        return 'badge-info';
-      case 'Pendiente':
-        return 'badge-warning';
-      case 'Cancelado':
-        return 'badge-error';
-      default:
-        return 'badge';
+    if (role === 'Administración') {
+      return [
+        { id: 'validacion', label: 'Validación', icon: AlertTriangle }, // Pendiente Validación
+        { id: 'facturacion', label: 'Facturación', icon: FileText }, // Entregado -> Facturado
+        ...common
+      ];
+    }
+    if (role === 'Almacén') {
+      return [
+        { id: 'picking', label: 'Preparación', icon: Package }, // En Preparación
+        { id: 'envios', label: 'Envíos', icon: Truck }, // En Reparto (View only)
+        ...common
+      ];
+    }
+    if (role === 'Comercial') {
+      return [
+        { id: 'mis_pedidos', label: 'Mis Pedidos', icon: FileText },
+        ...common
+      ];
+    }
+    // Repartidor (role text might differ physically, distinct specific logic?)
+    if (role === 'Repartidor' || (usuario?.username === 'repartidor')) {
+      return [
+        { id: 'reparto', label: 'Mi Reparto', icon: Truck }, // En Reparto
+        ...common
+      ];
+    }
+    return common;
+  }, [usuario]);
+
+  useEffect(() => {
+    if (tabs.length > 0 && tabActiva === 'todos' && tabs[0].id !== 'todos') {
+      setTabActiva(tabs[0].id);
+    }
+  }, [tabs]);
+
+  // Filtrado de pedidos
+  const pedidosFiltrados = useMemo(() => {
+    let filtered = pedidos.map(p => ({
+      ...p,
+      clienteNombre: clientes.find(c => c.id === p.clienteId)?.nombre || 'Cliente Desconocido',
+      cliente: clientes.find(c => c.id === p.clienteId)
+    }));
+
+    // Filtro por Tab
+    if (tabActiva === 'validacion') {
+      filtered = filtered.filter(p => p.estado === 'Pendiente de Validación' as any || p.estado === 'Pendiente' as any); // Check enum mapping
+    } else if (tabActiva === 'picking') {
+      filtered = filtered.filter(p => p.estado === 'En Preparación');
+    } else if (tabActiva === 'reparto') {
+      filtered = filtered.filter(p => p.estado === 'En Reparto');
+    } else if (tabActiva === 'facturacion') {
+      filtered = filtered.filter(p => p.estado === 'Entregado');
+    } else if (tabActiva === 'envios') {
+      filtered = filtered.filter(p => p.estado === 'En Reparto');
+    } else if (tabActiva === 'mis_pedidos') {
+      // Filter by comercial logic if needed, currently showing all for demo
+    }
+
+    // Filtro por Busqueda
+    if (busqueda) {
+      const term = busqueda.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.numero.toLowerCase().includes(term) ||
+        p.clienteNombre.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered.sort((a, b) => new Date(b.created_at || b.fecha).getTime() - new Date(a.created_at || a.fecha).getTime());
+  }, [pedidos, clientes, tabActiva, busqueda]);
+
+
+  // Acciones
+  const handleAprobar = async (id: string) => {
+    if (window.confirm('¿Aprobar pedido y liberar riesgo?')) {
+      await cambiarEstadoPedido(id, 'En Preparación');
+      alert('Pedido aprobado.');
+      cargarPedidos(); // Refresh to update risk/state
     }
   };
 
+  const handlePreparado = async (id: string) => {
+    if (window.confirm('¿Marcar como preparado y descontar stock?')) {
+      try {
+        await cambiarEstadoPedido(id, 'En Reparto');
+        alert('Stock descontado. Pedido en reparto.');
+        cargarPedidos();
+      } catch (e: any) {
+        alert('Error: ' + e.message);
+      }
+    }
+  };
+
+  const handleEntregar = async (id: string) => {
+    const firma = prompt('Firma del cliente (simulada):', 'Recibido conforme');
+    if (firma) {
+      await cambiarEstadoPedido(id, 'Entregado');
+      // TODO: Send signature to backend via separate endpoint if implemented
+      alert('Pedido entregado.');
+    }
+  };
+
+  const handleVerDetalles = (pedido: Pedido) => {
+    setPedidoSeleccionado(pedido);
+  };
+
+  const handleCambiarEstadoDesdeModal = async (id: string, nuevoEstado: EstadoPedido) => {
+    try {
+      await cambiarEstadoPedido(id, nuevoEstado);
+      alert('Estado actualizado correctamente');
+      cargarPedidos();
+      // Update local state to reflect change immediately in modal if open, though closeModal refreshes list
+      // simpler to just close or re-fetch.
+    } catch (e: any) {
+      alert('Error al actualizar estado: ' + e.message);
+    }
+  };
+
+  const getEstadoBadge = (estado: string) => {
+    const styles: Record<string, string> = {
+      'Borrador': 'bg-gray-100 text-gray-800',
+      'Pendiente': 'bg-yellow-100 text-yellow-800',
+      'PENDIENTE_VALIDACION': 'bg-red-100 text-red-800', // ENUM raw value
+      'Pendiente de Validación': 'bg-red-100 text-red-800', // Potential Display value
+      'En Preparación': 'bg-blue-100 text-blue-800',
+      'EN_PREPARACION': 'bg-blue-100 text-blue-800',
+      'En Reparto': 'bg-purple-100 text-purple-800',
+      'EN_REPARTO': 'bg-purple-100 text-purple-800',
+      'Entregado': 'bg-green-100 text-green-800',
+      'ENTREGADO': 'bg-green-100 text-green-800',
+      'Facturado': 'bg-green-800 text-white',
+    };
+
+    // Normalize state string
+    const normalized = estado.replace(/_/g, ' ');
+    const style = styles[estado] || styles[normalized] || 'bg-gray-100 text-gray-800';
+
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${style}`}>
+        {estado.replace(/_/g, ' ')}
+      </span>
+    );
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-20">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Pedidos</h1>
+          <h1 className="text-3xl font-bold text-secondary-900">Gestión de Pedidos</h1>
           <p className="mt-2 text-secondary-600">
-            Gestiona todos tus pedidos y su estado
+            Ciclo de vida de pedidos: {usuario?.rol}
           </p>
         </div>
-        <button
-          onClick={() => navigate('/pedidos/nuevo')}
-          className="btn-primary"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Nuevo pedido
-        </button>
+        {usuario?.rol === 'Comercial' && (
+          <button
+            onClick={() => navigate('/pedidos/nuevo')}
+            className="btn-primary"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Nuevo pedido
+          </button>
+        )}
       </div>
 
-      {/* Búsqueda y filtros */}
-      <div className="card">
-        <div className="flex flex-col gap-4 md:flex-row">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="w-5 h-5 text-secondary-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar por número o cliente..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="input w-full"
-              style={{ paddingLeft: '3rem' }}
-            />
-          </div>
-          <button className="btn-outline">
-            <Filter className="w-5 h-5 mr-2" />
-            Filtros
-          </button>
+      {/* Tabs */}
+      <div className="flex overflow-x-auto space-x-2 border-b border-secondary-200">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setTabActiva(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${tabActiva === tab.id
+                ? 'border-primary-600 text-primary-700 font-medium'
+                : 'border-transparent text-secondary-500 hover:text-secondary-700'
+                }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Filtros */}
+      <div className="card p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-400" />
+          <input
+            type="text"
+            placeholder="Buscar por cliente o número de pedido..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="input w-full pl-12"
+          />
         </div>
       </div>
 
-      {/* Lista de pedidos */}
-      <div className="card">
-        {cargando ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 rounded-full border-primary-500 border-t-transparent animate-spin"></div>
+      {/* Lista */}
+      <div className="card overflow-hidden">
+        <table className="table w-full">
+          <thead className="bg-secondary-50">
+            <tr>
+              <text-left className="p-4">Pedido</text-left>
+              <th className="p-4 text-left">Cliente</th>
+              <th className="p-4 text-left">Fecha</th>
+              <th className="p-4 text-left">Forma Pago</th>
+              <th className="p-4 text-left">Estado</th>
+              {usuario?.rol !== 'Comercial' && <th className="p-4 text-left">Comercial</th>}
+              <th className="p-4 text-right">Total</th>
+              <th className="p-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-secondary-100">
+            {pedidosFiltrados.map((pedido) => (
+              <tr key={pedido.id} className="hover:bg-primary-50 transition-colors">
+                <td className="p-4 font-medium">{pedido.numero}</td>
+                <td className="p-4">
+                  <div className="font-medium text-secondary-900">{pedido.clienteNombre}</div>
+                  <div className="text-xs text-secondary-500">CIF: {pedido.cliente?.cif}</div>
+                </td>
+                <td className="p-4 text-sm text-secondary-600">
+                  {new Date(pedido.fecha).toLocaleDateString()}
+                </td>
+                <td className="p-4 text-sm">
+                  {pedido.formaPago || 'Contado'}
+                </td>
+                <td className="p-4">
+                  {getEstadoBadge(pedido.estado)}
+                </td>
+                {usuario?.rol !== 'Comercial' && (
+                  <td className="p-4 text-sm text-secondary-600">
+                    {pedido.usuario?.nombre ? `${pedido.usuario.nombre} ${pedido.usuario.apellidos}` : '-'}
+                  </td>
+                )}
+                <td className="p-4 text-right font-bold text-secondary-900">
+                  {formatearPrecio(pedido.total)}
+                </td>
+                <td className="p-4 flex justify-center gap-2">
+                  {/* Validation Actions */}
+                  {tabActiva === 'validacion' && (pedido.estado === 'PENDIENTE_VALIDACION' || pedido.estado === 'Pendiente de Validación') && (
+                    <button onClick={() => handleAprobar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-green-600 hover:bg-green-700">
+                      Aprobar
+                    </button>
+                  )}
+
+                  {/* Picking Actions */}
+                  {tabActiva === 'picking' && (pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') && (
+                    <button onClick={() => handlePreparado(pedido.id)} className="btn-primary py-1 px-3 text-xs">
+                      Preparado
+                    </button>
+                  )}
+
+                  {/* Delivery Actions */}
+                  {(tabActiva === 'reparto' || tabActiva === 'envios') && (pedido.estado === 'EN_REPARTO' || pedido.estado === 'En Reparto') && usuario?.rol !== 'Almacén' && (
+                    <button onClick={() => handleEntregar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
+                      Entregar
+                    </button>
+                  )}
+
+                  {/* Details (Always visible) */}
+                  <button
+                    onClick={() => handleVerDetalles(pedido)}
+                    className="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                    title="Ver detalles completos"
+                  >
+                    <Eye className="w-5 h-5" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {pedidosFiltrados.length === 0 && (
+          <div className="p-8 text-center text-secondary-500">
+            No hay pedidos en esta sección.
           </div>
-        ) : (
-          <>
-            {pedidos.length === 0 ? (
-              <div className="py-20 text-center">
-                <p className="text-lg text-secondary-600">
-                  No hay pedidos registrados
-                </p>
-                <button
-                  onClick={() => navigate('/pedidos/nuevo')}
-                  className="mt-4 btn-primary"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Crear primer pedido
-                </button>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Nº Pedido</th>
-                      <th>Cliente</th>
-                      <th>Fecha</th>
-                      <th>Estado</th>
-                      <th className="text-right">Total</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pedidosConCliente.map((pedido) => (
-                      <tr key={pedido.id}>
-                        <td className="font-medium text-secondary-900">
-                          {pedido.numero}
-                        </td>
-                        <td>{pedido.clienteNombre}</td>
-                        <td>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="w-4 h-4 text-secondary-500" />
-                            {new Date(pedido.fecha).toLocaleDateString('es-ES')}
-                          </div>
-                        </td>
-                        <td>
-                          <select
-                            value={pedido.estado}
-                            onChange={(e) => cambiarEstadoPedido(pedido.id, e.target.value as EstadoPedido)}
-                            className={`${getEstadoBadgeClass(pedido.estado)} !px-2 !py-1 text-xs font-medium border-none cursor-pointer`}
-                          >
-                            <option value="Borrador">Borrador</option>
-                            <option value="Pendiente">Pendiente</option>
-                            <option value="Confirmado">Confirmado</option>
-                            <option value="Enviado">Enviado</option>
-                            <option value="Entregado">Entregado</option>
-                            <option value="Cancelado">Cancelado</option>
-                          </select>
-                        </td>
-                        <td className="font-semibold text-right text-secondary-900">
-                          {formatearPrecio(pedido.total)}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => {
-                              const detalles = pedido.lineas.map(linea =>
-                                `- ${linea.vinoNombre}: ${linea.cantidad} uds. x ${formatearPrecio(linea.precioUnitario)} = ${formatearPrecio(linea.subtotal)}`
-                              ).join('\n');
-                              alert(`Pedido: ${pedido.numero}\nCliente: ${pedido.clienteNombre}\n\nDetalle:\n${detalles}\n\nSubtotal: ${formatearPrecio(pedido.subtotal)}\nIVA (${pedido.iva}%): ${formatearPrecio(pedido.total - pedido.subtotal)}\nTotal: ${formatearPrecio(pedido.total)}`);
-                            }}
-                            className="btn-outline !py-1 !px-3 text-sm flex items-center gap-1"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Ver
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
         )}
       </div>
+
+      {/* Modal de Detalles */}
+      {pedidoSeleccionado && (
+        <PedidoModal
+          pedido={pedidoSeleccionado}
+          onClose={() => setPedidoSeleccionado(null)}
+          onCambiarEstado={handleCambiarEstadoDesdeModal}
+          rol={usuario?.rol}
+        />
+      )}
     </div>
   );
 };

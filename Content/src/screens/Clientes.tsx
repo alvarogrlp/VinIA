@@ -7,12 +7,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Mail, Phone, MapPin } from 'lucide-react';
-import { useClientesStore, usePedidosStore, useAuthStore } from '../store';
+import { useClientesStore, useAuthStore } from '../store';
 
 export const Clientes = () => {
   const navigate = useNavigate();
   const { clientes, cargando, cargarClientes } = useClientesStore();
-  const { crearPedido } = usePedidosStore();
   const { usuario } = useAuthStore();
   const [busqueda, setBusqueda] = useState('');
 
@@ -82,7 +81,11 @@ export const Clientes = () => {
           ) : (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {clientesFiltrados.map((cliente) => (
-                <div key={cliente.id} className="card">
+                <div
+                  key={cliente.id}
+                  onClick={() => navigate(`/clientes/${cliente.id}`)}
+                  className="card cursor-pointer hover:shadow-md transition-shadow"
+                >
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold text-secondary-900">
@@ -115,24 +118,6 @@ export const Clientes = () => {
                       <Mail className="w-4 h-4 text-secondary-500" />
                       <span>{cliente.email}</span>
                     </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-4 mt-4 border-t border-secondary-200">
-                    <button
-                      onClick={() => navigate(`/clientes/${cliente.id}`)}
-                      className="btn-outline flex-1 !py-2"
-                    >
-                      Ver detalles
-                    </button>
-                    <button
-                      onClick={() => {
-                        crearPedido(cliente.id);
-                        navigate('/pedidos');
-                      }}
-                      className="btn-primary flex-1 !py-2"
-                    >
-                      Nuevo pedido
-                    </button>
                   </div>
                 </div>
               ))}

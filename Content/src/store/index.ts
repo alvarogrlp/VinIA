@@ -505,13 +505,16 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       total: 0,
       instruccionesEntrega: '',
       direccionEnvioSnapshot: cliente?.direccionEnvio || cliente?.direccion || '',
-      direccionEntrega: cliente?.direccionEnvio || cliente?.direccion || '' // Legacy field support
+      direccionEntrega: cliente?.direccionEnvio || cliente?.direccion || '', // Legacy field support
+      formaPago: 'Contado'
     };
     set({ pedidoActual: nuevoPedido });
   },
 
   agregarLineaPedido: (linea) => {
+    // ... no changes to lines
     set((state) => {
+      // ...
       if (!state.pedidoActual) return state;
 
       const nuevaLinea: LineaPedido = {
@@ -531,6 +534,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   actualizarLineaPedido: (lineaId, datos) => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
 
@@ -552,6 +556,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   eliminarLineaPedido: (lineaId) => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
 
@@ -566,6 +571,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   setDescuento: (descuento) => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
       return {
@@ -579,6 +585,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   setIva: (iva) => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
       return {
@@ -592,6 +599,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   actualizarPedido: (datos) => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
       return {
@@ -604,6 +612,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
   },
 
   calcularTotales: () => {
+    // ...
     set((state) => {
       if (!state.pedidoActual) return state;
 
@@ -637,15 +646,16 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
         {
           numero: "GENERATED_BY_BACKEND", // El backend genera el número definitivo
           clienteId: pedidoActual.clienteId,
-          fecha: pedidoActual.fecha,
-          estado: 'Pendiente',
+          fecha: new Date().toISOString().slice(0, 19), // Format: YYYY-MM-DDTHH:mm:ss for LocalDateTime
+          estado: 'PENDIENTE_VALIDACION', // Backend will override if needed, but we send a default
           subtotal: pedidoActual.subtotal,
           descuento: pedidoActual.descuento,
           iva: pedidoActual.iva,
           total: pedidoActual.total,
           notas: undefined,
           instruccionesEntrega: pedidoActual.instruccionesEntrega,
-          direccionEnvioSnapshot: pedidoActual.direccionEnvioSnapshot
+          direccionEnvioSnapshot: pedidoActual.direccionEnvioSnapshot,
+          formaPago: pedidoActual.formaPago
         },
         pedidoActual.lineas.map(linea => ({
           vinoId: linea.vinoId,

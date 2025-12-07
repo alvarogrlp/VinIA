@@ -22,6 +22,7 @@ import { Usuarios } from './screens/Usuarios';
 import { Administracion } from './screens/Administracion';
 import { DetalleComercial } from './screens/DetalleComercial';
 import { DetalleCliente } from './screens/DetalleCliente';
+import { HistoricoCliente } from './screens/HistoricoCliente';
 
 /**
  * Componente que protege rutas que requieren autenticación
@@ -78,6 +79,7 @@ function App() {
           <Route path="clientes" element={<Clientes />} />
           <Route path="clientes/nuevo" element={<NuevoCliente />} />
           <Route path="clientes/:id" element={<DetalleCliente />} />
+          <Route path="clientes/:id/historico" element={<HistoricoCliente />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
           <Route path="facturas" element={<Facturas />} />

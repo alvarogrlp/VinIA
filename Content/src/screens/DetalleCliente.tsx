@@ -64,15 +64,7 @@ export const DetalleCliente = () => {
         );
     }
 
-    const getEstadoColor = (estado: string) => {
-        switch (estado) {
-            case 'Entregado': return 'bg-green-100 text-green-800 border-green-200';
-            case 'Pendiente': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'Enviado': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'Cancelado': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
+
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -149,11 +141,18 @@ export const DetalleCliente = () => {
 
                 {/* Historial Pedidos */}
                 <div className="bg-white shadow-sm rounded-xl border border-secondary-200 lg:col-span-2">
-                    <div className="p-6 border-b border-secondary-200">
+                    <div className="p-6 border-b border-secondary-200 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="w-5 h-5 text-primary-600" />
                             <h2 className="text-lg font-semibold text-secondary-900">Historial de Pedidos</h2>
                         </div>
+                        <button
+                            onClick={() => navigate(`/clientes/${id}/historico`)}
+                            className="btn-outline py-1.5 px-3 text-sm flex items-center gap-2"
+                        >
+                            <Calendar className="w-4 h-4" />
+                            Ver Histórico Completo
+                        </button>
                     </div>
 
                     <div className="p-6">
@@ -167,34 +166,45 @@ export const DetalleCliente = () => {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {pedidos.map((pedido) => (
-                                    <div
-                                        key={pedido.id}
-                                        className="flex items-center justify-between p-4 bg-white border rounded-lg border-secondary-200 hover:border-primary-300 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 rounded-full bg-primary-50 text-primary-600">
-                                                <ShoppingBag className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-secondary-900">{pedido.numero}</p>
-                                                <div className="flex items-center gap-2 text-sm text-secondary-500">
-                                                    <Calendar className="w-3 h-3" />
-                                                    <span>{new Date(pedido.fecha).toLocaleDateString()}</span>
+                                {pedidos
+                                    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                                    .slice(0, 5) // Mostramos solo los últimos 5
+                                    .map((pedido) => (
+                                        <div
+                                            key={pedido.id}
+                                            onClick={() => navigate(`/clientes/${id}/historico`)}
+                                            className="flex items-center justify-between p-4 bg-white border rounded-lg border-secondary-200 hover:border-primary-300 hover:bg-primary-50 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 rounded-full bg-secondary-100 text-secondary-500 group-hover:bg-primary-100 group-hover:text-primary-600">
+                                                    <Calendar className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-secondary-900">
+                                                        {new Date(pedido.fecha).toLocaleDateString()}
+                                                    </div>
+                                                    <p className="text-xs text-secondary-500">
+                                                        {pedido.numero}
+                                                    </p>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-6">
-                                            <span className={`px-3 py-1 text-sm font-medium rounded-full border ${getEstadoColor(pedido.estado)}`}>
-                                                {pedido.estado}
-                                            </span>
-                                            <p className="font-mono font-medium text-secondary-900 w-24 text-right">
-                                                {pedido.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                                            </p>
+                                            <div className="flex items-center gap-6">
+                                                <p className="font-bold text-secondary-900">
+                                                    {pedido.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+
+                                {pedidos.length > 5 && (
+                                    <button
+                                        onClick={() => navigate(`/clientes/${id}/historico`)}
+                                        className="w-full py-2 text-sm text-center text-primary-600 hover:text-primary-700 font-medium hover:bg-primary-50 rounded-lg transition-colors"
+                                    >
+                                        Ver historial completo ({pedidos.length})
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

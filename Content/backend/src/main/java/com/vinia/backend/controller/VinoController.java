@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/vinos")
 @CrossOrigin(origins = "*")
+@PreAuthorize("isAuthenticated()")
 public class VinoController {
 
     @Autowired
@@ -34,11 +36,13 @@ public class VinoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ALMACEN')")
     public Vino create(@RequestBody Vino vino) {
         return vinoService.save(vino);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ALMACEN')")
     public ResponseEntity<Vino> update(@PathVariable String id, @RequestBody Vino vino) {
         try {
             Vino existing = vinoService.findById(id);
@@ -50,6 +54,7 @@ public class VinoController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ALMACEN')")
     public ResponseEntity<?> delete(@PathVariable String id) {
         try {
             vinoService.deleteById(id);

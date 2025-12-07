@@ -73,7 +73,7 @@ export const pedidosService = {
       numero: pedidoData.numero,
       cliente: { id: pedidoData.clienteId },
       fecha: pedidoData.fecha,
-      estado: pedidoData.estado || 'Pendiente',
+      estado: pedidoData.estado || 'PENDIENTE_VALIDACION',
       subtotal: pedidoData.subtotal,
       descuento: pedidoData.descuento,
       iva: pedidoData.iva,
@@ -81,6 +81,7 @@ export const pedidosService = {
       notas: pedidoData.notas,
       instruccionesEntrega: pedidoData.instruccionesEntrega,
       direccionEnvioSnapshot: pedidoData.direccionEnvioSnapshot,
+      formaPago: pedidoData.formaPago,
       lineas: lineasData.map(linea => ({
         vino: { id: linea.vinoId },
         cantidad: linea.cantidad,

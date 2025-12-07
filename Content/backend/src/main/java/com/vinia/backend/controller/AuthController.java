@@ -18,6 +18,9 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private com.vinia.backend.security.JwtUtils jwtUtils;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("username");
@@ -31,6 +34,9 @@ public class AuthController {
             Usuario user = userOpt.get();
             Map<String, Object> response = new HashMap<>();
 
+            // Generate REAL token
+            String token = jwtUtils.generateTokenFromUsername(user.getUsername());
+
             // Return user info
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", user.getId());
@@ -40,7 +46,7 @@ public class AuthController {
             userInfo.put("rol", user.getRol());
 
             response.put("user", userInfo);
-            response.put("token", "mock-jwt-token-" + user.getId()); // Still mock token for now
+            response.put("token", token);
 
             return ResponseEntity.ok(response);
         } else {

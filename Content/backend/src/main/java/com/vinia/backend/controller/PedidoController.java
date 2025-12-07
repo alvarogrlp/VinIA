@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/pedidos")
 @CrossOrigin(origins = "*")
+@PreAuthorize("isAuthenticated()")
 // Controller for managing orders (Pedidos)
 public class PedidoController {
 
@@ -35,15 +37,19 @@ public class PedidoController {
     }
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> create(@RequestBody Pedido pedido) {
         try {
             return ResponseEntity.ok(pedidoService.createPedido(pedido));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest()
+                    .body("Error creando pedido: " + (e.getMessage() != null ? e.getMessage() : e.toString()));
         }
     }
 
     @PostMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALMACEN', 'REPARTIDOR')")
     public ResponseEntity<Pedido> updateStatus(@PathVariable String id, @RequestBody String estado) {
         try {
             // Simple parsing if body is just the string or JSON

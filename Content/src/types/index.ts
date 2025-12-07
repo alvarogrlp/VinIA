@@ -153,11 +153,16 @@ export interface Cliente {
 export type EstadoPedido =
   | 'Borrador'
   | 'Pendiente'
+  | 'PENDIENTE_VALIDACION'
   | 'Confirmado'
   | 'En Preparación'
+  | 'EN_PREPARACION'
   | 'En Reparto'
+  | 'EN_REPARTO'
   | 'Entregado'
+  | 'ENTREGADO'
   | 'Facturado'
+  | 'FACTURADO'
   | 'Cobrado'
   | 'Cancelado';
 
@@ -201,6 +206,10 @@ export interface Pedido {
   direccionEntrega?: string; // Ahora se usa como snapshot o dirección final
   instruccionesEntrega?: string;
   direccionEnvioSnapshot?: string;
+  formaPago?: string;
+  // Campos de usuario (Comercial)
+  usuarioId?: string;
+  usuario?: Usuario;
   created_at?: string;
   updated_at?: string;
 }

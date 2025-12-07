@@ -428,82 +428,98 @@ export const NuevoPedido = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="sticky top-6 card bg-primary-50 border-primary-100">
-            <h2 className="mb-4 text-lg font-semibold text-primary-900">Resumen del Pedido</h2>
+        {/* Payment Method */}
+        <div className="card bg-white border-secondary-100 mt-6">
+          <h2 className="mb-4 text-lg font-semibold text-secondary-900">Forma de Pago</h2>
+          <select
+            value={pedidoActual?.formaPago || 'Contado'}
+            onChange={(e) => actualizarPedido({ formaPago: e.target.value })}
+            className="w-full input"
+          >
+            <option value="Contado">Contado</option>
+            <option value="Tarjeta">Tarjeta</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Giro 30 días">Giro 30 días</option>
+            <option value="Giro 60 días">Giro 60 días</option>
+          </select>
+        </div>
 
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-secondary-600">
-                <span>Subtotal</span>
-                <span>{formatearPrecio(pedidoActual?.subtotal || 0)}</span>
-              </div>
+        <div className="sticky top-6 card bg-primary-50 border-primary-100">
+          <h2 className="mb-4 text-lg font-semibold text-primary-900">Resumen del Pedido</h2>
 
-              <div className="flex items-center justify-between text-secondary-600">
-                <span>Descuento (%)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={pedidoActual?.descuento || 0}
-                  onChange={(e) => setDescuento(Number(e.target.value))}
-                  className="w-20 px-2 py-1 text-right border rounded border-secondary-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                />
-              </div>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between text-secondary-600">
+              <span>Subtotal</span>
+              <span>{formatearPrecio(pedidoActual?.subtotal || 0)}</span>
+            </div>
 
-              {/* Selector de Impuestos */}
-              <div className="py-2 border-t border-b border-primary-200/50 my-2">
-                <span className="block mb-2 text-secondary-600">Impuestos</span>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="iva"
-                      checked={pedidoActual?.iva === 21}
-                      onChange={() => setIva(21)}
-                      className="text-primary-600 focus:ring-primary-500"
-                    />
-                    <span>IVA (21%)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="iva"
-                      checked={pedidoActual?.iva === 7}
-                      onChange={() => setIva(7)}
-                      className="text-primary-600 focus:ring-primary-500"
-                    />
-                    <span>IGIC (7%)</span>
-                  </label>
-                </div>
-              </div>
+            <div className="flex items-center justify-between text-secondary-600">
+              <span>Descuento (%)</span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={pedidoActual?.descuento || 0}
+                onChange={(e) => setDescuento(Number(e.target.value))}
+                className="w-20 px-2 py-1 text-right border rounded border-secondary-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
 
-              <div className="flex justify-between text-secondary-600">
-                <span>{pedidoActual?.iva === 7 ? 'IGIC' : 'IVA'} ({pedidoActual?.iva}%)</span>
-                <span>{formatearPrecio(((pedidoActual?.subtotal || 0) * (1 - (pedidoActual?.descuento || 0) / 100)) * ((pedidoActual?.iva || 0) / 100))}</span>
-              </div>
-              <div className="pt-3 mt-3 border-t border-primary-200 flex justify-between items-end">
-                <span className="font-bold text-primary-900">Total</span>
-                <span className="text-2xl font-bold text-primary-700">
-                  {formatearPrecio(pedidoActual?.total || 0)}
-                </span>
+            {/* Selector de Impuestos */}
+            <div className="py-2 border-t border-b border-primary-200/50 my-2">
+              <span className="block mb-2 text-secondary-600">Impuestos</span>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="iva"
+                    checked={pedidoActual?.iva === 21}
+                    onChange={() => setIva(21)}
+                    className="text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>IVA (21%)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="iva"
+                    checked={pedidoActual?.iva === 7}
+                    onChange={() => setIva(7)}
+                    className="text-primary-600 focus:ring-primary-500"
+                  />
+                  <span>IGIC (7%)</span>
+                </label>
               </div>
             </div>
 
-            <div className="mt-6 space-y-3">
-              <button
-                onClick={handleGuardar}
-                disabled={!pedidoActual?.lineas.length || cargandoPedido}
-                className="w-full btn-primary py-3 justify-center"
-              >
-                Confirmar Pedido
-              </button>
-              <button
-                onClick={() => navigate('/pedidos')}
-                className="w-full btn-outline bg-white justify-center"
-              >
-                Cancelar
-              </button>
+            <div className="flex justify-between text-secondary-600">
+              <span>{pedidoActual?.iva === 7 ? 'IGIC' : 'IVA'} ({pedidoActual?.iva}%)</span>
+              <span>{formatearPrecio(((pedidoActual?.subtotal || 0) * (1 - (pedidoActual?.descuento || 0) / 100)) * ((pedidoActual?.iva || 0) / 100))}</span>
             </div>
+            <div className="pt-3 mt-3 border-t border-primary-200 flex justify-between items-end">
+              <span className="font-bold text-primary-900">Total</span>
+              <span className="text-2xl font-bold text-primary-700">
+                {formatearPrecio(pedidoActual?.total || 0)}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <button
+              onClick={handleGuardar}
+              disabled={!pedidoActual?.lineas.length || cargandoPedido}
+              className="w-full btn-primary py-3 justify-center"
+            >
+              Confirmar Pedido
+            </button>
+            <button
+              onClick={() => navigate('/pedidos')}
+              className="w-full btn-outline bg-white justify-center"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       </div>

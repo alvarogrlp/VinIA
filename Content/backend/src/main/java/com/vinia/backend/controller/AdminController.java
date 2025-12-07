@@ -1,10 +1,10 @@
 package com.vinia.backend.controller;
 
 import com.vinia.backend.model.Asignacion;
-import com.vinia.backend.model.Cliente;
 import com.vinia.backend.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/administracion")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     @Autowired

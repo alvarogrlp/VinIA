@@ -2,6 +2,7 @@
  * VinIA - Exportaciones de componentes
  */
 
-export { Layout } from './Layout';
+export * from './Layout';
+export * from './PedidoModal';
 export { VinoCard } from './VinoCard';
 export { Loading } from './Loading';

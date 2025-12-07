@@ -5,6 +5,7 @@ import com.vinia.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
@@ -50,11 +51,20 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteUser(@PathVariable String id) {
-        if (usuarioRepository.existsById(id)) {
+        if (!usuarioRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
             usuarioRepository.deleteById(id);
             return ResponseEntity.ok().build();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            return ResponseEntity.status(409).body(java.util.Collections.singletonMap("message",
+                    "No se puede eliminar el usuario porque tiene registros relacionados (pedidos, asignaciones). Desactívelo en su lugar."));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(java.util.Collections.singletonMap("message",
+                    "Error interno al eliminar usuario: " + e.getMessage()));
         }
-        return ResponseEntity.notFound().build();
     }
 }

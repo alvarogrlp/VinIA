@@ -27,10 +27,27 @@ public class Pedido {
     private Usuario usuario;
 
     @Column(name = "fecha")
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime fecha;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String estado = "Borrador";
+    private EstadoPedido estado = EstadoPedido.PENDIENTE_VALIDACION;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean bloqueado = false;
+
+    @Column(name = "motivo_bloqueo")
+    private String motivoBloqueo;
+
+    @Column(name = "firma_entrega", columnDefinition = "TEXT")
+    private String firmaEntrega;
+
+    @Column(name = "url_factura")
+    private String urlFactura;
+
+    @Column(name = "forma_pago")
+    private String formaPago;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;

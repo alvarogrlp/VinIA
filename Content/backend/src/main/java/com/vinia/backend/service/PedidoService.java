@@ -1,10 +1,12 @@
 package com.vinia.backend.service;
 
 import com.vinia.backend.model.Pedido;
+import com.vinia.backend.model.EstadoPedido;
 import com.vinia.backend.model.LineaPedido;
 import com.vinia.backend.model.Vino;
 import com.vinia.backend.repository.PedidoRepository;
 import com.vinia.backend.repository.VinoRepository;
+import com.vinia.backend.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,9 @@ public class PedidoService {
     @Autowired
     private VinoRepository vinoRepository;
 
+    @Autowired
+    private ClienteRepository clienteRepository;
+
     public List<Pedido> findAll() {
         return pedidoRepository.findAll();
     }
@@ -33,60 +38,114 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 
-    @Autowired
-    private com.vinia.backend.repository.ClienteRepository clienteRepository;
-
     @Transactional
     public Pedido createPedido(Pedido pedido) {
-        // Fetch existing client ref to avoid transient error
-        if (pedido.getCliente() != null && pedido.getCliente().getId() != null) {
-            com.vinia.backend.model.Cliente clienteRef = clienteRepository.findById(pedido.getCliente().getId())
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado: " + pedido.getCliente().getId()));
-            pedido.setCliente(clienteRef);
+        // 1. Fetch Client
+        if (pedido.getCliente() == null || pedido.getCliente().getId() == null) {
+            throw new RuntimeException("El pedido debe tener un cliente asignado");
         }
+        com.vinia.backend.model.Cliente cliente = clienteRepository.findById(pedido.getCliente().getId())
+                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+        pedido.setCliente(cliente);
 
-        // Generate number
+        // 2. Generate Number
         String lastNum = pedidoRepository.findLastNumeroPedido();
         int nextSeq = 1;
         if (lastNum != null && lastNum.startsWith("PED-")) {
             try {
                 nextSeq = Integer.parseInt(lastNum.substring(4)) + 1;
             } catch (NumberFormatException e) {
-                // ignore
             }
         }
         pedido.setNumero(String.format("PED-%06d", nextSeq));
 
-        if (pedido.getLineas() != null) {
-            for (LineaPedido linea : pedido.getLineas()) {
-                Vino vino = vinoRepository.findById(linea.getVino().getId())
-                        .orElseThrow(() -> new RuntimeException("Vino no encontrado: " + linea.getVino().getId()));
-
-                if (vino.getStock() < linea.getCantidad()) {
-                    throw new RuntimeException("Stock insuficiente para vino: " + vino.getNombre());
-                }
-
-                // Update stock
-                vino.setStock(vino.getStock() - linea.getCantidad());
-                vinoRepository.save(vino);
-
-                linea.setPedido(pedido);
-                // Trust frontend for subtotal/total to handle discounts correctly
-            }
-        }
-
-        // If totals are null (should not be from frontend), initialize them
+        // 3. Initialize Totals
         if (pedido.getSubtotal() == null)
             pedido.setSubtotal(BigDecimal.ZERO);
         if (pedido.getTotal() == null)
             pedido.setTotal(BigDecimal.ZERO);
 
+        // 4. Link Lines (Don't deduct stock yet!)
+        if (pedido.getLineas() != null) {
+            for (LineaPedido linea : pedido.getLineas()) {
+                linea.setPedido(pedido);
+                // Optional: Check existence of wine, but don't lock stock yet
+                if (!vinoRepository.existsById(linea.getVino().getId())) {
+                    throw new RuntimeException("Vino no encontrado: " + linea.getVino().getId());
+                }
+            }
+        }
+
+        // 5. DEBT CHECK
+        BigDecimal riesgoActual = cliente.getRiesgoActual() != null ? cliente.getRiesgoActual() : BigDecimal.ZERO;
+        BigDecimal limiteCredito = cliente.getLimiteCredito() != null ? cliente.getLimiteCredito()
+                : new BigDecimal("1000.00");
+
+        BigDecimal deudaTotal = riesgoActual.add(pedido.getTotal());
+        if (deudaTotal.compareTo(limiteCredito) > 0) {
+            pedido.setEstado(EstadoPedido.PENDIENTE_VALIDACION);
+            pedido.setBloqueado(true);
+            pedido.setMotivoBloqueo(
+                    "Límite de crédito excedido. Riesgo: " + deudaTotal + " > Limite: " + limiteCredito);
+            System.out.println("PEDIDO BLOQUEADO: " + pedido.getMotivoBloqueo());
+        } else {
+            // Auto-approve if no debts
+            pedido.setEstado(EstadoPedido.EN_PREPARACION);
+            pedido.setBloqueado(false);
+
+            // Update client risk immediately? Or on invoice?
+            // Usually on Picking or Delivery, but let's reserve risk now.
+            cliente.setRiesgoActual(deudaTotal);
+            clienteRepository.save(cliente);
+        }
+
         return pedidoRepository.save(pedido);
     }
 
-    public Pedido updateStatus(String id, String estado) {
+    @Transactional
+    public Pedido updateStatus(String id, String nuevoEstadoStr) {
         Pedido pedido = findById(id);
-        pedido.setEstado(estado);
+        EstadoPedido nuevoEstado;
+        try {
+            nuevoEstado = EstadoPedido.valueOf(nuevoEstadoStr);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado inválido: " + nuevoEstadoStr);
+        }
+
+        EstadoPedido oldState = pedido.getEstado();
+
+        // LOGIC TRANSITIONS
+
+        // 1. Validation (Validation -> Preparacion)
+        if (oldState == EstadoPedido.PENDIENTE_VALIDACION && nuevoEstado == EstadoPedido.EN_PREPARACION) {
+            pedido.setBloqueado(false);
+            pedido.setMotivoBloqueo(null);
+
+            // Update risk now if we didn't before (because it was blocked)
+            com.vinia.backend.model.Cliente cliente = pedido.getCliente();
+            cliente.setRiesgoActual(cliente.getRiesgoActual().add(pedido.getTotal()));
+            clienteRepository.save(cliente);
+        }
+
+        // 2. Picking (Preparacion -> Reparto) -> DEDUCT STOCK
+        if (oldState == EstadoPedido.EN_PREPARACION && nuevoEstado == EstadoPedido.EN_REPARTO) {
+            for (LineaPedido linea : pedido.getLineas()) {
+                Vino vino = vinoRepository.findById(linea.getVino().getId())
+                        .orElseThrow(() -> new RuntimeException("Vino " + linea.getVino().getId() + " no encontrado"));
+
+                if (vino.getStock() < linea.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente para: " + vino.getNombre());
+                }
+                vino.setStock(vino.getStock() - linea.getCantidad());
+                vinoRepository.save(vino);
+            }
+        }
+
+        // 3. Delivery (Reparto -> Entregado)
+        // logic handled in controller (signature saving) or separate method.
+        // Here just state change.
+
+        pedido.setEstado(nuevoEstado);
         return pedidoRepository.save(pedido);
     }
 }

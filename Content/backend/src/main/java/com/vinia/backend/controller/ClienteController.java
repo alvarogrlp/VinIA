@@ -6,11 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/clientes")
 @CrossOrigin(origins = "*")
+@PreAuthorize("isAuthenticated()")
 public class ClienteController {
 
     @Autowired
@@ -55,11 +57,13 @@ public class ClienteController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
     public Cliente create(@RequestBody Cliente cliente) {
         return clienteService.save(cliente);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
     public ResponseEntity<Cliente> update(@PathVariable String id, @RequestBody Cliente cliente) {
         try {
             Cliente existing = clienteService.findById(id);
@@ -71,6 +75,7 @@ public class ClienteController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable String id) {
         try {
             clienteService.deleteById(id);

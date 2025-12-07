@@ -1,3 +1,4 @@
+C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\security\CustomUserDetailsService.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\repository\ClienteRepository.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Pedido.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Usuario.java
@@ -7,10 +8,14 @@ C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\controller\SeedController.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\service\ClienteService.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Vino.java
+C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\EstadoPedido.java
+C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\security\JwtAuthenticationFilter.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Asignacion.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\controller\UserController.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\service\VinoService.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\config\SecurityConfig.java
+C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\exception\GlobalExceptionHandler.java
+C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\security\JwtUtils.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\service\AuthService.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\repository\UsuarioRepository.java
 C:\Users\alvar\Desktop\Programacion\DAM 2º\VinIA\Content\backend\src\main\java\com\vinia\backend\model\LineaPedido.java

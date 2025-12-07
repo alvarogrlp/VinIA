@@ -55,6 +55,12 @@ public class Cliente {
     @Column(columnDefinition = "TEXT")
     private String notas;
 
+    @Column(name = "limite_credito", precision = 10, scale = 2)
+    private BigDecimal limiteCredito = new BigDecimal("1000.00"); // Default limit
+
+    @Column(name = "riesgo_actual", precision = 10, scale = 2)
+    private BigDecimal riesgoActual = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private boolean activo = true;
 
