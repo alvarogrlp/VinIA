@@ -2,6 +2,16 @@
 
 **VinIA** es una aplicación profesional diseñada para comerciales del sector vinícola, inspirada en sistemas ERP como Navision. Funciona perfectamente en **PC, tablets y móviles** como Progressive Web App (PWA).
 
+> 🚧 **Estado del Proyecto**: Esta aplicación se encuentra actualmente en una fase temprana de desarrollo.
+
+## 🤖 Visión: Inteligencia Artificial para Comerciales
+
+El núcleo de la evolución futura de VinIA es la integración de un **Asistente IA** avanzado. Esta herramienta está siendo diseñada para actuar como un copiloto inteligente que potenciará la eficiencia de los comerciales mediante:
+
+- **Recomendaciones Inteligentes**: Sugerencias de vinos personalizadas basadas en el perfil del cliente y tendencias.
+- **Gestión Asistida de Pedidos**: Creación y procesamiento de pedidos mediante comandos de lenguaje natural.
+- **Atención al Cliente Aumentada**: Soporte instantáneo para resolver dudas sobre el catálogo y maridajes.
+
 ## 🎯 Características principales
 
 - ✅ **Catálogo de vinos** completo con búsqueda y filtros avanzados
