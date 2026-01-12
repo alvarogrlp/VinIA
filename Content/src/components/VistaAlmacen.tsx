@@ -3,6 +3,7 @@ import { Package, FileText, MapPin, Calendar, ArrowRight, Printer, Search, Downl
 import { usePedidosStore, useClientesStore } from '../store';
 import type { Pedido, EstadoPedido } from '../types';
 import { PedidoModal } from './PedidoModal';
+import { ConfirmModal } from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -10,6 +11,28 @@ export const VistaAlmacen = () => {
     const { pedidos, cambiarEstadoPedido, marcarAlbaranDescargado } = usePedidosStore();
     const { clientes } = useClientesStore();
     const [pedidoSeleccionado, setPedidoSeleccionado] = useState<Pedido | null>(null);
+
+    // Modal State
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalConfig, setModalConfig] = useState<{
+        title: string;
+        message: string;
+        type?: 'info' | 'warning' | 'danger' | 'success';
+        confirmText?: string;
+        cancelText?: string;
+        onConfirm: () => void;
+        onCancel?: () => void;
+        showCancel?: boolean;
+    }>({
+        title: '',
+        message: '',
+        onConfirm: () => { }
+    });
+
+    const showModal = (config: typeof modalConfig) => {
+        setModalConfig(config);
+        setModalOpen(true);
+    };
 
     // Filtros y Búsqueda
     const [filtroEstado, setFiltroEstado] = useState<'Pendiente' | 'Confirmado' | 'En Reparto' | 'Albaranes Pendientes' | 'Todos'>('Todos');
@@ -66,49 +89,99 @@ export const VistaAlmacen = () => {
 
 
     const handleEstado = async (id: string, nuevoEstado: EstadoPedido) => {
-        if (window.confirm(`¿Cambiar estado a ${nuevoEstado}?`)) {
-            try {
-                await cambiarEstadoPedido(id, nuevoEstado);
-            } catch (error: any) {
-                alert('Error: ' + error.message);
+        showModal({
+            title: 'Confirmar Cambio de Estado',
+            message: `¿Está seguro de que desea cambiar el estado del pedido a ${nuevoEstado}?`,
+            type: 'warning',
+            onConfirm: async () => {
+                try {
+                    await cambiarEstadoPedido(id, nuevoEstado);
+                } catch (error: any) {
+                    showModal({
+                        title: 'Error',
+                        message: 'Error al cambiar estado: ' + error.message,
+                        type: 'danger',
+                        onConfirm: () => { }
+                    });
+                }
             }
-        }
+        });
     };
 
-    const generarAlbaran = async (pedido: Pedido) => {
+    const doGenerarAlbaran = async (pedido: Pedido, mostrarPrecios: boolean) => {
         const doc = new jsPDF();
 
         // Header
         doc.setFontSize(20);
-        doc.text('ALBARÁN DE ENTREGA', 105, 20, { align: 'center' });
+        doc.text(mostrarPrecios ? 'ALBARÁN DE ENTREGA' : 'NOTA DE ENTREGA', 105, 20, { align: 'center' });
 
         doc.setFontSize(10);
         doc.text(`Pedido: ${pedido.numero}`, 14, 30);
         doc.text(`Fecha: ${new Date(pedido.fecha).toLocaleDateString()}`, 14, 35);
+        doc.text(`Forma de Pago: ${pedido.formaPago || 'Contado'}`, 14, 40);
 
         // Cliente
-        doc.text('DATOS CLIENTE:', 14, 45);
+        doc.text('DATOS CLIENTE:', 14, 50);
         doc.setFontSize(12);
-        doc.text(pedido.clienteNombre || '', 14, 52);
+        doc.text(pedido.clienteNombre || '', 14, 57);
         doc.setFontSize(10);
-        doc.text(`CIF: ${pedido.cliente?.cif || ''}`, 14, 58);
-        doc.text(`Dirección: ${pedido.direccionEntrega || ''}`, 14, 64);
+        doc.text(`CIF: ${pedido.cliente?.cif || ''}`, 14, 63);
+        doc.text(`Dirección: ${pedido.direccionEntrega || ''}`, 14, 69);
 
-        // Tabla Productos
-        const tableData = pedido.lineas.map(l => [
-            l.vinoNombre || '',
-            l.tipoBulto || 'Botella',
-            l.cantidad || 0,
-        ]);
+        // Tabla Productos Headers
+        const head = [['Producto', 'Formato', 'Cantidad']];
+        if (mostrarPrecios) {
+            head[0].push('P. Unit.', 'Dto %', 'Total');
+        }
+
+        // Tabla Productos Body
+        const tableData = pedido.lineas.map(l => {
+            const row = [
+                l.vinoNombre || '',
+                l.tipoBulto || 'Botella',
+                l.cantidad || 0,
+            ];
+            if (mostrarPrecios) {
+                row.push((l.precioUnitario || 0).toFixed(2) + '€');
+                // Use line discount if available, otherwise order discount, or 0
+                const dto = l.descuento || pedido.descuento || 0;
+                row.push(dto > 0 ? `${dto}%` : '-');
+                row.push((l.subtotal || 0).toFixed(2) + '€');
+            }
+            return row;
+        });
 
         autoTable(doc, {
-            startY: 75,
-            head: [['Producto', 'Formato', 'Cantidad']],
+            startY: 80,
+            head: head,
             body: tableData,
         });
 
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+        // Totales (Solo si mostrarPrecios es true)
+        if (mostrarPrecios) {
+            // El subtotal ya incluye los descuentos aplicados linea por linea o globalmente en el store
+            // Si queremos mostrar el total final limpio:
+
+            // Calculamos base imponible real sumando los subtotales de linea (que ya tienen dto aplicado)
+            // Si pedido.subtotal del backend viene "bruto", usaríamos la suma de lineas.
+            // Asumiendo que pedido.subtotal ya tiene el descuento aplicado si es global en backend, O BIEN
+            // recalculamos para asegurar consistencia con la tabla:
+            const baseImponible = pedido.lineas.reduce((acc, l) => acc + (l.subtotal || 0), 0);
+
+            const porcentajeIva = pedido.iva || 0;
+            const montoIva = baseImponible * (porcentajeIva / 100);
+            const total = baseImponible + montoIva;
+
+            doc.text(`Subtotal: ${baseImponible.toFixed(2)}€`, 140, finalY);
+            doc.text(`Impuestos (${porcentajeIva}%): ${montoIva.toFixed(2)}€`, 140, finalY + 5);
+            doc.setFontSize(12);
+            doc.text(`TOTAL: ${total.toFixed(2)}€`, 140, finalY + 12);
+            doc.setFontSize(10);
+        }
+
         // Space for signature
-        const finalY = (doc as any).lastAutoTable.finalY || 150;
         doc.text('Recibí Conforme:', 14, finalY + 30);
         doc.line(14, finalY + 50, 80, finalY + 50); // Signature line
         doc.text('Firma y Fecha', 14, finalY + 55);
@@ -121,11 +194,34 @@ export const VistaAlmacen = () => {
         }
     };
 
+    const iniciarGenerarAlbaran = (pedido: Pedido) => {
+        const esContado = pedido.formaPago === 'Contado';
+
+        if (esContado) {
+            doGenerarAlbaran(pedido, true);
+        } else {
+            showModal({
+                title: 'Formato de Documento',
+                message: 'El pedido no es al contado. ¿Cómo desea generar el documento?\n\nPuede ocultar los precios para crear una Nota de Entrega.',
+                confirmText: 'Ocultar Precios',
+                cancelText: 'Mostrar Precios',
+                type: 'info',
+                onConfirm: () => doGenerarAlbaran(pedido, false),
+                onCancel: () => doGenerarAlbaran(pedido, true)
+            });
+        }
+    };
+
     const generarHojaCarga = async () => {
         const seleccion = pedidosPorZona.filter(p => pedidosSeleccionados.includes(p.id));
 
         if (seleccion.length === 0) {
-            alert('Seleccione al menos un pedido');
+            showModal({
+                title: 'Selección requerida',
+                message: 'Seleccione al menos un pedido',
+                type: 'warning',
+                onConfirm: () => { }
+            });
             return;
         }
 
@@ -166,14 +262,25 @@ export const VistaAlmacen = () => {
         doc.save(`HojaCarga_${zonaSeleccionada}_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
 
         // 3. Cambiar estado a 'En Reparto'
-        if (window.confirm(`Se ha generado la hoja de carga. ¿Desea pasar los ${seleccion.length} pedidos a estado "En Reparto"?`)) {
-            for (const pedido of seleccion) {
-                await cambiarEstadoPedido(pedido.id, 'EN_REPARTO' as any);
+        showModal({
+            title: 'Actualizar Pedidos',
+            message: `Se ha generado la hoja de carga correctamente.\n\n¿Desea pasar los ${seleccion.length} pedidos seleccionados al estado "En Reparto"?`,
+            confirmText: 'Sí, Actualizar a En Reparto',
+            cancelText: 'No, Mantener estado',
+            type: 'success',
+            onConfirm: async () => {
+                try {
+                    for (const pedido of seleccion) {
+                        await cambiarEstadoPedido(pedido.id, 'EN_REPARTO' as any);
+                    }
+                    setPedidosSeleccionados([]);
+                    setMostrarHojaCarga(false);
+                } catch (error: any) {
+                    // Nested modals might be tricky if not careful, but state update works
+                    alert('Error actualizando estados: ' + error.message); // Fallback or use a toast
+                }
             }
-            // Clear selection or refresh
-            setPedidosSeleccionados([]);
-            setMostrarHojaCarga(false);
-        }
+        });
     };
 
     const getSiguienteEstado = (estadoActual: EstadoPedido): { label: string; estado: EstadoPedido; color: string } | null => {
@@ -197,6 +304,19 @@ export const VistaAlmacen = () => {
 
     return (
         <div className="space-y-6">
+            <ConfirmModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onConfirm={modalConfig.onConfirm}
+                onCancel={modalConfig.onCancel}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+            />
+
             {/* Header Actions */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -292,8 +412,8 @@ export const VistaAlmacen = () => {
                                     key={f}
                                     onClick={() => setFiltroEstado(f as any)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${filtroEstado === f
-                                            ? 'bg-primary-100 text-primary-800'
-                                            : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
+                                        ? 'bg-primary-100 text-primary-800'
+                                        : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                                         }`}
                                 >
                                     {f === 'Pendiente' ? 'En Prep.' : f}
@@ -307,7 +427,7 @@ export const VistaAlmacen = () => {
                                 placeholder="Buscar pedido..."
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
-                                className="input w-full pl-9 py-2 text-sm"
+                                className="input w-full !pl-10 py-2 text-sm"
                             />
                         </div>
                     </div>
@@ -392,9 +512,8 @@ export const VistaAlmacen = () => {
                                             </button>
 
                                             {/* Action Button Logic */}
-                                            {/* If Ready for Delivery, Show Albaran Button primarily, or 'Send' button if Albaran is done? The user requested Albaran button always there but enabled conditionally. */}
                                             <button
-                                                onClick={() => generarAlbaran(pedido)}
+                                                onClick={() => iniciarGenerarAlbaran(pedido)}
                                                 disabled={!puedeDescargarAlbaran}
                                                 className={`col-span-1 flex items-center justify-center px-3 py-2 text-sm font-medium text-white rounded-md transition-colors 
                                                 ${!puedeDescargarAlbaran
@@ -410,10 +529,6 @@ export const VistaAlmacen = () => {
                                             </button>
                                         </div>
 
-                                        {/* Optional: Separate State Advance Button if needed, or keep it integrated. User asked to change state when Loading Sheet is generated. 
-                                        But individal advancement is also useful. Keeping the "Next State" button if valid transition exists? 
-                                        Let's keep the standard Workflow button below if available and desired.
-                                    */}
                                         {siguienteAccion && (
                                             <button
                                                 onClick={() => handleEstado(pedido.id, siguienteAccion.estado)}

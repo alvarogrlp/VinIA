@@ -7,11 +7,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Calendar, Filter, Download, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { ArrowLeft, Search, Calendar, Filter, Download, ChevronDown, ChevronUp, Package, CheckSquare } from 'lucide-react';
 import { useClientesStore } from '../store';
 import { api } from '../lib/api';
 import { formatearPrecio } from '../utils/helpers';
-import type { Pedido } from '../types';
+import type { Pedido, Vino } from '../types';
+import { VinoDetalleModal } from '../components/VinoDetalleModal';
 
 export const HistoricoCliente = () => {
     const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ export const HistoricoCliente = () => {
 
     const [pedidos, setPedidos] = useState<Pedido[]>([]);
     const [cargando, setCargando] = useState(true);
+    const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
 
     // Filtros
     const [busqueda, setBusqueda] = useState('');
@@ -47,14 +49,29 @@ export const HistoricoCliente = () => {
     const cargarHistorial = async () => {
         try {
             setCargando(true);
-            // Usamos el endpoint que devuelve pedidos filtrados por cliente del controller de pedidos
-            // Ojo: Asegurar que este endpoint existe y devuelve los pedidos completos
             const data = await api.get(`/pedidos?clienteId=${id}`);
-            setPedidos(data || []);
 
-            // Expandir el primero por defecto
-            if (data && data.length > 0) {
-                setPedidosExpandidos(new Set([data[0].id]));
+            // Mapear datos para asegurar que nombres de vinos y otros campos calculados estén disponibles
+            const pedidosMapeados = (data || []).map((p: any) => ({
+                ...p,
+                // Asegurar compatibilidad de campos si vienen anidados
+                usuario: p.usuario,
+                clienteNombre: p.cliente?.nombre || 'Cliente Desconocido',
+                lineas: p.lineas.map((l: any) => ({
+                    ...l,
+                    vino: l.vino, // Preservar el objeto vino completo si existe
+                    vinoNombre: l.vino?.nombre || l.vinoNombre || 'Producto Desconocido',
+                    precioUnitario: l.precioUnitario || l.vino?.precio_unitario || 0,
+                    anada: l.anada || l.vino?.ano,
+                    // Si el backend no envía subtotal de línea, calcularlo
+                    subtotal: l.subtotal || ((l.cantidad * (l.precioUnitario || l.vino?.precio_unitario || 0)) * (1 - (l.descuento || 0) / 100))
+                }))
+            }));
+
+            setPedidos(pedidosMapeados);
+
+            if (pedidosMapeados.length > 0) {
+                setPedidosExpandidos(new Set([pedidosMapeados[0].id]));
             }
         } catch (error) {
             console.error('Error al cargar historial:', error);
@@ -78,14 +95,12 @@ export const HistoricoCliente = () => {
             // Filtro de texto (busca en ID, info de vinos)
             const textoMatch = !busqueda ||
                 pedido.numero.toLowerCase().includes(busqueda.toLowerCase()) ||
-                pedido.lineas.some(l => l.vinoNombre.toLowerCase().includes(busqueda.toLowerCase()));
+                pedido.lineas.some(l => (l.vinoNombre || '').toLowerCase().includes(busqueda.toLowerCase()));
 
-            // Filtro de fecha
             const fechaPedido = new Date(pedido.fecha);
             const fechaInicioMatch = !fechaInicio || fechaPedido >= new Date(fechaInicio);
             const fechaFinMatch = !fechaFin || fechaPedido <= new Date(fechaFin);
 
-            // Filtro de precio
             const precioMinMatch = !rangoPrecio.min || pedido.total >= Number(rangoPrecio.min);
             const precioMaxMatch = !rangoPrecio.max || pedido.total <= Number(rangoPrecio.max);
 
@@ -136,7 +151,7 @@ export const HistoricoCliente = () => {
                             placeholder="Buscar producto o nº pedido..."
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            className="input w-full pl-9 text-sm"
+                            className="input w-full !pl-10 text-sm"
                         />
                     </div>
 
@@ -213,11 +228,17 @@ export const HistoricoCliente = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-secondary-900">{pedido.numero}</h3>
-                                        <div className="flex items-center gap-2 text-sm text-secondary-500">
-                                            <Calendar className="w-3 h-3" />
-                                            <span>{new Date(pedido.fecha).toLocaleDateString()}</span>
-                                            <span className="mx-1">•</span>
-                                            <span>{pedido.lineas.length} productos</span>
+                                        <div className="flex flex-col text-sm text-secondary-500">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-3 h-3" />
+                                                <span>Creado: {new Date(pedido.fecha).toLocaleDateString()} {new Date(pedido.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            {pedido.fechaEntrega && (
+                                                <div className="flex items-center gap-2 text-green-600">
+                                                    <CheckSquare className="w-3 h-3" />
+                                                    <span>Entregado: {new Date(pedido.fechaEntrega).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -228,6 +249,7 @@ export const HistoricoCliente = () => {
                                     </span>
                                     <div className="text-right">
                                         <p className="text-lg font-bold text-primary-700">{formatearPrecio(pedido.total)}</p>
+                                        {pedido.descuento > 0 && <p className="text-xs text-green-600 font-medium">Dto. {pedido.descuento}%</p>}
                                     </div>
                                 </div>
                             </div>
@@ -237,22 +259,34 @@ export const HistoricoCliente = () => {
                                 <div className="border-t border-secondary-200 divide-y divide-secondary-100 animate-fade-in">
                                     {/* Cabecera Tabla */}
                                     <div className="grid grid-cols-12 gap-4 p-3 bg-secondary-50/50 text-xs font-semibold text-secondary-500 uppercase tracking-wider">
-                                        <div className="col-span-6">Producto</div>
+                                        <div className="col-span-5">Producto</div>
                                         <div className="col-span-2 text-center">Cant.</div>
                                         <div className="col-span-2 text-right">Precio Ud.</div>
+                                        <div className="col-span-1 text-center">Dto</div>
                                         <div className="col-span-2 text-right">Total</div>
                                     </div>
 
                                     {/* Lineas */}
                                     {pedido.lineas.map((linea, idx) => (
                                         <div key={idx} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-primary-50/30 transition-colors">
-                                            <div className="col-span-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-secondary-100 rounded text-secondary-500">
+                                            <div className="col-span-5">
+                                                <div
+                                                    className={`flex items-center gap-3 ${linea.vino ? 'cursor-pointer hover:bg-secondary-100 p-1 rounded transition-colors group' : ''}`}
+                                                    onClick={(e) => {
+                                                        if (linea.vino) {
+                                                            e.stopPropagation();
+                                                            setVinoSeleccionado(linea.vino);
+                                                        }
+                                                    }}
+                                                    title={linea.vino ? "Ver ficha técnica del vino" : ""}
+                                                >
+                                                    <div className="p-2 bg-secondary-100 rounded text-secondary-500 group-hover:bg-primary-100 group-hover:text-primary-600 transition-colors">
                                                         <Package className="w-4 h-4" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-secondary-900">{linea.vinoNombre}</p>
+                                                        <p className={`font-medium ${linea.vino ? 'text-primary-800 underline decoration-dotted decoration-primary-300' : 'text-secondary-900'}`}>
+                                                            {linea.vinoNombre}
+                                                        </p>
                                                         {linea.anada && <span className="text-xs text-secondary-500">Añada {linea.anada}</span>}
                                                     </div>
                                                 </div>
@@ -271,17 +305,36 @@ export const HistoricoCliente = () => {
                                             <div className="col-span-2 text-right text-secondary-600 font-mono text-sm">
                                                 {formatearPrecio(linea.precioUnitario)}
                                             </div>
+                                            <div className="col-span-1 text-center text-xs font-medium text-secondary-500">
+                                                {linea.descuento > 0 ? <span className="text-green-600">-{linea.descuento}%</span> : '-'}
+                                            </div>
                                             <div className="col-span-2 text-right font-bold text-secondary-900 font-mono text-sm">
                                                 {formatearPrecio(linea.subtotal)}
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* Footer Detalles (Impuestos, envio, etc si hubiera) */}
+                                    <div className="p-3 bg-secondary-50 flex justify-end gap-6 text-sm text-secondary-600">
+                                        <span>Subtotal: {formatearPrecio(pedido.subtotal)}</span>
+                                        <span>IVA ({pedido.iva}%): {formatearPrecio((pedido.total - pedido.subtotal))}</span>
+                                        <span className="font-bold text-secondary-900">Total: {formatearPrecio(pedido.total)}</span>
+                                    </div>
                                 </div>
                             )}
                         </div>
                     ))
                 )}
             </div>
+
+            {/* Modal de Detalle de Vino */}
+            {vinoSeleccionado && (
+                <VinoDetalleModal
+                    vino={vinoSeleccionado}
+                    onClose={() => setVinoSeleccionado(null)}
+                />
+            )}
         </div>
     );
 };
+

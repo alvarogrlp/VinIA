@@ -685,7 +685,9 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
           notas: undefined,
           instruccionesEntrega: pedidoActual.instruccionesEntrega,
           direccionEnvioSnapshot: pedidoActual.direccionEnvioSnapshot,
-          formaPago: pedidoActual.formaPago
+          formaPago: pedidoActual.formaPago,
+          usuario: pedidoActual.usuario, // Pass the whole object if API supports or just ID
+          usuarioId: pedidoActual.usuarioId // Ensure ID is passed if property exists
         },
         pedidoActual.lineas.map(linea => ({
           vinoId: linea.vinoId,

@@ -1,10 +1,3 @@
-/**
- * VinIA - Pantalla de Nuevo Pedido
- * 
- * Flujo de creación de pedidos para comerciales.
- * Selección de cliente, adición de productos y confirmación.
- */
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,6 +11,7 @@ import {
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useVinosStore } from '../store';
 import { formatearPrecio } from '../utils/helpers';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const NuevoPedido = () => {
   const navigate = useNavigate();
@@ -42,6 +36,20 @@ export const NuevoPedido = () => {
   const [busquedaVino, setBusquedaVino] = useState('');
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState<string | null>(null);
   const [mostrarBuscadorVinos, setMostrarBuscadorVinos] = useState(false);
+
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: '',
+    message: '',
+    type: 'info' as 'info' | 'warning' | 'danger' | 'success',
+    onConfirm: () => { }
+  });
+
+  const showModal = (title: string, message: string, type: 'info' | 'warning' | 'danger' | 'success' = 'info', onConfirm: () => void = () => setModalOpen(false)) => {
+    setModalConfig({ title, message, type, onConfirm });
+    setModalOpen(true);
+  };
 
   useEffect(() => {
     cargarClientes();
@@ -81,7 +89,7 @@ export const NuevoPedido = () => {
 
     // Verificar stock
     if (vino.stock <= 0) {
-      alert('No hay stock disponible para este producto');
+      showModal('Stock Agotado', 'No hay stock disponible para este producto', 'danger');
       return;
     }
 
@@ -89,15 +97,12 @@ export const NuevoPedido = () => {
     const existe = pedidoActual.lineas.find(l => l.vinoId === vino.id);
     if (existe) {
       if (existe.cantidad + 1 > vino.stock) {
-        alert('No hay suficiente stock disponible');
+        showModal('Stock Insuficiente', 'No hay suficiente stock disponible para agregar más unidades.', 'warning');
         return;
       }
       actualizarLineaPedido(existe.id, {
         cantidad: existe.cantidad + 1,
         cantidadBultos: (existe.cantidadBultos || 0) + 1
-        // Nota: Esto asume suma simple, pero si mezcla cajas y botellas es complejo.
-        // Simplificación: Al agregar desde buscador, siempre suma 1 unidad del tipo configurado actualmente?
-        // Mejor: Al agregar desde buscador, siempre agrega 1 BOTELLA extra al total.
       });
     } else {
       agregarLineaPedido({
@@ -124,7 +129,7 @@ export const NuevoPedido = () => {
     const totalBotellas = nuevosBultos * botellasPorBulto;
 
     if (totalBotellas > vino.stock) {
-      alert(`Stock insuficiente. Necesitas ${totalBotellas} botellas, hay ${vino.stock}.`);
+      showModal('Stock Insuficiente', `Necesitas ${totalBotellas} botellas, pero solo hay ${vino.stock} disponibles.`, 'warning');
       return;
     }
 
@@ -145,7 +150,7 @@ export const NuevoPedido = () => {
 
     if (lineasSinStock.length > 0) {
       const nombres = lineasSinStock.map(l => l.vinoNombre).join(', ');
-      alert(`No hay stock suficiente para los siguientes vinos: ${nombres}. Por favor, ajuste las cantidades.`);
+      showModal('Stock Insuficiente', `No hay stock suficiente para los siguientes vinos:\n${nombres}\n\nPor favor, ajuste las cantidades antes de confirmar.`, 'danger');
       return;
     }
 
@@ -154,7 +159,7 @@ export const NuevoPedido = () => {
       navigate('/pedidos');
     } catch (error) {
       console.error('Error guardando pedido:', error);
-      alert('Error al guardar el pedido: ' + (error as Error).message);
+      showModal('Error', 'Error al guardar el pedido: ' + (error as Error).message, 'danger');
     }
   };
 
@@ -214,6 +219,17 @@ export const NuevoPedido = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
+      <ConfirmModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        showCancel={false}
+        confirmText="Entendido"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -431,19 +447,33 @@ export const NuevoPedido = () => {
         </div>
 
         {/* Payment Method */}
-        <div className="card bg-white border-secondary-100 mt-6">
-          <h2 className="mb-4 text-lg font-semibold text-secondary-900">Forma de Pago</h2>
-          <select
-            value={pedidoActual?.formaPago || 'Contado'}
-            onChange={(e) => actualizarPedido({ formaPago: e.target.value })}
-            className="w-full input"
-          >
-            <option value="Contado">Contado</option>
-            <option value="Tarjeta">Tarjeta</option>
-            <option value="Transferencia">Transferencia</option>
-            <option value="Giro 30 días">Giro 30 días</option>
-            <option value="Giro 60 días">Giro 60 días</option>
-          </select>
+        <div className="card bg-white border-secondary-100 mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h2 className="mb-2 text-lg font-semibold text-secondary-900">Forma de Pago</h2>
+            <select
+              value={pedidoActual?.formaPago || 'Contado'}
+              onChange={(e) => actualizarPedido({ formaPago: e.target.value })}
+              className="w-full input"
+            >
+              <option value="Contado">Contado</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cobrado">Cobrado</option>
+              <option value="Giro 30 días">Giro 30 días</option>
+              <option value="Giro 60 días">Giro 60 días</option>
+            </select>
+          </div>
+          <div>
+            <h2 className="mb-2 text-lg font-semibold text-secondary-900">Comercial Asignado</h2>
+            <select
+              value={pedidoActual?.usuarioId || ''}
+              onChange={(e) => actualizarPedido({ usuarioId: e.target.value })}
+              className="w-full input"
+              disabled
+            >
+              <option value="">Seleccionar Comercial (No disponible)</option>
+            </select>
+            <p className="text-xs text-red-400 mt-1">Gestión de usuarios no cargada</p>
+          </div>
         </div>
 
         <div className="sticky top-6 card bg-primary-50 border-primary-100">
