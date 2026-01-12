@@ -256,6 +256,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         ciudad: c.ciudad || '',
         codigoPostal: c.codigoPostal || '',
         provincia: c.ciudad || '',
+        zona: (c as any).zona || 'Norte',
         telefono: c.telefono || '',
         email: c.email || '',
         personaContacto: c.nombre,
@@ -287,6 +288,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         ciudad: c.ciudad || '',
         codigoPostal: c.codigoPostal || '',
         provincia: c.ciudad || '',
+        zona: (c as any).zona || 'Norte',
         telefono: c.telefono || '',
         email: c.email || '',
         personaContacto: c.nombre,
@@ -327,6 +329,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         direccion: cliente.direccion || '',
         ciudad: cliente.ciudad || '',
         provincia: cliente.ciudad || '',
+        zona: (cliente as any).zona || 'Norte',
         codigoPostal: cliente.codigoPostal || '',
         personaContacto: cliente.personaContacto || cliente.nombre,
         tipo: cliente.tipo || 'Particular',
@@ -344,6 +347,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         ciudad: nuevoCliente.ciudad || '',
         codigoPostal: nuevoCliente.codigoPostal || '',
         provincia: nuevoCliente.ciudad || '',
+        zona: (nuevoCliente as any).zona || 'Norte',
         telefono: nuevoCliente.telefono || '',
         email: nuevoCliente.email || '',
         personaContacto: cliente.personaContacto || nuevoCliente.nombre, // Usar el dato original o el nombre como fallback
@@ -390,6 +394,7 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         ciudad: clienteActualizado.ciudad || '',
         codigoPostal: clienteActualizado.codigoPostal || '',
         provincia: clienteActualizado.ciudad || '',
+        zona: (clienteActualizado as any).zona || 'Norte',
         telefono: clienteActualizado.telefono || '',
         email: clienteActualizado.email || '',
         personaContacto: clienteActualizado.nombre,
@@ -452,6 +457,7 @@ interface PedidosState {
   guardarPedido: () => Promise<void>;
   cancelarPedido: () => void;
   cambiarEstadoPedido: (pedidoId: string, estado: Pedido['estado']) => Promise<void>;
+  marcarAlbaranDescargado: (pedidoId: string) => Promise<void>;
 }
 
 export const usePedidosStore = create<PedidosState>((set, get) => ({
@@ -472,11 +478,31 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
         clienteNombre: p.cliente.nombre,
         fecha: p.fecha,
         estado: p.estado,
-        lineas: [],
+        lineas: p.lineas.map(l => ({
+          id: l.id,
+          vinoId: l.vino.id,
+          vinoNombre: l.vino.nombre,
+          vino: l.vino as any, // Preserve full wine object if possible or just minimal
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario,
+          descuento: l.descuento,
+          subtotal: l.subtotal,
+          anada: l.anada,
+          lote: l.lote,
+          tipoBulto: l.tipoBulto,
+          cantidadBultos: l.cantidadBultos
+        })),
+        cliente: p.cliente as any, // Preserve cliente object data
         subtotal: p.subtotal,
         descuento: p.descuento,
         iva: p.iva,
         total: p.total,
+        notas: p.notas, // Add notes
+        direccionEntrega: p.direccionEnvioSnapshot || p.instruccionesEntrega || (p.cliente as any)?.direccionEnvio || (p.cliente as any)?.direccion, // Fallback logic
+        formaPago: p.formaPago, // Add payment type
+        usuario: p.usuario, // Add assigned commercial if present
+        albaranDescargado: (p as any).albaranDescargado,
+        fechaDescargaAlbaran: (p as any).fechaDescargaAlbaran,
         created_at: p.created_at
       }));
 
@@ -508,8 +534,8 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       iva: 7, // IGIC por defecto
       total: 0,
       instruccionesEntrega: '',
-      direccionEnvioSnapshot: cliente?.direccionEnvio || cliente?.direccion || '',
-      direccionEntrega: cliente?.direccionEnvio || cliente?.direccion || '', // Legacy field support
+      direccionEnvioSnapshot: (cliente as any)?.direccionEnvio || (cliente as any)?.direccion || '',
+      direccionEntrega: (cliente as any)?.direccionEnvio || (cliente as any)?.direccion || '', // Legacy field support
       formaPago: 'Contado'
     };
     set({ pedidoActual: nuevoPedido });
@@ -730,6 +756,31 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     } catch (error: any) {
       set({ error: error.message, cargando: false });
       throw error;
+    }
+  },
+
+  marcarAlbaranDescargado: async (pedidoId) => {
+    try {
+      set({ cargando: true, error: null });
+      const fecha = new Date().toISOString();
+      // Call service to update backend
+      await pedidosService.update(pedidoId, {
+        albaranDescargado: true,
+        fechaDescargaAlbaran: fecha
+      } as any);
+
+      set((state) => ({
+        pedidos: state.pedidos.map((pedido) =>
+          pedido.id === pedidoId ? {
+            ...pedido,
+            albaranDescargado: true,
+            fechaDescargaAlbaran: fecha
+          } : pedido
+        ),
+        cargando: false
+      }));
+    } catch (error: any) {
+      set({ error: error.message, cargando: false });
     }
   },
 }));

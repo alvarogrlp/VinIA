@@ -6,13 +6,13 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Save, 
-  Building2, 
-  MapPin, 
-  Phone, 
-  Mail, 
+import {
+  ArrowLeft,
+  Save,
+  Building2,
+  MapPin,
+  Phone,
+  Mail,
   User,
   Percent
 } from 'lucide-react';
@@ -37,6 +37,7 @@ export const NuevoCliente = () => {
     email: '',
     personaContacto: '',
     descuento: 0,
+    zona: 'Norte' as 'Norte' | 'Sur' | 'Santa Cruz',
     notas: ''
   });
 
@@ -96,7 +97,7 @@ export const NuevoCliente = () => {
             <Building2 className="w-5 h-5 text-primary-600" />
             <h2>Datos de la Empresa</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="nombre" className="text-sm font-medium text-secondary-700">
@@ -239,6 +240,24 @@ export const NuevoCliente = () => {
                 className="w-full input"
                 placeholder="Ej: Madrid"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="zona" className="text-sm font-medium text-secondary-700">
+                Zona de Reparto *
+              </label>
+              <select
+                id="zona"
+                name="zona"
+                value={(formData as any).zona || 'Norte'}
+                onChange={handleChange}
+                className="w-full input"
+                required
+              >
+                <option value="Norte">Norte</option>
+                <option value="Sur">Sur</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+              </select>
             </div>
           </div>
         </div>

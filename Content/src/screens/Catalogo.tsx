@@ -1,264 +1,162 @@
 /**
- * VinIA - Pantalla Catálogo de Vinos
+ * VinIA - Pantalla de Catálogo de Vinos
  * 
- * Muestra el catálogo completo de vinos con capacidad de búsqueda,
- * filtrado y vista detallada.
+ * Muestra el listado completo de vinos disponibles con opciones de búsqueda
+ * y filtrado avanzado. Permite ver detalles de cada vino.
  */
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus } from 'lucide-react';
-import { useVinosStore, useAuthStore } from '../store';
-import { VinoDetalleModal } from '../components/VinoDetalleModal';
+import { Search, Filter, Wine, X } from 'lucide-react';
+import { useVinosStore } from '../store';
 import { VinoCard } from '../components/VinoCard';
+import { VinoDetalleModal } from '../components/VinoDetalleModal';
 import type { Vino } from '../types';
 
 export const Catalogo = () => {
-  const { vinos, cargando, cargarVinos, buscarVinos } = useVinosStore();
-  const { usuario } = useAuthStore();
-  const [busqueda, setBusqueda] = useState('');
-  const [tipoFiltro, setTipoFiltro] = useState<string>('Todos');
-  const [ordenamiento, setOrdenamiento] = useState<string>('relevancia');
-  const [vinosFiltrados, setVinosFiltrados] = useState(vinos);
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
+    const { vinos, cargando, cargarVinos, buscarVinos, filtrarVinos, error } = useVinosStore();
+    const [busqueda, setBusqueda] = useState('');
+    const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
 
-  useEffect(() => {
-    cargarVinos();
-  }, [cargarVinos]);
+    // Filtros locales (podrían moverse al store si se requiere persistencia o lógica compleja)
+    const [filtroTipo, setFiltroTipo] = useState<string>('');
+    const [filtroDO, setFiltroDO] = useState<string>('');
 
-  useEffect(() => {
-    const filtrarYOrdenar = async () => {
-      let resultados = vinos;
+    useEffect(() => {
+        cargarVinos();
+    }, [cargarVinos]);
 
-      if (tipoFiltro !== 'Todos') {
-        resultados = resultados.filter((vino) => vino.tipo === tipoFiltro);
-      }
+    // Manejar búsqueda con debounce básico
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (busqueda) {
+                buscarVinos(busqueda);
+            } else {
+                cargarVinos(); // Recargar todos si se limpia la búsqueda
+            }
+        }, 500);
 
-      switch (ordenamiento) {
-        case 'precio-asc':
-          resultados = [...resultados].sort((a, b) => a.precio_unitario - b.precio_unitario);
-          break;
-        case 'precio-desc':
-          resultados = [...resultados].sort((a, b) => b.precio_unitario - a.precio_unitario);
-          break;
-        case 'nombre':
-          resultados = [...resultados].sort((a, b) => a.nombre.localeCompare(b.nombre));
-          break;
-        case 'ano':
-          resultados = [...resultados].sort((a, b) => (b.ano || 0) - (a.ano || 0));
-          break;
-        default:
-          break;
-      }
+        return () => clearTimeout(timeoutId);
+    }, [busqueda, buscarVinos, cargarVinos]);
 
-      setVinosFiltrados(resultados);
+    // Filtrado en memoria (para simplicidad por ahora, idealmente en backend si son muchos)
+    // Nota: El store ya tiene `filtrarVinos`, pero aquí lo haremos combinando local y store si es necesario.
+    // Por ahora, usamos el array `vinos` del store y filtramos visualmente.
+    const vinosFiltrados = vinos.filter(vino => {
+        if (filtroTipo && vino.tipo !== filtroTipo) return false;
+        if (filtroDO && vino.denominacion_origen !== filtroDO) return false;
+        return true;
+    });
+
+    // Obtener listas únicas para los filtros
+    const tiposVino = Array.from(new Set(vinos.map(v => v.tipo))).filter(Boolean);
+    const dosVino = Array.from(new Set(vinos.map(v => v.denominacion_origen))).filter(Boolean);
+
+    const handleVinoClick = (vino: Vino) => {
+        setVinoSeleccionado(vino);
     };
 
-    filtrarYOrdenar();
-  }, [tipoFiltro, ordenamiento, vinos]);
+    return (
+        <div className="space-y-6 animate-fade-in">
+            {/* Header y Búsqueda */}
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-secondary-900">Catálogo de Vinos</h1>
+                    <p className="text-secondary-600">Explora nuestra selección de vinos exclusivos</p>
+                </div>
 
-  useEffect(() => {
-    const realizarBusqueda = async () => {
-      if (busqueda.trim()) {
-        await buscarVinos(busqueda);
-      } else {
-        await cargarVinos();
-      }
-    };
-
-    const timeoutId = setTimeout(realizarBusqueda, 300);
-    return () => clearTimeout(timeoutId);
-  }, [busqueda]);
-
-  const handleVinoClick = (vino: Vino) => {
-    setVinoSeleccionado(vino);
-  };
-
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-secondary-900">
-            Catálogo de Vinos
-          </h1>
-          <p className="mt-2 text-secondary-600">
-            Explora nuestro catálogo completo de vinos y bodegas
-          </p>
-        </div>
-        {usuario?.rol === 'Administración' && (
-          <button
-            onClick={() => alert('Función de añadir vino: Aquí se abrirá un formulario para añadir un nuevo vino al catálogo con todos sus detalles (nombre, bodega, tipo, año, precio, DO, etc.)')}
-            className="btn-primary"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Añadir vino
-          </button>
-        )}
-      </div>
-
-      {/* Barra de búsqueda y filtros */}
-      <div className="card">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          {/* Búsqueda */}
-          <div className="relative flex-1">
-            <div className="absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none">
-              <Search className="w-5 h-5 text-secondary-400" />
+                <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="relative">
+                        <Search className="absolute w-5 h-5 text-secondary-400 left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre, bodega..."
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                            className="w-full pl-10 input min-w-[300px]"
+                        />
+                    </div>
+                </div>
             </div>
-            <input
-              type="text"
-              placeholder="Buscar por nombre, bodega, región, variedad, tipo, maridaje..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="input w-full"
-              style={{ paddingLeft: '3rem' }}
-            />
-            {busqueda && (
-              <button
-                onClick={() => setBusqueda('')}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
-                title="Limpiar búsqueda"
-              >
-                ✕
-              </button>
-            )}
-          </div>
 
-          {/* Botón filtros */}
-          <button
-            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            className="btn-outline flex items-center justify-center"
-          >
-            <Filter className="w-5 h-5 mr-2" />
-            {mostrarFiltros ? 'Ocultar filtros' : 'Más filtros'}
-          </button>
-        </div>
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-lg shadow-sm border border-secondary-200">
+                <div className="flex items-center gap-2 text-secondary-600">
+                    <Filter className="w-5 h-5" />
+                    <span className="text-sm font-medium">Filtros:</span>
+                </div>
 
-        {/* Filtros avanzados (desplegable) */}
-        {mostrarFiltros && (
-          <div className="pt-4 mt-4 space-y-4 border-t border-secondary-200">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div>
-                <label htmlFor="precioMin" className="block mb-2 text-sm font-medium text-secondary-700">Precio mínimo</label>
-                <input id="precioMin" type="number" placeholder="0 €" className="input" />
-              </div>
-              <div>
-                <label htmlFor="precioMax" className="block mb-2 text-sm font-medium text-secondary-700">Precio máximo</label>
-                <input id="precioMax" type="number" placeholder="1000 €" className="input" />
-              </div>
-              <div>
-                <label htmlFor="denominacion" className="block mb-2 text-sm font-medium text-secondary-700">Denominación de Origen</label>
-                <select id="denominacion" className="input">
-                  <option>Todas</option>
-                  <option>Rioja</option>
-                  <option>Ribera del Duero</option>
-                  <option>Priorat</option>
-                  <option>Rías Baixas</option>
-                  <option>Rueda</option>
+                <select
+                    value={filtroTipo}
+                    onChange={(e) => setFiltroTipo(e.target.value)}
+                    className="text-sm input py-1.5"
+                >
+                    <option value="">Todos los Tipos</option>
+                    {tiposVino.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                    ))}
                 </select>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => alert('Filtros aplicados')} className="btn-primary">Aplicar filtros</button>
-              <button onClick={() => { setMostrarFiltros(false); setTipoFiltro('Todos'); }} className="btn-outline">Limpiar</button>
-            </div>
-          </div>
-        )}
 
-        {/* Filtros rápidos */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          {['Todos', 'Tinto', 'Blanco', 'Rosado', 'Espumoso', 'Fortificado', 'Dulce'].map((tipo) => (
-            <button
-              key={tipo}
-              onClick={() => setTipoFiltro(tipo)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tipo === tipoFiltro
-                ? 'bg-primary-500 text-white'
-                : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-                }`}
-            >
-              {tipo}
-            </button>
-          ))}
-        </div>
-      </div>
+                <select
+                    value={filtroDO}
+                    onChange={(e) => setFiltroDO(e.target.value)}
+                    className="text-sm input py-1.5"
+                >
+                    <option value="">Todas las D.O.</option>
+                    {dosVino.map(d => (
+                        <option key={String(d)} value={String(d)}>{d}</option>
+                    ))}
+                </select>
 
-      {/* Resultados */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-secondary-600">
-            Mostrando <span className="font-medium text-secondary-900">{vinosFiltrados.length}</span> vinos
-          </p>
-          <select
-            value={ordenamiento}
-            onChange={(e) => setOrdenamiento(e.target.value)}
-            className="px-4 py-2 text-sm border rounded-lg border-secondary-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="relevancia">Ordenar por: Relevancia</option>
-            <option value="precio-asc">Precio: Menor a mayor</option>
-            <option value="precio-desc">Precio: Mayor a menor</option>
-            <option value="nombre">Nombre: A-Z</option>
-            <option value="ano">Año: Más reciente</option>
-          </select>
-        </div>
-
-        {/* Grid de vinos */}
-        {cargando ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 rounded-full border-primary-500 border-t-transparent animate-spin"></div>
-          </div>
-        ) : (
-          <>
-            {vinosFiltrados.length === 0 ? (
-              <div className="py-20 text-center card">
-                <Search className="w-16 h-16 mx-auto mb-4 text-secondary-300" />
-                <p className="text-lg font-medium text-secondary-900 mb-2">
-                  No se encontraron vinos
-                </p>
-                <p className="text-secondary-600">
-                  {(() => {
-                    if (busqueda) {
-                      return `No hay resultados para "${busqueda}". Intenta con otro término.`;
-                    }
-                    if (tipoFiltro === 'Todos') {
-                      return 'No hay vinos disponibles en el catálogo.';
-                    }
-                    return `No hay vinos del tipo ${tipoFiltro} disponibles.`;
-                  })()}
-                </p>
-                {(busqueda || tipoFiltro !== 'Todos') && (
-                  <button
-                    onClick={() => {
-                      setBusqueda('');
-                      setTipoFiltro('Todos');
-                    }}
-                    className="mt-4 btn-outline"
-                  >
-                    Limpiar filtros
-                  </button>
+                {(filtroTipo || filtroDO) && (
+                    <button
+                        onClick={() => {
+                            setFiltroTipo('');
+                            setFiltroDO('');
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 bg-red-50 rounded-md hover:bg-red-100"
+                    >
+                        <X className="w-4 h-4" />
+                        Limpiar filtros
+                    </button>
                 )}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {vinosFiltrados.map((vino) => (
-                  <VinoCard
-                    key={vino.id}
-                    vino={vino}
-                    onClick={() => handleVinoClick(vino)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
 
-      {/* Modal de Detalle */}
-      {vinoSeleccionado && (
-        <VinoDetalleModal
-          vino={vinoSeleccionado}
-          onClose={() => setVinoSeleccionado(null)}
-        />
-      )}
-    </div>
-  );
+            {/* Grid de Vinos */}
+            {cargando ? (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="h-[400px] bg-secondary-100 rounded-lg animate-pulse" />
+                    ))}
+                </div>
+            ) : error ? (
+                <div className="p-8 text-center bg-red-50 rounded-lg">
+                    <p className="text-red-600">{error}</p>
+                </div>
+            ) : vinosFiltrados.length === 0 ? (
+                <div className="py-12 text-center bg-white rounded-lg border border-dashed border-secondary-300">
+                    <Wine className="w-12 h-12 mx-auto text-secondary-300 mb-3" />
+                    <p className="text-lg font-medium text-secondary-900">No se encontraron vinos</p>
+                    <p className="text-secondary-500">Intenta con otros términos o filtros</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {vinosFiltrados.map((vino) => (
+                        <VinoCard
+                            key={vino.id}
+                            vino={vino}
+                            onClick={() => handleVinoClick(vino)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Modal de Detalle */}
+            {vinoSeleccionado && (
+                <VinoDetalleModal
+                    vino={vinoSeleccionado}
+                    onClose={() => setVinoSeleccionado(null)}
+                />
+            )}
+        </div>
+    );
 };

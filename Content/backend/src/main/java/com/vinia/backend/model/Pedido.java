@@ -76,6 +76,12 @@ public class Pedido {
     @Column(name = "instrucciones_entrega", columnDefinition = "TEXT")
     private String instruccionesEntrega;
 
+    @Column(name = "albaran_descargado")
+    private Boolean albaranDescargado = false;
+
+    @Column(name = "fecha_descarga_albaran")
+    private LocalDateTime fechaDescargaAlbaran;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties("pedido")
     private List<LineaPedido> lineas;

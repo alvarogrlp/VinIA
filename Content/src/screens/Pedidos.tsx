@@ -13,12 +13,22 @@ import {
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useAuthStore } from '../store';
 import { PedidoModal } from '../components/PedidoModal';
+import { VistaAlmacen } from '../components/VistaAlmacen';
 import { formatearPrecio } from '../utils/helpers';
 import type { Pedido, EstadoPedido } from '../types';
 
 export const Pedidos = () => {
   const navigate = useNavigate();
   const { usuario } = useAuthStore();
+
+  if (usuario?.rol === 'Almacén') {
+    return (
+      <div className="animate-fade-in pb-20">
+        <VistaAlmacen />
+      </div>
+    );
+  }
+
   const { pedidos, cargando, cargarPedidos, cambiarEstadoPedido } = usePedidosStore();
   const { clientes, cargarClientes } = useClientesStore();
 

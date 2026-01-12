@@ -43,6 +43,9 @@ public class Cliente {
     @Column(nullable = false, length = 100)
     private String provincia;
 
+    @Column(nullable = false, length = 50)
+    private String zona; // Norte, Sur, Santa Cruz
+
     @Column(nullable = false, length = 20)
     private String telefono;
 

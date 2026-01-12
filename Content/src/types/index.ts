@@ -134,6 +134,7 @@ export interface Cliente {
   ciudad: string;
   codigoPostal: string;
   provincia: string;
+  zona: 'Norte' | 'Sur' | 'Santa Cruz';
   telefono: string;
   email: string;
   personaContacto: string;
@@ -161,6 +162,10 @@ export type EstadoPedido =
   | 'Confirmado'
   | 'En Preparación'
   | 'EN_PREPARACION'
+  | 'Listo para Reparto'
+  | 'LISTO_PARA_REPARTO'
+  | 'Enviado'
+  | 'ENVIADO'
   | 'En Reparto'
   | 'EN_REPARTO'
   | 'Entregado'
@@ -214,6 +219,9 @@ export interface Pedido {
   // Campos de usuario (Comercial)
   usuarioId?: string;
   usuario?: Usuario;
+  // Campos de Albarán
+  albaranDescargado?: boolean;
+  fechaDescargaAlbaran?: string;
   created_at?: string;
   updated_at?: string;
 }

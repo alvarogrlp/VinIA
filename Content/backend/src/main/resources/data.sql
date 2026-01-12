@@ -1,21 +1,24 @@
 -- Clientes
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000001', 'Restaurante El Mirador', 'B12345678', 'Restaurante', 'Calle Mayor 10', 'Madrid', '28001', 'Madrid', '912345678', 'contacto@elmirador.com', 'Juan Pérez', 10.00, 'Cliente premium', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000001', 'Restaurante El Mirador', 'B12345678', 'Restaurante', 'Calle Mayor 10', 'Madrid', '28001', 'Madrid', 'Norte', '912345678', 'contacto@elmirador.com', 'Juan Pérez', 10.00, 'Cliente premium', true, NOW(), NOW());
 
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000002', 'Vinoteca La Barrica', 'B87654321', 'Tienda Especializada', 'Av. Constitución 45', 'Barcelona', '08001', 'Barcelona', '934567890', 'pedidos@labarrica.es', 'Ana García', 15.00, 'Buen pagador', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000002', 'Vinoteca La Barrica', 'B87654321', 'Tienda Especializada', 'Av. Constitución 45', 'Barcelona', '08001', 'Barcelona', 'Norte', '934567890', 'pedidos@labarrica.es', 'Ana García', 15.00, 'Buen pagador', true, NOW(), NOW());
 
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000003', 'Hotel Gran Plaza', 'A11223344', 'Hotel', 'Plaza España 1', 'Sevilla', '41001', 'Sevilla', '954112233', 'compras@granplaza.com', 'Carlos Ruiz', 12.00, 'Solicita factura mensual', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000003', 'Hotel Gran Plaza', 'A11223344', 'Hotel', 'Plaza España 1', 'Sevilla', '41001', 'Sevilla', 'Sur', '954112233', 'compras@granplaza.com', 'Carlos Ruiz', 12.00, 'Solicita factura mensual', true, NOW(), NOW());
 
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000004', 'Catering Delicias', 'B99887766', 'Catering', 'Polígono Industrial Norte 23', 'Valencia', '46001', 'Valencia', '963334455', 'info@cateringdelicias.com', 'Laura M.', 8.00, 'Pedidos grandes puntuales', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000004', 'Catering Delicias', 'B99887766', 'Catering', 'Polígono Industrial Norte 23', 'Valencia', '46001', 'Valencia', 'Sur', '963334455', 'info@cateringdelicias.com', 'Laura M.', 8.00, 'Pedidos grandes puntuales', true, NOW(), NOW());
 
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000005', 'Restaurante Casa Pepe', 'B55443322', 'Restaurante', 'Calle del Pez 4', 'Madrid', '28004', 'Madrid', '915556677', 'reservas@casapepe.com', 'Pepe', 5.00, 'Pago contado', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000005', 'Restaurante Casa Pepe', 'B55443322', 'Restaurante', 'Calle del Pez 4', 'Madrid', '28004', 'Madrid', 'Norte', '915556677', 'reservas@casapepe.com', 'Pepe', 5.00, 'Pago contado', true, NOW(), NOW());
 
-INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
-VALUES ('c1000000-0000-0000-0000-000000000006', 'Gourmet Selection', 'A22334455', 'Tienda Online', 'Calle Logística 9', 'Zaragoza', '50001', 'Zaragoza', '976112233', 'proveedores@gourmetsel.com', 'Sofia V.', 18.00, 'Volumen alto', true, NOW(), NOW());
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000006', 'Gourmet Selection', 'A22334455', 'Tienda Online', 'Calle Logística 9', 'Zaragoza', '50001', 'Zaragoza', 'Norte', '976112233', 'proveedores@gourmetsel.com', 'Sofia V.', 18.00, 'Volumen alto', true, NOW(), NOW());
+
+INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, provincia, zona, telefono, email, persona_contacto, descuento, notas, activo, created_at, updated_at) 
+VALUES ('c1000000-0000-0000-0000-000000000007', 'Restaurante El Drago', 'B38000001', 'Restaurante', 'Calle El Drago 5', 'Santa Cruz', '38001', 'Santa Cruz de Tenerife', 'Santa Cruz', '922000111', 'administracion@eldrago.com', 'Manuel H.', 5.00, 'Cliente local', true, NOW(), NOW());
 
 
 -- Usuarios (Admin y Comerciales)
