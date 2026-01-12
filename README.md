@@ -44,7 +44,7 @@ El núcleo de la evolución futura de VinIA es la integración de un **Asistente
 🔴 **Haz clic en el icono para ver el video demo**  
 👇  
 <a href="https://youtu.be/chMul1mp6QY">
-  <img src="Resources/Images/Logo.png" width="200" style="border-radius: 50%;" alt="Ver demo en YouTube"/>
+  <img src="Resources/Images/Logo.png" width="200" alt="Ver demo en YouTube"/>
 </a>
 
 > 🎬 En este video se muestra una versión **muy temprana** de desarrollo, hay varios errores y limitaciones.
