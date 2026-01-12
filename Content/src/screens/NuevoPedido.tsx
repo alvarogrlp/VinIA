@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   Plus,
@@ -7,14 +7,17 @@ import {
   Save,
   User,
   ShoppingCart,
-  ArrowLeft
+  ArrowLeft,
+  History
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useVinosStore } from '../store';
+import { api } from '../lib/api';
 import { formatearPrecio } from '../utils/helpers';
 import { ConfirmModal } from '../components/ConfirmModal';
 
 export const NuevoPedido = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     pedidoActual,
     crearPedido,
@@ -37,6 +40,10 @@ export const NuevoPedido = () => {
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState<string | null>(null);
   const [mostrarBuscadorVinos, setMostrarBuscadorVinos] = useState(false);
 
+  // Historial de productos
+  const [productosHabituales, setProductosHabituales] = useState<any[]>([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState({
@@ -55,9 +62,113 @@ export const NuevoPedido = () => {
     cargarClientes();
     cargarVinos();
 
-    // Limpiar pedido anterior al entrar
-    cancelarPedido();
+    // Limpiar pedido anterior al entrar si no venimos de repetir
+    if (!location.state) {
+      cancelarPedido();
+    }
   }, [cargarClientes, cargarVinos, cancelarPedido]);
+
+  // Manejar "Repetir Pedido" desde state del router
+  useEffect(() => {
+    if (location.state && location.state.clienteId && clientes.length > 0) {
+      const { clienteId, lineas, direccionEnvio, instrucciones } = location.state;
+
+      // Inicializar pedido para el cliente
+      setClienteSeleccionadoId(clienteId);
+      crearPedido(clienteId);
+
+      // Añadir las líneas del pedido anterior
+      // Usamos setTimeout para asegurar que el estado de 'crearPedido' se haya procesado (aunque en zustand suele ser síncrono, ayuda con el batching de React)
+      setTimeout(() => {
+        if (lineas && Array.isArray(lineas)) {
+          lineas.forEach((linea: any) => {
+            agregarLineaPedido({
+              vinoId: linea.vinoId,
+              vinoNombre: linea.vinoNombre,
+              cantidad: linea.cantidad,
+              precioUnitario: linea.precioUnitario,
+              descuento: linea.descuento,
+              subtotal: linea.subtotal,
+              anada: linea.anada,
+              tipoBulto: linea.tipoBulto,
+              cantidadBultos: linea.cantidadBultos
+            });
+          });
+        }
+        if (direccionEnvio) actualizarPedido({ direccionEnvioSnapshot: direccionEnvio });
+        if (instrucciones) actualizarPedido({ instruccionesEntrega: instrucciones });
+
+        // Limpiar el state para no re-ejecutar si recarga
+        window.history.replaceState({}, document.title);
+      }, 100);
+    }
+  }, [location.state, clientes.length]); // Dependencia en clientes.length para asegurar que ya cargaron
+
+  // Cargar historial de productos cuando se selecciona un cliente
+  useEffect(() => {
+    const fetchHistorial = async () => {
+      if (!clienteSeleccionadoId) {
+        setProductosHabituales([]);
+        return;
+      }
+
+      try {
+        setCargandoHistorial(true);
+        const data: any[] = await api.get(`/pedidos?clienteId=${clienteSeleccionadoId}`);
+
+        // Procesar historial para contar frecuencias
+        const stats = new Map();
+        data.forEach(pedido => {
+          // Usamos un Set para contar solo una vez por pedido si el mismo vino aparece varias veces (raro pero posible)
+          const vinosEnPedido = new Set();
+
+          pedido.lineas.forEach((linea: any) => {
+            // Intentar obtener el nombre más fiable
+            const nombre = linea.vino?.nombre || linea.vinoNombre || 'Producto desconocido';
+            const vinoId = linea.vinoId || linea.vino?.id; // ID preferido
+
+            // Clave única: ID si existe, sino Nombre
+            const key = vinoId || nombre;
+
+            if (vinosEnPedido.has(key)) return; // Ya contamos este vino para este pedido
+            vinosEnPedido.add(key);
+
+            if (!stats.has(key)) {
+              stats.set(key, {
+                id: vinoId,
+                nombre: nombre,
+                vecesPedido: 0,
+                ultimaAnada: linea.anada || linea.vino?.ano,
+              });
+            }
+
+            const item = stats.get(key);
+            item.vecesPedido += 1;
+            // Actualizar nombre si tenemos uno mejor ahora (ej. antes era null)
+            if (item.nombre === 'Producto desconocido' && nombre !== 'Producto desconocido') {
+              item.nombre = nombre;
+            }
+            // Mantener anada más reciente si la hay
+            if (linea.anada) item.ultimaAnada = linea.anada;
+          });
+        });
+
+        // Convertir a array, filtrar (min 2 pedidos) y ordenar por frecuencia
+        const habituales = Array.from(stats.values())
+          .filter(item => item.vecesPedido >= 2)
+          .sort((a, b) => b.vecesPedido - a.vecesPedido)
+          .slice(0, 5); // Top 5
+
+        setProductosHabituales(habituales);
+      } catch (error) {
+        console.error("Error cargando historial de productos", error);
+      } finally {
+        setCargandoHistorial(false);
+      }
+    };
+
+    fetchHistorial();
+  }, [clienteSeleccionadoId]);
 
   // Filtrar clientes
   const clientesFiltrados = clientes.filter(c =>
@@ -86,7 +197,7 @@ export const NuevoPedido = () => {
 
   const handleAgregarVino = (vino: any) => {
     if (!pedidoActual) return;
-
+    // (Lógica existente de agregar vino)
     // Verificar stock
     if (vino.stock <= 0) {
       showModal('Stock Agotado', 'No hay stock disponible para este producto', 'danger');
@@ -96,6 +207,7 @@ export const NuevoPedido = () => {
     // Verificar si ya existe
     const existe = pedidoActual.lineas.find(l => l.vinoId === vino.id);
     if (existe) {
+      // ... (misma lógica de antes)
       if (existe.cantidad + 1 > vino.stock) {
         showModal('Stock Insuficiente', 'No hay suficiente stock disponible para agregar más unidades.', 'warning');
         return;
@@ -119,6 +231,22 @@ export const NuevoPedido = () => {
     }
     setBusquedaVino('');
     setMostrarBuscadorVinos(false);
+  };
+
+  // Handler para agregar desde historial (busca el vino en la lista actual para validar stock etc)
+  const handleAgregarDesdeHistorial = (itemHistorial: any) => {
+    // Buscar el vino actual en el store para tener datos frescos de stock y precio
+    // Intentamos por ID primero, luego por nombre
+    let vinoEncontraado = vinos.find(v => v.id === itemHistorial.id);
+    if (!vinoEncontraado) {
+      vinoEncontraado = vinos.find(v => v.nombre === itemHistorial.nombre);
+    }
+
+    if (vinoEncontraado) {
+      handleAgregarVino(vinoEncontraado);
+    } else {
+      showModal('Producto no disponible', 'Este producto del historial ya no se encuentra en el catálogo activo.', 'warning');
+    }
   };
 
   const handleUpdateBultos = (linea: any, nuevoTipo: 'BOTELLA' | 'CAJA', nuevosBultos: number) => {
@@ -164,6 +292,7 @@ export const NuevoPedido = () => {
   };
 
   if (!clienteSeleccionadoId) {
+    // (Render de selección de cliente - sin cambios importantes, solo imports)
     return (
       <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
@@ -262,6 +391,39 @@ export const NuevoPedido = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Columna Izquierda: Buscador y Productos */}
         <div className="space-y-6 lg:col-span-2">
+          {/* Historial de Productos Habituales */}
+          {cargandoHistorial ? (
+            <div className="card bg-primary-50 border-primary-100 flex items-center justify-center p-8">
+              <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : productosHabituales.length > 0 && (
+            <div className="card bg-primary-50 border-primary-100">
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-5 h-5 text-primary-600" />
+                <h2 className="text-lg font-semibold text-primary-900">Productos Habituales</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {productosHabituales.map((item, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleAgregarDesdeHistorial(item)}
+                    className="flex flex-col items-start p-3 text-left transition-all bg-white border rounded-lg border-primary-100 hover:border-primary-400 hover:shadow-md group"
+                  >
+                    <div className="flex items-center justify-between w-full mb-1">
+                      <h3 className="font-medium text-secondary-900 line-clamp-1 group-hover:text-primary-700">
+                        {item.nombre}
+                      </h3>
+                      <Plus className="w-4 h-4 text-primary-400 group-hover:text-primary-600" />
+                    </div>
+                    <span className="text-xs text-secondary-500">
+                      Pedido {item.vecesPedido} veces
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Buscador de productos */}
           <div className="card">
             <h2 className="mb-4 text-lg font-semibold text-secondary-900">Agregar Productos</h2>
@@ -448,7 +610,7 @@ export const NuevoPedido = () => {
 
         {/* Payment Method */}
         <div className="card bg-white border-secondary-100 mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="col-span-2">
             <h2 className="mb-2 text-lg font-semibold text-secondary-900">Forma de Pago</h2>
             <select
               value={pedidoActual?.formaPago || 'Contado'}
@@ -461,18 +623,6 @@ export const NuevoPedido = () => {
               <option value="Giro 30 días">Giro 30 días</option>
               <option value="Giro 60 días">Giro 60 días</option>
             </select>
-          </div>
-          <div>
-            <h2 className="mb-2 text-lg font-semibold text-secondary-900">Comercial Asignado</h2>
-            <select
-              value={pedidoActual?.usuarioId || ''}
-              onChange={(e) => actualizarPedido({ usuarioId: e.target.value })}
-              className="w-full input"
-              disabled
-            >
-              <option value="">Seleccionar Comercial (No disponible)</option>
-            </select>
-            <p className="text-xs text-red-400 mt-1">Gestión de usuarios no cargada</p>
           </div>
         </div>
 

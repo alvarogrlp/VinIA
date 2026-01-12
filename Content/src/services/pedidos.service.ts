@@ -82,6 +82,7 @@ export const pedidosService = {
       instruccionesEntrega: pedidoData.instruccionesEntrega,
       direccionEnvioSnapshot: pedidoData.direccionEnvioSnapshot,
       formaPago: pedidoData.formaPago,
+      usuario: pedidoData.usuario ? { id: pedidoData.usuario.id } : (pedidoData.usuarioId ? { id: pedidoData.usuarioId } : undefined),
       lineas: lineasData.map(linea => ({
         vino: { id: linea.vinoId },
         cantidad: linea.cantidad,

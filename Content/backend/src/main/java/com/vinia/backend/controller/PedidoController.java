@@ -49,7 +49,7 @@ public class PedidoController {
     }
 
     @PostMapping("/{id}/estado")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ALMACEN', 'REPARTIDOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ALMACEN', 'REPARTIDOR', 'COMERCIAL')")
     public ResponseEntity<Pedido> updateStatus(@PathVariable String id, @RequestBody String estado) {
         try {
             // Simple parsing if body is just the string or JSON
@@ -59,7 +59,8 @@ public class PedidoController {
             }
             return ResponseEntity.ok(pedidoService.updateStatus(id, estado));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

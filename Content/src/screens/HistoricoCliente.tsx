@@ -7,21 +7,37 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Calendar, Filter, Download, ChevronDown, ChevronUp, Package, CheckSquare } from 'lucide-react';
-import { useClientesStore } from '../store';
+import { ArrowLeft, Search, Calendar, Filter, ChevronDown, ChevronUp, Package, CheckSquare } from 'lucide-react';
+import { useClientesStore, usePedidosStore, useAuthStore } from '../store';
 import { api } from '../lib/api';
 import { formatearPrecio } from '../utils/helpers';
 import type { Pedido, Vino } from '../types';
 import { VinoDetalleModal } from '../components/VinoDetalleModal';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const HistoricoCliente = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { usuario } = useAuthStore();
     const { clientes, cargarClientes } = useClientesStore();
+    const { cambiarEstadoPedido } = usePedidosStore();
+
+    const esCancelable = (estado: string) => {
+        if (!estado) return false;
+        const s = estado.toUpperCase().replace(/_/g, ' ').replace(/Á/g, 'A').replace(/Ó/g, 'O').trim();
+        return ['PENDIENTE VALIDACION', 'PENDIENTE', 'BORRADOR', 'PENDIENTE DE VALIDACION'].includes(s);
+    };
 
     const [pedidos, setPedidos] = useState<Pedido[]>([]);
     const [cargando, setCargando] = useState(true);
     const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
+
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+    });
 
     // Filtros
     const [busqueda, setBusqueda] = useState('');
@@ -45,6 +61,10 @@ export const HistoricoCliente = () => {
             cargarHistorial();
         }
     }, [id]);
+
+    const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+        setConfirmModal({ isOpen: true, title, message, onConfirm });
+    };
 
     const cargarHistorial = async () => {
         try {
@@ -88,6 +108,44 @@ export const HistoricoCliente = () => {
             newSet.add(pedidoId);
         }
         setPedidosExpandidos(newSet);
+    };
+
+    const handleCancelarPedido = (e: React.MouseEvent, pedidoId: string) => {
+        e.stopPropagation();
+        showConfirm('Cancelar Pedido', '¿Está seguro de que desea cancelar este pedido? El stock será devuelto.', async () => {
+            try {
+                await cambiarEstadoPedido(pedidoId, 'CANCELADO' as any);
+                await cargarHistorial(); // Refrescar lista
+            } catch (error) {
+                console.error('Error al cancelar pedido', error);
+            }
+        });
+    };
+
+    const handleRepetirPedido = (pedido: Pedido) => {
+        // Navegar a nuevo pedido pasando los datos del pedido actual
+        // Mapeamos las líneas al formato esperado por agregarLineaPedido
+        const lineasParaRepetir = pedido.lineas.map(l => ({
+            vinoId: l.vino?.id || l.vinoId, // Intentar obtener ID si está disponible
+            vinoNombre: l.vinoNombre,
+            cantidad: l.cantidad,
+            precioUnitario: l.precioUnitario,
+            descuento: l.descuento || 0,
+            subtotal: l.subtotal || 0,
+            anada: l.anada,
+            tipoBulto: l.tipoBulto || 'BOTELLA',
+            cantidadBultos: l.cantidadBultos || l.cantidad,
+            vino: l.vino // Pasamos objeto vino completo si existe
+        }));
+
+        navigate('/pedidos/nuevo', {
+            state: {
+                clienteId: cliente?.id,
+                lineas: lineasParaRepetir,
+                direccionEnvio: pedido.direccionEnvioSnapshot,
+                instrucciones: pedido.instruccionesEntrega
+            }
+        });
     };
 
     const pedidosFiltrados = useMemo(() => {
@@ -151,7 +209,8 @@ export const HistoricoCliente = () => {
                             placeholder="Buscar producto o nº pedido..."
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            className="input w-full !pl-10 text-sm"
+                            className="input w-full text-sm"
+                            style={{ paddingLeft: '3rem' }}
                         />
                     </div>
 
@@ -243,7 +302,24 @@ export const HistoricoCliente = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-6 mt-4 sm:mt-0">
+                                <div className="flex items-center gap-3 mt-4 sm:mt-0 min-w-fit">
+                                    {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
+                                        <button
+                                            onClick={(e) => handleCancelarPedido(e, pedido.id)}
+                                            className="text-xs px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-sm"
+                                        >
+                                            CANCELAR
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRepetirPedido(pedido);
+                                        }}
+                                        className="text-sm px-3 py-1 mr-2 rounded-full bg-primary-100 text-primary-700 font-medium hover:bg-primary-200 transition-colors"
+                                    >
+                                        Repetir Pedido
+                                    </button>
                                     <span className="text-sm px-3 py-1 rounded-full bg-white border border-secondary-200 text-secondary-700 font-medium">
                                         {pedido.estado.replace(/_/g, ' ')}
                                     </span>
@@ -334,6 +410,14 @@ export const HistoricoCliente = () => {
                     onClose={() => setVinoSeleccionado(null)}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+            />
         </div>
     );
 };

@@ -72,7 +72,8 @@ export const Catalogo = () => {
                             placeholder="Buscar por nombre, bodega..."
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
-                            className="w-full pl-10 input min-w-[300px]"
+                            className="w-full input min-w-[300px]"
+                            style={{ paddingLeft: '3rem' }}
                         />
                     </div>
                 </div>

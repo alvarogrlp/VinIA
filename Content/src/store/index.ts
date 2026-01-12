@@ -519,7 +519,11 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
 
   crearPedido: (clienteId: string) => {
     const { clientes } = useClientesStore.getState();
+    const { usuario } = useAuthStore.getState();
     const cliente = clientes.find(c => c.id === clienteId);
+
+    // Prefer assigned commercial, otherwise current user
+    const comercial = (cliente as any)?.usuario || usuario;
 
     const nuevoPedido: Pedido = {
       id: `temp-${Date.now()}`,
@@ -536,7 +540,9 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       instruccionesEntrega: '',
       direccionEnvioSnapshot: (cliente as any)?.direccionEnvio || (cliente as any)?.direccion || '',
       direccionEntrega: (cliente as any)?.direccionEnvio || (cliente as any)?.direccion || '', // Legacy field support
-      formaPago: 'Contado'
+      formaPago: 'Contado',
+      usuario: comercial || undefined,
+      usuarioId: comercial?.id
     };
     set({ pedidoActual: nuevoPedido });
   },
@@ -732,6 +738,10 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
         pedidoActual: null,
         cargando: false
       }));
+
+      // Refresh stock
+      useVinosStore.getState().cargarVinos();
+
     } catch (error: any) {
       set({ error: error.message, cargando: false });
       throw error;

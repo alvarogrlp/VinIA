@@ -8,18 +8,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, Plus, Calendar, Filter, Eye, CheckCircle,
+  Search, Plus, Eye,
   Truck, Package, FileText, AlertTriangle
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useAuthStore } from '../store';
 import { PedidoModal } from '../components/PedidoModal';
 import { VistaAlmacen } from '../components/VistaAlmacen';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { formatearPrecio } from '../utils/helpers';
 import type { Pedido, EstadoPedido } from '../types';
 
 export const Pedidos = () => {
   const navigate = useNavigate();
   const { usuario } = useAuthStore();
+  const esCancelable = (estado: string) => {
+    if (!estado) return false;
+    const s = estado.toUpperCase().replace(/_/g, ' ').replace(/Á/g, 'A').replace(/Ó/g, 'O').trim();
+    return ['PENDIENTE VALIDACION', 'PENDIENTE', 'BORRADOR', 'PENDIENTE DE VALIDACION'].includes(s);
+  };
 
   if (usuario?.rol === 'Almacén') {
     return (
@@ -29,12 +35,19 @@ export const Pedidos = () => {
     );
   }
 
-  const { pedidos, cargando, cargarPedidos, cambiarEstadoPedido } = usePedidosStore();
+  const { pedidos, cargarPedidos, cambiarEstadoPedido } = usePedidosStore();
   const { clientes, cargarClientes } = useClientesStore();
 
   const [busqueda, setBusqueda] = useState('');
   const [tabActiva, setTabActiva] = useState<string>('todos');
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<Pedido | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => { },
+  });
 
   useEffect(() => {
     cargarPedidos();
@@ -92,7 +105,7 @@ export const Pedidos = () => {
 
     // Filtro por Tab
     if (tabActiva === 'validacion') {
-      filtered = filtered.filter(p => p.estado === 'Pendiente de Validación' as any || p.estado === 'Pendiente' as any); // Check enum mapping
+      filtered = filtered.filter(p => p.estado === 'Pendiente de Validación' || p.estado === 'PENDIENTE_VALIDACION' || p.estado === 'Pendiente' || p.estado === 'PENDIENTE');
     } else if (tabActiva === 'picking') {
       filtered = filtered.filter(p => p.estado === 'En Preparación');
     } else if (tabActiva === 'reparto') {
@@ -119,24 +132,35 @@ export const Pedidos = () => {
 
 
   // Acciones
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmModal({ isOpen: true, title, message, onConfirm });
+  };
+
   const handleAprobar = async (id: string) => {
-    if (window.confirm('¿Aprobar pedido y liberar riesgo?')) {
+    showConfirm('Aprobar Pedido', '¿Aprobar pedido y liberar riesgo?', async () => {
       await cambiarEstadoPedido(id, 'En Preparación');
-      alert('Pedido aprobado.');
       cargarPedidos(); // Refresh to update risk/state
-    }
+    });
   };
 
   const handlePreparado = async (id: string) => {
-    if (window.confirm('¿Marcar como preparado y descontar stock?')) {
+    showConfirm('Confirmar Preparación', '¿Marcar como preparado y descontar stock?', async () => {
       try {
         await cambiarEstadoPedido(id, 'En Reparto');
-        alert('Stock descontado. Pedido en reparto.');
         cargarPedidos();
       } catch (e: any) {
-        alert('Error: ' + e.message);
+        console.error('Error: ' + e.message);
       }
-    }
+    });
+  };
+
+  const handleCancelar = (id: string) => {
+    showConfirm('Cancelar Pedido', '¿Está seguro de que desea cancelar este pedido? Se devolverá el stock.', async () => {
+      try {
+        await cambiarEstadoPedido(id, 'CANCELADO');
+        cargarPedidos();
+      } catch (e) { console.error(e); }
+    });
   };
 
   const handleEntregar = async (id: string) => {
@@ -155,7 +179,6 @@ export const Pedidos = () => {
   const handleCambiarEstadoDesdeModal = async (id: string, nuevoEstado: EstadoPedido) => {
     try {
       await cambiarEstadoPedido(id, nuevoEstado);
-      alert('Estado actualizado correctamente');
       cargarPedidos();
       // Update local state to reflect change immediately in modal if open, though closeModal refreshes list
       // simpler to just close or re-fetch.
@@ -240,7 +263,8 @@ export const Pedidos = () => {
             placeholder="Buscar por cliente o número de pedido..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="input w-full pl-12"
+            className="input w-full"
+            style={{ paddingLeft: '3rem' }}
           />
         </div>
       </div>
@@ -250,7 +274,7 @@ export const Pedidos = () => {
         <table className="table w-full">
           <thead className="bg-secondary-50">
             <tr>
-              <text-left className="p-4">Pedido</text-left>
+              <th className="p-4 text-left">Pedido</th>
               <th className="p-4 text-left">Cliente</th>
               <th className="p-4 text-left">Fecha</th>
               <th className="p-4 text-left">Forma Pago</th>
@@ -285,36 +309,48 @@ export const Pedidos = () => {
                 <td className="p-4 text-right font-bold text-secondary-900">
                   {formatearPrecio(pedido.total)}
                 </td>
-                <td className="p-4 flex justify-center gap-2">
-                  {/* Validation Actions */}
-                  {tabActiva === 'validacion' && (pedido.estado === 'PENDIENTE_VALIDACION' || pedido.estado === 'Pendiente de Validación') && (
-                    <button onClick={() => handleAprobar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-green-600 hover:bg-green-700">
-                      Aprobar
-                    </button>
-                  )}
+                <td className="p-4">
+                  <div className="flex justify-center gap-2 items-center">
+                    {/* Cancel Action for Commercial & Admin */}
+                    {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
+                      <button
+                        onClick={() => handleCancelar(pedido.id)}
+                        className="px-3 py-1 text-[10px] font-bold bg-red-600 text-white rounded hover:bg-red-700 transition-all shadow-sm"
+                      >
+                        CANCELAR
+                      </button>
+                    )}
 
-                  {/* Picking Actions */}
-                  {tabActiva === 'picking' && (pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') && (
-                    <button onClick={() => handlePreparado(pedido.id)} className="btn-primary py-1 px-3 text-xs">
-                      Preparado
-                    </button>
-                  )}
+                    {/* Validation Actions */}
+                    {tabActiva === 'validacion' && (pedido.estado === 'PENDIENTE_VALIDACION' || pedido.estado === 'Pendiente de Validación') && (
+                      <button onClick={() => handleAprobar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-green-600 hover:bg-green-700">
+                        Aprobar
+                      </button>
+                    )}
 
-                  {/* Delivery Actions */}
-                  {(tabActiva === 'reparto' || tabActiva === 'envios') && (pedido.estado === 'EN_REPARTO' || pedido.estado === 'En Reparto') && usuario?.rol !== 'Almacén' && (
-                    <button onClick={() => handleEntregar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
-                      Entregar
-                    </button>
-                  )}
+                    {/* Picking Actions */}
+                    {tabActiva === 'picking' && (pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') && (
+                      <button onClick={() => handlePreparado(pedido.id)} className="btn-primary py-1 px-3 text-xs">
+                        Preparado
+                      </button>
+                    )}
 
-                  {/* Details (Always visible) */}
-                  <button
-                    onClick={() => handleVerDetalles(pedido)}
-                    className="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
-                    title="Ver detalles completos"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
+                    {/* Delivery Actions */}
+                    {(tabActiva === 'reparto' || tabActiva === 'envios') && (pedido.estado === 'EN_REPARTO' || pedido.estado === 'En Reparto') && usuario?.rol !== 'Almacén' && (
+                      <button onClick={() => handleEntregar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
+                        Entregar
+                      </button>
+                    )}
+
+                    {/* Details (Always visible) */}
+                    <button
+                      onClick={() => handleVerDetalles(pedido)}
+                      className="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                      title="Ver detalles completos"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -336,6 +372,14 @@ export const Pedidos = () => {
           rol={usuario?.rol}
         />
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };

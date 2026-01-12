@@ -286,6 +286,7 @@ export const VistaAlmacen = () => {
     const getSiguienteEstado = (estadoActual: EstadoPedido): { label: string; estado: EstadoPedido; color: string } | null => {
         const estado = estadoActual.toString().toUpperCase().replace(/_/g, ' ');
 
+        if (estado.includes('PENDIENTE')) return { label: 'Validar', estado: 'EN_PREPARACION' as any, color: 'bg-primary-100 text-primary-800 hover:bg-primary-200' };
         if (estado === 'EN PREPARACION') return { label: 'Listo para Reparto', estado: 'LISTO_PARA_REPARTO' as any, color: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' };
         if (estado === 'LISTO PARA REPARTO') return { label: 'Enviar (En Reparto)', estado: 'EN_REPARTO' as any, color: 'bg-blue-100 text-blue-800 hover:bg-blue-200' };
         if (estado === 'EN REPARTO') return { label: 'Entregado', estado: 'ENTREGADO' as any, color: 'bg-green-100 text-green-800 hover:bg-green-200' };

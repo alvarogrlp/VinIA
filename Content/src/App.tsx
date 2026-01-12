@@ -82,7 +82,14 @@ function App() {
           <Route path="clientes/:id/historico" element={<HistoricoCliente />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
-          <Route path="facturas" element={<Facturas />} />
+          <Route
+            path="facturas"
+            element={
+              <ProtectedRoute allowedRoles={['Administración']}>
+                <Facturas />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="inventario"
             element={

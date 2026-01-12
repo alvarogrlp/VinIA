@@ -65,14 +65,22 @@ public class PedidoService {
         if (pedido.getTotal() == null)
             pedido.setTotal(BigDecimal.ZERO);
 
-        // 4. Link Lines (Don't deduct stock yet!)
+        // 4. Link Lines AND DEDUCT STOCK
         if (pedido.getLineas() != null) {
             for (LineaPedido linea : pedido.getLineas()) {
                 linea.setPedido(pedido);
-                // Optional: Check existence of wine, but don't lock stock yet
-                if (!vinoRepository.existsById(linea.getVino().getId())) {
-                    throw new RuntimeException("Vino no encontrado: " + linea.getVino().getId());
+
+                Vino vino = vinoRepository.findById(linea.getVino().getId())
+                        .orElseThrow(() -> new RuntimeException("Vino " + linea.getVino().getId() + " no encontrado"));
+
+                if (vino.getStock() < linea.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente para: " + vino.getNombre() +
+                            ". Solicitado: " + linea.getCantidad() + ", Disponible: " + vino.getStock());
                 }
+
+                // Deduct stock immediately to reserve it
+                vino.setStock(vino.getStock() - linea.getCantidad());
+                vinoRepository.save(vino);
             }
         }
 
@@ -93,8 +101,7 @@ public class PedidoService {
             pedido.setEstado(EstadoPedido.EN_PREPARACION);
             pedido.setBloqueado(false);
 
-            // Update client risk immediately? Or on invoice?
-            // Usually on Picking or Delivery, but let's reserve risk now.
+            // Update client risk immediately
             cliente.setRiesgoActual(deudaTotal);
             clienteRepository.save(cliente);
         }
@@ -127,23 +134,31 @@ public class PedidoService {
             clienteRepository.save(cliente);
         }
 
-        // 2. Picking (Preparacion -> Reparto) -> DEDUCT STOCK
-        if (oldState == EstadoPedido.EN_PREPARACION && nuevoEstado == EstadoPedido.EN_REPARTO) {
+        // 2. Cancellation (Restore Stock)
+        if (nuevoEstado == EstadoPedido.CANCELADO && oldState != EstadoPedido.CANCELADO) {
             for (LineaPedido linea : pedido.getLineas()) {
                 Vino vino = vinoRepository.findById(linea.getVino().getId())
                         .orElseThrow(() -> new RuntimeException("Vino " + linea.getVino().getId() + " no encontrado"));
 
-                if (vino.getStock() < linea.getCantidad()) {
-                    throw new RuntimeException("Stock insuficiente para: " + vino.getNombre());
-                }
-                vino.setStock(vino.getStock() - linea.getCantidad());
+                // Restore stock
+                vino.setStock(vino.getStock() + linea.getCantidad());
                 vinoRepository.save(vino);
+            }
+
+            // If it was counted in risk, remove it?
+            // If it was PENDIENTE_VALIDACION, it wasn't added to risk yet (line 98 logic).
+            // If it was EN_PREPARACION, it WAS added.
+            if (!Boolean.TRUE.equals(pedido.getBloqueado()) && oldState != EstadoPedido.PENDIENTE_VALIDACION) {
+                com.vinia.backend.model.Cliente cliente = pedido.getCliente();
+                if (cliente.getRiesgoActual().compareTo(pedido.getTotal()) >= 0) {
+                    cliente.setRiesgoActual(cliente.getRiesgoActual().subtract(pedido.getTotal()));
+                    clienteRepository.save(cliente);
+                }
             }
         }
 
-        // 3. Delivery (Reparto -> Entregado)
-        // logic handled in controller (signature saving) or separate method.
-        // Here just state change.
+        // 3. Delivery (Reparto -> Entregado) handled elsewhere or just state change
+        // here.
 
         pedido.setEstado(nuevoEstado);
         return pedidoRepository.save(pedido);

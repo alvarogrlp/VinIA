@@ -33,7 +33,7 @@ export const Layout = () => {
     { path: '/catalogo', icon: GlassWater, label: 'Catálogo', roles: ['Administración', 'Comercial'] },
     { path: '/clientes', icon: Users, label: 'Clientes', roles: ['Administración', 'Comercial'] },
     { path: '/pedidos', icon: ShoppingCart, label: 'Pedidos', roles: ['Comercial', 'Almacén'] },
-    { path: '/facturas', icon: FileText, label: 'Facturas', roles: ['Administración', 'Comercial'] },
+    { path: '/facturas', icon: FileText, label: 'Facturas', roles: ['Administración'] },
     { path: '/inventario', icon: Package, label: 'Inventario', roles: ['Almacén', 'Administración'] },
   ];
 

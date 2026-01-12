@@ -158,7 +158,9 @@ export interface Cliente {
 export type EstadoPedido =
   | 'Borrador'
   | 'Pendiente'
+  | 'PENDIENTE'
   | 'PENDIENTE_VALIDACION'
+  | 'Pendiente de Validación'
   | 'Confirmado'
   | 'En Preparación'
   | 'EN_PREPARACION'
@@ -173,7 +175,8 @@ export type EstadoPedido =
   | 'Facturado'
   | 'FACTURADO'
   | 'Cobrado'
-  | 'Cancelado';
+  | 'Cancelado'
+  | 'CANCELADO';
 
 /**
  * Línea de pedido (detalle de producto en pedido)
