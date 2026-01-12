@@ -15,7 +15,6 @@ import { Clientes } from './screens/Clientes';
 import { NuevoCliente } from './screens';
 import { NuevoVino } from './screens/NuevoVino';
 import { Pedidos } from './screens/Pedidos';
-import { Facturas } from './screens/Facturas';
 import { Inventario } from './screens/Inventario';
 import { NuevoPedido } from './screens/NuevoPedido';
 import { Usuarios } from './screens/Usuarios';
@@ -82,14 +81,7 @@ function App() {
           <Route path="clientes/:id/historico" element={<HistoricoCliente />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
-          <Route
-            path="facturas"
-            element={
-              <ProtectedRoute allowedRoles={['Administración']}>
-                <Facturas />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="inventario"
             element={

@@ -10,7 +10,6 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import {
   Users,
   ShoppingCart,
-  FileText,
   BarChart3,
   Menu,
   X,
@@ -33,8 +32,7 @@ export const Layout = () => {
     { path: '/catalogo', icon: GlassWater, label: 'Catálogo', roles: ['Administración', 'Comercial'] },
     { path: '/clientes', icon: Users, label: 'Clientes', roles: ['Administración', 'Comercial'] },
     { path: '/pedidos', icon: ShoppingCart, label: 'Pedidos', roles: ['Comercial', 'Almacén'] },
-    { path: '/facturas', icon: FileText, label: 'Facturas', roles: ['Administración'] },
-    { path: '/inventario', icon: Package, label: 'Inventario', roles: ['Almacén', 'Administración'] },
+    { path: '/inventario', icon: Package, label: 'Inventario', roles: ['Almacén'] },
   ];
 
   // Items solo para administradores
