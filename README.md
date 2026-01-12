@@ -37,6 +37,20 @@ El núcleo de la evolución futura de VinIA es la integración de un **Asistente
 - **H2 Database** - Base de datos en memoria (fácil despliegue y pruebas)
 - **Spring Security** - Gestión de autenticación y autorización
 
+## 📽️ Demostración Interactiva
+
+<div align="center">
+
+🔴 **Haz clic en el icono para ver el video demo**  
+👇  
+<a href="https://youtu.be/chMul1mp6QY">
+  <img src="Resources/Images/Logo.png" width="200" style="border-radius: 50%;" alt="Ver demo en YouTube"/>
+</a>
+
+> 🎬 En este video se muestra una versión **muy temprana** de desarrollo, hay varios errores y limitaciones.
+
+</div>
+
 ## ⚡ Inicio Rápido (One-Click)
 
 **Paso 1: Instalación (Solo la primera vez)**
@@ -51,7 +65,7 @@ cd ..
 **Paso 2: Ejecución**
 Para arrancar todo el sistema automáticamente (Backend + Frontend) en la **misma terminal**, ejecuta el siguiente comando:
 
-```bash
+```bashhttp://localhost:5173/login
 npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
 ```
 
