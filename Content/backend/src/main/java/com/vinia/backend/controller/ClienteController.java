@@ -25,26 +25,69 @@ public class ClienteController {
     private com.vinia.backend.repository.PedidoRepository pedidoRepository;
 
     @GetMapping
-    public List<Cliente> getAll(@RequestParam(required = false) String search,
+    public ResponseEntity<?> getAll(@RequestParam(required = false) String search,
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) String role) {
+
         if ("Comercial".equals(role) && userId != null) {
             List<Cliente> clientes = adminService.getClientesComercial(userId);
             if (search != null && !search.isEmpty()) {
                 String q = search.toLowerCase();
-                return clientes.stream()
+                clientes = clientes.stream()
                         .filter(c -> (c.getNombre() != null && c.getNombre().toLowerCase().contains(q)) ||
                                 (c.getCif() != null && c.getCif().toLowerCase().contains(q)) ||
                                 (c.getEmail() != null && c.getEmail().toLowerCase().contains(q)))
                         .collect(java.util.stream.Collectors.toList());
             }
-            return clientes;
+            return ResponseEntity.ok(clientes);
+        }
+
+        // If admin, return clients with their assignment status
+        if ("Administración".equals(role)) {
+            java.util.List<java.util.Map<String, Object>> enrichedClients = clienteService.findAll().stream().map(c -> {
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", c.getId());
+                map.put("nombre", c.getNombre());
+                map.put("cif", c.getCif());
+                map.put("tipo", c.getTipo());
+                map.put("ciudad", c.getCiudad());
+                map.put("provincia", c.getProvincia());
+                map.put("direccion", c.getDireccion());
+                map.put("telefono", c.getTelefono());
+                map.put("email", c.getEmail());
+                map.put("activo", c.isActivo());
+                map.put("created_at", c.getCreatedAt());
+
+                // Fetch assignment
+                try {
+                    com.vinia.backend.model.Asignacion asignacion = adminService.getAsignacionByCliente(c.getId());
+                    if (asignacion != null) {
+                        map.put("comercial_nombre",
+                                asignacion.getComercial().getNombre() + " " + asignacion.getComercial().getApellidos());
+                        map.put("comercial_id", asignacion.getComercial().getId());
+                    }
+                } catch (Exception e) {
+                }
+
+                return map;
+            }).collect(java.util.stream.Collectors.toList());
+
+            if (search != null && !search.isEmpty()) {
+                String q = search.toLowerCase();
+                enrichedClients = enrichedClients.stream()
+                        .filter(m -> (m.get("nombre") != null && m.get("nombre").toString().toLowerCase().contains(q))
+                                ||
+                                (m.get("cif") != null && m.get("cif").toString().toLowerCase().contains(q)))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            return ResponseEntity.ok(enrichedClients);
         }
 
         if (search != null && !search.isEmpty()) {
-            return clienteService.search(search);
+            return ResponseEntity.ok(clienteService.search(search));
         }
-        return clienteService.findAll();
+        return ResponseEntity.ok(clienteService.findAll());
     }
 
     @GetMapping("/{id}")

@@ -35,13 +35,12 @@ public class AdminService {
             throw new RuntimeException("No autorizado");
         }
 
-        // 1. Deactivate ANY active assignment for this client
+        // 1. Check if client is ALREADY assigned to another commercial
         asignacionRepository.findByClienteIdAndActivoTrue(clienteId)
                 .ifPresent(a -> {
-                    // Optimized: Only deactivate if it's a different commercial
                     if (!a.getComercial().getId().equals(comercialId)) {
-                        a.setActivo(false);
-                        asignacionRepository.save(a);
+                        throw new RuntimeException("El cliente ya está asignado al comercial " +
+                                a.getComercial().getNombre() + " " + a.getComercial().getApellidos());
                     }
                 });
 
@@ -120,5 +119,9 @@ public class AdminService {
                         asignacionRepository.save(a);
                     }
                 });
+    }
+
+    public Asignacion getAsignacionByCliente(String clienteId) {
+        return asignacionRepository.findByClienteIdAndActivoTrue(clienteId).orElse(null);
     }
 }

@@ -18,6 +18,17 @@ INSERT INTO clientes (id, nombre, cif, tipo, direccion, ciudad, codigo_postal, p
 VALUES ('c1000000-0000-0000-0000-000000000006', 'Gourmet Selection', 'A22334455', 'Tienda Online', 'Calle Logística 9', 'Zaragoza', '50001', 'Zaragoza', '976112233', 'proveedores@gourmetsel.com', 'Sofia V.', 18.00, 'Volumen alto', true, NOW(), NOW());
 
 
+-- Usuarios (Admin y Comerciales)
+INSERT INTO usuarios (id, nombre, apellidos, username, password, rol, activo, created_at, updated_at)
+VALUES ('u1000000-0000-0000-0000-000000000001', 'Administrador', 'Sistema', 'admin', 'admin', 'Administración', true, NOW(), NOW());
+
+INSERT INTO usuarios (id, nombre, apellidos, username, password, rol, activo, created_at, updated_at)
+VALUES ('u1000000-0000-0000-0000-000000000002', 'Carlos', 'Comercial', 'carlos', '1234', 'Comercial', true, NOW(), NOW());
+
+INSERT INTO usuarios (id, nombre, apellidos, username, password, rol, activo, created_at, updated_at)
+VALUES ('u1000000-0000-0000-0000-000000000003', 'Laura', 'Ventas', 'laura', '1234', 'Comercial', true, NOW(), NOW());
+
+
 -- Vinos Detailed
 INSERT INTO vinos (id, codigo_interno, nombre, bodega, tipo, ano, precio, denominacion_origen, grado_alcohol, descripcion, stock, stock_minimo, imagen_url, botellas_por_caja, formato_venta, nota_cata, variedad_uva, temperatura_servicio, potencial_guarda, aroma, sabor, premios, created_at, updated_at)
 VALUES (

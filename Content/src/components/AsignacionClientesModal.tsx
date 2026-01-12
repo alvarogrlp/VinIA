@@ -73,15 +73,21 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
     }
   };
 
-  // Filtrar clientes disponibles (no asignados a este comercial)
+  // Filtrar clientes disponibles (no asignados a este comercial ni a otros)
   const clientesDisponibles = clientes.filter(cliente => {
-    const estaAsignado = asignados.some(a => a.cliente_id === cliente.id);
+    // Ya asignado a este comercial (estado local actualizado)
+    const asignadoAEste = asignados.some(a => a.cliente_id === cliente.id);
+
+    // Asignado a OTRO comercial (según datos del store)
+    // Nota: cliente.comercial_id viene del backend enriquecido para admins
+    const asignadoAOtro = cliente.comercial_id && cliente.comercial_id !== comercial.id;
+
     const coincideBusqueda =
       cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.cif.toLowerCase().includes(busqueda.toLowerCase()) ||
       cliente.ciudad.toLowerCase().includes(busqueda.toLowerCase());
 
-    return !estaAsignado && coincideBusqueda;
+    return !asignadoAEste && !asignadoAOtro && coincideBusqueda;
   });
 
   return (

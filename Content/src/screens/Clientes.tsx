@@ -6,8 +6,11 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Mail, Phone, MapPin } from 'lucide-react';
+import { Search, Plus, Mail, Phone, MapPin, UserCheck } from 'lucide-react';
 import { useClientesStore, useAuthStore } from '../store';
+
+
+
 
 export const Clientes = () => {
   const navigate = useNavigate();
@@ -110,6 +113,14 @@ export const Clientes = () => {
                         {cliente.direccion}, {cliente.ciudad} ({cliente.provincia})
                       </span>
                     </div>
+
+                    {/* Mostrar comercial asignado si existe (solo Admin) */}
+                    {cliente.comercial_nombre && (
+                      <div className="flex items-center gap-2 text-sm font-medium text-primary-700 bg-primary-50 px-2 py-1 rounded-md w-fit">
+                        <UserCheck className="w-4 h-4" />
+                        <span>Gestor: {cliente.comercial_nombre}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-secondary-700">
                       <Phone className="w-4 h-4 text-secondary-500" />
                       <span>{cliente.telefono}</span>

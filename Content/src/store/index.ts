@@ -262,7 +262,9 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         descuento: c.descuento || 0,
         activo: c.activo,
         created_at: c.created_at,
-        updated_at: c.updated_at
+        updated_at: c.updated_at,
+        comercial_id: (c as any).comercial_id,
+        comercial_nombre: (c as any).comercial_nombre
       }));
 
       set({ clientes, cargando: false });
@@ -291,7 +293,9 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         descuento: c.descuento || 0,
         activo: c.activo,
         created_at: c.created_at,
-        updated_at: c.updated_at
+        updated_at: c.updated_at,
+        comercial_id: (c as any).comercial_id,
+        comercial_nombre: (c as any).comercial_nombre
       }));
 
       set({ clientes, cargando: false });

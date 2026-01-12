@@ -142,6 +142,9 @@ export interface Cliente {
   activo: boolean;
   created_at?: string;
   updated_at?: string;
+  // Campos de asignación (para Admins)
+  comercial_id?: string;
+  comercial_nombre?: string;
 }
 
 // ============================================
