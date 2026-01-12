@@ -75,7 +75,7 @@ export interface Vino {
   imagen_url?: string | null;
   imagen_etiqueta?: string | null;
   descripcion?: string | null;
-  notas_cata?: string | null;
+  nota_cata?: string | null;
   aroma?: string | null;
   sabor?: string | null;
   maridaje?: string[] | null;
@@ -87,6 +87,7 @@ export interface Vino {
   puntuacion_penin?: number | null;
   puntuacion_guia_proensa?: number | null;
   notas_criticos?: string | null;
+  premios?: string | null;
   margen_comercial?: number;
   cliente_objetivo?: string;
   promocion_activa?: boolean;

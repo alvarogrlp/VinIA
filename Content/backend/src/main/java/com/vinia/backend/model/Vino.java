@@ -8,7 +8,12 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "vinos")
+@Table(name = "vinos", indexes = {
+        @Index(name = "idx_vino_nombre", columnList = "nombre"),
+        @Index(name = "idx_vino_bodega", columnList = "bodega"),
+        @Index(name = "idx_vino_tipo", columnList = "tipo"),
+        @Index(name = "idx_vino_denominacion", columnList = "denominacion_origen")
+})
 public class Vino {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -72,6 +77,27 @@ public class Vino {
     @Column(name = "nota_cata", columnDefinition = "TEXT")
     @com.fasterxml.jackson.annotation.JsonProperty("nota_cata")
     private String notaCata;
+
+    @Column(name = "variedad_uva")
+    @com.fasterxml.jackson.annotation.JsonProperty("variedad_uva")
+    private String variedadUva;
+
+    @Column(name = "temperatura_servicio")
+    @com.fasterxml.jackson.annotation.JsonProperty("temperatura_servicio")
+    private String temperaturaServicio;
+
+    @Column(name = "potencial_guarda")
+    @com.fasterxml.jackson.annotation.JsonProperty("potencial_guarda")
+    private String potencialGuarda;
+
+    @Column(columnDefinition = "TEXT")
+    private String aroma; // Notas olfativas / salida
+
+    @Column(columnDefinition = "TEXT")
+    private String sabor; // Notas gustativas
+
+    @Column(columnDefinition = "TEXT")
+    private String premios;
 
     @Column(name = "created_at")
     @com.fasterxml.jackson.annotation.JsonProperty("created_at")

@@ -8,7 +8,9 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, Plus } from 'lucide-react';
 import { useVinosStore, useAuthStore } from '../store';
+import { VinoDetalleModal } from '../components/VinoDetalleModal';
 import { VinoCard } from '../components/VinoCard';
+import type { Vino } from '../types';
 
 export const Catalogo = () => {
   const { vinos, cargando, cargarVinos, buscarVinos } = useVinosStore();
@@ -18,6 +20,7 @@ export const Catalogo = () => {
   const [ordenamiento, setOrdenamiento] = useState<string>('relevancia');
   const [vinosFiltrados, setVinosFiltrados] = useState(vinos);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
 
   useEffect(() => {
     cargarVinos();
@@ -27,15 +30,10 @@ export const Catalogo = () => {
     const filtrarYOrdenar = async () => {
       let resultados = vinos;
 
-      // Filtrar por búsqueda (si hay búsqueda, ya se habrá llamado a buscarVinos)
-      // Los resultados ya están en el store en vinos
-
-      // Filtrar por tipo
       if (tipoFiltro !== 'Todos') {
         resultados = resultados.filter((vino) => vino.tipo === tipoFiltro);
       }
 
-      // Ordenar
       switch (ordenamiento) {
         case 'precio-asc':
           resultados = [...resultados].sort((a, b) => a.precio_unitario - b.precio_unitario);
@@ -59,7 +57,6 @@ export const Catalogo = () => {
     filtrarYOrdenar();
   }, [tipoFiltro, ordenamiento, vinos]);
 
-  // Efecto separado para búsqueda
   useEffect(() => {
     const realizarBusqueda = async () => {
       if (busqueda.trim()) {
@@ -69,13 +66,12 @@ export const Catalogo = () => {
       }
     };
 
-    const timeoutId = setTimeout(realizarBusqueda, 300); // Debounce de 300ms
+    const timeoutId = setTimeout(realizarBusqueda, 300);
     return () => clearTimeout(timeoutId);
   }, [busqueda]);
 
-  const handleVinoClick = (vinoId: string) => {
-    console.log('Ver detalle del vino:', vinoId);
-    alert(`Ver detalle del vino ID: ${vinoId}`);
+  const handleVinoClick = (vino: Vino) => {
+    setVinoSeleccionado(vino);
   };
 
   return (
@@ -176,8 +172,8 @@ export const Catalogo = () => {
               key={tipo}
               onClick={() => setTipoFiltro(tipo)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tipo === tipoFiltro
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+                ? 'bg-primary-500 text-white'
+                : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
                 }`}
             >
               {tipo}
@@ -247,7 +243,7 @@ export const Catalogo = () => {
                   <VinoCard
                     key={vino.id}
                     vino={vino}
-                    onClick={() => handleVinoClick(vino.id)}
+                    onClick={() => handleVinoClick(vino)}
                   />
                 ))}
               </div>
@@ -255,6 +251,14 @@ export const Catalogo = () => {
           </>
         )}
       </div>
+
+      {/* Modal de Detalle */}
+      {vinoSeleccionado && (
+        <VinoDetalleModal
+          vino={vinoSeleccionado}
+          onClose={() => setVinoSeleccionado(null)}
+        />
+      )}
     </div>
   );
 };

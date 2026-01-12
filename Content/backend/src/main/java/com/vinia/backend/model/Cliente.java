@@ -7,7 +7,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "clientes")
+@Table(name = "clientes", indexes = {
+        @Index(name = "idx_cliente_nombre", columnList = "nombre"),
+        @Index(name = "idx_cliente_email", columnList = "email")
+})
 public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

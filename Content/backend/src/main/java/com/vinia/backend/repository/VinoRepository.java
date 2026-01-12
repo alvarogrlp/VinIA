@@ -15,6 +15,9 @@ public interface VinoRepository extends JpaRepository<Vino, String> {
             "LOWER(v.nombre) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(v.bodega) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(v.denominacionOrigen) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(v.variedadUva) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(v.aroma) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(v.sabor) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(v.tipo) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Vino> search(@Param("query") String query);
 }
