@@ -9,7 +9,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Plus, Eye,
-  Truck, Package, FileText, AlertTriangle
+  Truck, Package, FileText, AlertTriangle, Download
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useAuthStore } from '../store';
 import { PedidoModal } from '../components/PedidoModal';
@@ -17,6 +17,7 @@ import { VistaAlmacen } from '../components/VistaAlmacen';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { formatearPrecio } from '../utils/helpers';
 import type { Pedido, EstadoPedido } from '../types';
+import { exportToExcel, exportToPDF, formatCurrency } from '../utils/exportUtils';
 
 export const Pedidos = () => {
   const navigate = useNavigate();
@@ -187,6 +188,30 @@ export const Pedidos = () => {
     }
   };
 
+  const handleExportPDF = () => {
+    const columns = ['Pedido', 'Cliente', 'Fecha', 'Estado', 'Total'];
+    const data = pedidosFiltrados.map(p => [
+      p.numero,
+      p.clienteNombre || '-',
+      new Date(p.fecha).toLocaleDateString(),
+      p.estado,
+      formatCurrency(p.total)
+    ]);
+    exportToPDF('Listado de Pedidos', columns, data, 'pedidos_vinia');
+  };
+
+  const handleExportExcel = () => {
+    const data = pedidosFiltrados.map(p => ({
+      Numero: p.numero,
+      Cliente: p.clienteNombre,
+      Fecha: new Date(p.fecha).toLocaleDateString(),
+      Estado: p.estado,
+      Total: p.total,
+      Comercial: p.usuario?.nombre || '-'
+    }));
+    exportToExcel(data, 'pedidos_vinia');
+  };
+
   const getEstadoBadge = (estado: string) => {
     const styles: Record<string, string> = {
       'Borrador': 'bg-gray-100 text-gray-800',
@@ -223,15 +248,23 @@ export const Pedidos = () => {
             Ciclo de vida de pedidos: {usuario?.rol}
           </p>
         </div>
-        {usuario?.rol === 'Comercial' && (
-          <button
-            onClick={() => navigate('/pedidos/nuevo')}
-            className="btn-primary"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nuevo pedido
+        <div className="flex gap-2">
+          <button onClick={handleExportPDF} className="btn-secondary text-sm">
+            <FileText className="w-4 h-4 mr-2" /> PDF
           </button>
-        )}
+          <button onClick={handleExportExcel} className="btn-secondary text-sm">
+            <Download className="w-4 h-4 mr-2" /> Excel
+          </button>
+          {usuario?.rol === 'Comercial' && (
+            <button
+              onClick={() => navigate('/pedidos/nuevo')}
+              className="btn-primary"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nuevo pedido
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

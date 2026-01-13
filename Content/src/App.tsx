@@ -4,7 +4,7 @@
  * Configuración del router y rutas protegidas.
  */
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store';
 import { Layout } from './components/Layout';
@@ -22,6 +22,7 @@ import { Administracion } from './screens/Administracion';
 import { DetalleComercial } from './screens/DetalleComercial';
 import { DetalleCliente } from './screens/DetalleCliente';
 import { HistoricoCliente } from './screens/HistoricoCliente';
+import { Profile } from './screens/Profile';
 
 /**
  * Componente que protege rutas que requieren autenticación
@@ -101,6 +102,7 @@ function App() {
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="administracion" element={<Administracion />} />
           <Route path="administracion/comercial/:id" element={<DetalleComercial />} />
+          <Route path="perfil" element={<Profile />} />
         </Route>
 
         {/* Ruta por defecto - redirigir al dashboard */}

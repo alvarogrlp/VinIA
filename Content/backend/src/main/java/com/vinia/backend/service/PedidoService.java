@@ -25,6 +25,18 @@ public class PedidoService {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    @Autowired
+    private AuditService auditService;
+
+    private String getCurrentUsername() {
+        try {
+            return org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                    .getName();
+        } catch (Exception e) {
+            return "SYSTEM";
+        }
+    }
+
     public List<Pedido> findAll() {
         return pedidoRepository.findAll();
     }
@@ -106,7 +118,10 @@ public class PedidoService {
             clienteRepository.save(cliente);
         }
 
-        return pedidoRepository.save(pedido);
+        Pedido saved = pedidoRepository.save(pedido);
+        auditService.log(getCurrentUsername(), "CREATE", "Pedido", saved.getNumero(),
+                "Total: " + saved.getTotal() + ", Cliente: " + cliente.getNombre());
+        return saved;
     }
 
     @Transactional
@@ -161,6 +176,9 @@ public class PedidoService {
         // here.
 
         pedido.setEstado(nuevoEstado);
-        return pedidoRepository.save(pedido);
+        Pedido saved = pedidoRepository.save(pedido);
+        auditService.log(getCurrentUsername(), "UPDATE_STATUS", "Pedido", pedido.getNumero(),
+                "Old: " + oldState + ", New: " + nuevoEstado);
+        return saved;
     }
 }

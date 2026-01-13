@@ -76,7 +76,7 @@ export const vinosService = {
    * Actualizar un vino
    */
   async update(id: string, vino: VinoUpdate) {
-    const data = await api.post(`/vinos/${id}`, vino);
+    const data = await api.put(`/vinos/${id}`, vino);
     return data as Vino;
   },
 
@@ -84,11 +84,12 @@ export const vinosService = {
    * Eliminar un vino (soft delete)
    */
   async delete(id: string) {
-    await api.post(`/vinos/${id}/delete`, {});
+    await api.delete(`/vinos/${id}`);
   },
 
   /**
    * Actualizar stock de un vino
+   * Usa endpoint dedicado para mayor seguridad y consistencia.
    */
   async updateStock(id: string, cantidad: number) {
     const data = await api.post(`/vinos/${id}/stock`, { cantidad });

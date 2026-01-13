@@ -62,7 +62,7 @@ export const VinoDetalleModal = ({ vino, onClose }: VinoDetalleModalProps) => {
                 </div>
 
                 {/* Right: Detailed Info */}
-                <div className="w-full md:w-2/3 p-8 bg-white">
+                <div className="w-full md:w-2/3 p-8 pb-16 bg-white">
                     <div className="mb-8">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">{vino.nombre}</h2>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-600 mb-4">
@@ -176,6 +176,7 @@ export const VinoDetalleModal = ({ vino, onClose }: VinoDetalleModalProps) => {
                         </div>
                     )}
 
+                    <div className="h-10"></div>
                 </div>
             </div>
         </div>

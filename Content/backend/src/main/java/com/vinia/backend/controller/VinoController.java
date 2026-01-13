@@ -44,13 +44,8 @@ public class VinoController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ALMACEN')")
     public ResponseEntity<Vino> update(@PathVariable String id, @RequestBody Vino vino) {
-        try {
-            Vino existing = vinoService.findById(id);
-            vino.setId(id); // Ensure ID matches
-            return ResponseEntity.ok(vinoService.save(vino));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        vino.setId(id); // Ensure ID matches
+        return ResponseEntity.ok(vinoService.save(vino));
     }
 
     @DeleteMapping("/{id}")
@@ -59,6 +54,21 @@ public class VinoController {
         try {
             vinoService.deleteById(id);
             return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ALMACEN')")
+    public ResponseEntity<Vino> updateStock(@PathVariable String id,
+            @RequestBody java.util.Map<String, Integer> payload) {
+        Integer cantidad = payload.get("cantidad");
+        if (cantidad == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            return ResponseEntity.ok(vinoService.updateStock(id, cantidad));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

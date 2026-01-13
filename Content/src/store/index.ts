@@ -49,11 +49,16 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       });
     } catch (error: any) {
+      // Mensaje amigable para el usuario
+      const errorMessage = (error.status === 401 || error.status === 403 || error.message?.includes('401') || error.message?.includes('403'))
+        ? 'Usuario o contraseña incorrectos'
+        : (error.message || 'Error al iniciar sesión');
+
       set({
-        error: error.message || 'Usuario o contraseña incorrectos',
+        error: errorMessage,
         isLoading: false,
       });
-      throw error;
+      throw new Error(errorMessage);
     }
   },
 

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initData(UsuarioRepository usuarioRepository) {
+    CommandLineRunner initData(UsuarioRepository usuarioRepository, com.vinia.backend.repository.VinoRepository vinoRepository) {
         return args -> {
             // Check if admin exists
             if (usuarioRepository.findByUsername("admin").isEmpty()) {
@@ -61,6 +61,24 @@ public class DataInitializer {
                 repartidor.setActivo(true);
                 usuarioRepository.save(repartidor);
                 System.out.println("Repartidor user created: repartidor/repartidor");
+            }
+            
+            // Seed initial wine if empty to avoid 404s on fresh start
+            if (vinoRepository.count() == 0) {
+                 com.vinia.backend.model.Vino vino = new com.vinia.backend.model.Vino();
+                 vino.setId("v1000000-0000-0000-0000-000000000001");
+                 vino.setNombre("Vino Tinto Reserva");
+                 vino.setBodega("Bodegas VinIA");
+                 vino.setTipo("Tinto");
+                 vino.setAno(2020);
+                 vino.setPrecio(new java.math.BigDecimal("15.50"));
+                 vino.setDenominacionOrigen("Rioja");
+                 vino.setGradoAlcohol(new java.math.BigDecimal("13.5"));
+                 vino.setStock(100);
+                 vino.setStockMinimo(10);
+                 vino.setDescripcion("Vino tinto reserva con notas de roble.");
+                 vinoRepository.save(vino);
+                 System.out.println("Seeded initial wine: " + vino.getNombre());
             }
         };
     }

@@ -1,10 +1,3 @@
-/**
- * VinIA - Pantalla Dashboard
- * 
- * Pantalla principal que muestra resumen de métricas clave,
- * estadísticas de ventas y accesos rápidos.
- */
-
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -26,7 +19,7 @@ const getBadgeEstado = (estado: string) => {
   return 'badge-secondary';
 };
 
-export const Dashboard = () => {
+const StandardDashboard = () => {
   const { vinos, cargarVinos } = useVinosStore();
   const { clientes, cargarClientes } = useClientesStore();
   const { pedidos, cargarPedidos } = usePedidosStore();
@@ -46,6 +39,9 @@ export const Dashboard = () => {
     const ventasDelMes = pedidos.reduce((sum, pedido) => sum + pedido.total, 0);
     const clientesActivos = clientes.filter(c => c.activo).length;
     const totalPedidos = pedidos.length;
+
+    // Filter metrics based on role if needed, but for "Standard" (Commercial/Warehouse) this is fine.
+    // Warehouse might not care about money, but it's fine.
 
     return [
       {
@@ -112,7 +108,7 @@ export const Dashboard = () => {
           Dashboard
         </h1>
         <p className="mt-2 text-secondary-600">
-          Bienvenido a VinIA. Aquí tienes un resumen de tu actividad comercial.
+          Bienvenido a VinIA. Aquí tienes un resumen de tu actividad.
         </p>
       </div>
 
@@ -141,7 +137,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Almacén Workflow: Pedidos Pendientes */}
-      {usuario?.rol === 'Almacén' && pedidosPendientes.length > 0 && (
+      {(usuario?.rol === 'Almacén' || usuario?.rol === 'Administración') && pedidosPendientes.length > 0 && (
         <div className="p-4 mb-8 border-l-4 border-yellow-500 bg-yellow-50 rounded-r-xl">
           <div className="flex items-start justify-between">
             <div>
@@ -196,7 +192,7 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* Gráfico o tabla de ventas recientes */}
+      {/* Gráfico o tabla de pedidos recientes */}
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-secondary-900">
@@ -260,4 +256,26 @@ export const Dashboard = () => {
       </div>
     </div>
   );
+};
+
+import { AdminHomeDashboard } from './AdminHomeDashboard';
+import { WarehouseDashboard } from './WarehouseDashboard';
+import { CommercialDashboard } from './CommercialDashboard';
+
+export const Dashboard = () => {
+  const { usuario } = useAuthStore();
+
+  if (usuario?.rol === 'Administración') {
+    return <AdminHomeDashboard />;
+  }
+
+  if (usuario?.rol === 'Almacén') {
+    return <WarehouseDashboard />;
+  }
+
+  if (usuario?.rol === 'Comercial') {
+    return <CommercialDashboard />;
+  }
+
+  return <CommercialDashboard />; // Fallback default
 };

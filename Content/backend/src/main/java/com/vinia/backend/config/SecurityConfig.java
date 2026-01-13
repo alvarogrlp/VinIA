@@ -33,6 +33,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll() // Login/Register public
                         .requestMatchers("/api/test/**").permitAll() // Seeding public
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/error").permitAll() // Allow error dispatching
                         .anyRequest().authenticated()) // All other endpoints require auth
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

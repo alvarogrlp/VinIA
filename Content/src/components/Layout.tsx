@@ -102,26 +102,25 @@ export const Layout = () => {
 
           {/* Perfil de usuario */}
           <div className="p-4 border-t border-secondary-200">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-50">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-200">
+            <Link to="/perfil" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-50 transition-colors hover:bg-primary-100 group">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-200 group-hover:bg-primary-300">
                 <User className="w-5 h-5 text-primary-700" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-secondary-900 truncate">
-                  {usuario?.nombre} {usuario?.apellidos}
+                  {usuario?.nombre}
                 </p>
                 <p className="text-xs text-secondary-600 truncate">
                   {usuario?.rol}
                 </p>
               </div>
-              <button
-                onClick={logout}
-                className="p-2 transition-colors rounded-lg hover:bg-primary-200"
-                title="Cerrar sesión"
-              >
-                <LogOut className="w-4 h-4 text-secondary-600" />
-              </button>
-            </div>
+            </Link>
+            <button
+              onClick={logout}
+              className="w-full mt-2 p-2 text-xs flex items-center justify-center text-red-600 hover:bg-red-50 rounded"
+            >
+              <LogOut className="w-3 h-3 mr-1" /> Cerrar sesión
+            </button>
           </div>
         </div>
       </aside>

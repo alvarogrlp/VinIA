@@ -12,6 +12,18 @@ public class VinoService {
     @Autowired
     private VinoRepository vinoRepository;
 
+    @Autowired
+    private AuditService auditService;
+
+    private String getCurrentUsername() {
+        try {
+            return org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()
+                    .getName();
+        } catch (Exception e) {
+            return "SYSTEM";
+        }
+    }
+
     public List<Vino> findAll() {
         return vinoRepository.findAll();
     }
@@ -22,11 +34,14 @@ public class VinoService {
     }
 
     public Vino save(Vino vino) {
-        return vinoRepository.save(vino);
+        Vino saved = vinoRepository.save(vino);
+        auditService.log(getCurrentUsername(), "SAVE", "Vino", saved.getId(), "Nombre: " + saved.getNombre());
+        return saved;
     }
 
     public void deleteById(String id) {
         vinoRepository.deleteById(id);
+        auditService.log(getCurrentUsername(), "DELETE", "Vino", id, null);
     }
 
     public List<Vino> search(String query) {
@@ -35,5 +50,14 @@ public class VinoService {
 
     public List<Vino> findLowStock(Integer threshold) {
         return vinoRepository.findByStockLessThan(threshold);
+    }
+
+    public Vino updateStock(String id, Integer stock) {
+        Vino vino = findById(id);
+        int oldStock = vino.getStock();
+        vino.setStock(stock);
+        Vino saved = vinoRepository.save(vino);
+        auditService.log(getCurrentUsername(), "UPDATE_STOCK", "Vino", id, "Old: " + oldStock + ", New: " + stock);
+        return saved;
     }
 }

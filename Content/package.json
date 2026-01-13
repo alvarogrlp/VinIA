@@ -21,7 +21,10 @@
     "react-dom": "^19.1.1",
     "react-native-web": "^0.21.0",
     "react-router-dom": "^7.9.5",
+    "recharts": "^3.6.0",
     "tailwindcss": "^4.1.16",
+    "vite-plugin-pwa": "^1.2.0",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
