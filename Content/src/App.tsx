@@ -18,7 +18,7 @@ import { Pedidos } from './screens/Pedidos';
 import { Inventario } from './screens/Inventario';
 import { NuevoPedido } from './screens/NuevoPedido';
 import { Usuarios } from './screens/Usuarios';
-import { Administracion } from './screens/Administracion';
+import { AdminDashboard } from './screens/AdminDashboard';
 import { DetalleComercial } from './screens/DetalleComercial';
 import { DetalleCliente } from './screens/DetalleCliente';
 import { HistoricoCliente } from './screens/HistoricoCliente';
@@ -100,7 +100,7 @@ function App() {
             }
           />
           <Route path="usuarios" element={<Usuarios />} />
-          <Route path="administracion" element={<Administracion />} />
+          <Route path="administracion" element={<AdminDashboard />} />
           <Route path="administracion/comercial/:id" element={<DetalleComercial />} />
           <Route path="perfil" element={<Profile />} />
         </Route>

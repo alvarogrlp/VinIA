@@ -22,9 +22,13 @@ import {
     X,
     Award,
     DollarSign,
-    Package
+    Package,
+    UserPlus,
+    UserMinus,
+    Search
 } from 'lucide-react';
-import { usePedidosStore } from '../store';
+import { usePedidosStore, useClientesStore } from '../store';
+import { AsignacionClientesModal } from '../components/AsignacionClientesModal';
 import { authService } from '../services/auth.service';
 import { formatearPrecio } from '../utils/helpers';
 
@@ -41,16 +45,24 @@ interface UsuarioSistema {
 
 export const AdminDashboard = () => {
     const { pedidos, cargarPedidos } = usePedidosStore();
+    const { clientes, cargarClientes, actualizarCliente } = useClientesStore();
     const [comerciales, setComerciales] = useState<UsuarioSistema[]>([]);
     const [selectedUser, setSelectedUser] = useState<UsuarioSistema | null>(null);
     const [timeFrame, setTimeFrame] = useState<'week' | 'month' | 'year'>('month');
     const [loading, setLoading] = useState(true);
+    const [showManageClientsModal, setShowManageClientsModal] = useState(false);
+
+    // Reset states when closing modal
+    const closeUserModal = () => {
+        setSelectedUser(null);
+        setShowManageClientsModal(false);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                await cargarPedidos();
+                await Promise.all([cargarPedidos(), cargarClientes()]);
                 const users = await authService.getAllUsers();
                 // Filtrar solo comerciales y activos
                 setComerciales(users.filter((u: any) => u.rol === 'Comercial' && u.activo));
@@ -81,7 +93,10 @@ export const AdminDashboard = () => {
         // Calcular ticket medio
         const ticketMedio = totalPedidos > 0 ? totalVentas / totalPedidos : 0;
 
-        return { totalVentas, totalPedidos, ticketMedio, pedidos: userPedidos };
+        // Count assigned clients
+        const assignedClients = clientes.filter(c => c.comercial_id === userId).length;
+
+        return { totalVentas, totalPedidos, ticketMedio, assignedClients, pedidos: userPedidos };
     };
 
     // Generar datos para la gráfica
@@ -207,6 +222,12 @@ export const AdminDashboard = () => {
                                             <span className="text-sm text-secondary-600">Pedidos</span>
                                             <span className="font-medium text-secondary-800 bg-secondary-100 px-2 py-0.5 rounded-full text-xs">
                                                 {metrics.totalPedidos}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-secondary-600">Clientes Asignados</span>
+                                            <span className="font-medium text-secondary-800 bg-secondary-100 px-2 py-0.5 rounded-full text-xs">
+                                                {metrics.assignedClients}
                                             </span>
                                         </div>
                                     </div>
@@ -369,9 +390,80 @@ export const AdminDashboard = () => {
                                 </div>
                             </div>
 
+                            {/* Clientes Asignados */}
+                            <div className="bg-white p-6 rounded-xl border border-secondary-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1 h-8 bg-blue-500 rounded-full"></div>
+                                        <h3 className="text-xl font-bold text-secondary-900">
+                                            Cartera de Clientes ({clientes.filter(c => c.comercial_id === selectedUser.id).length})
+                                        </h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowManageClientsModal(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
+                                    >
+                                        <UserPlus className="w-4 h-4" />
+                                        Gestionar Clientes
+                                    </button>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="table w-full">
+                                        <thead>
+                                            <tr>
+                                                <th className="text-xs font-semibold text-secondary-500 uppercase">Cliente</th>
+                                                <th className="text-xs font-semibold text-secondary-500 uppercase">Empresa</th>
+                                                <th className="text-xs font-semibold text-secondary-500 uppercase">Contacto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {(() => {
+                                                const displayedClients = clientes.filter(c => c.comercial_id === selectedUser.id);
+
+                                                if (displayedClients.length === 0) {
+                                                    return (
+                                                        <tr>
+                                                            <td colSpan={3} className="text-center py-8 text-secondary-400">
+                                                                No hay clientes asignados a este comercial.
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+
+                                                return displayedClients.map(cliente => (
+                                                    <tr key={cliente.id} className="hover:bg-secondary-50 transition-colors">
+                                                        <td className="py-3">
+                                                            <div className="font-medium text-secondary-900">{cliente.nombre}</div>
+                                                        </td>
+                                                        <td className="py-3 text-secondary-600">
+                                                            {(cliente as any).empresa || '-'}
+                                                        </td>
+                                                        <td className="py-3">
+                                                            <div className="text-sm text-secondary-600">{cliente.email}</div>
+                                                            <div className="text-xs text-secondary-400">{cliente.telefono}</div>
+                                                        </td>
+                                                    </tr>
+                                                ));
+                                            })()}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showManageClientsModal && selectedUser && (
+                <AsignacionClientesModal
+                    comercial={selectedUser}
+                    onClose={() => {
+                        setShowManageClientsModal(false);
+                        // Recargar clientes to refresh the list in the background modal
+                        cargarClientes();
+                    }}
+                />
             )}
         </div>
     );

@@ -387,6 +387,8 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
       if (datos.codigoPostal !== undefined) datosSupabase.codigoPostal = datos.codigoPostal;
       if (datos.tipo !== undefined) datosSupabase.tipo = datos.tipo;
       if (datos.descuento !== undefined) datosSupabase.descuento = datos.descuento;
+      if (datos.comercial_id !== undefined) datosSupabase.comercial_id = datos.comercial_id;
+      if (datos.comercial_nombre !== undefined) datosSupabase.comercial_nombre = datos.comercial_nombre;
 
       const clienteActualizado = await clientesService.update(id, datosSupabase);
 
@@ -406,7 +408,9 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
         descuento: clienteActualizado.descuento || 0,
         activo: clienteActualizado.activo,
         created_at: clienteActualizado.created_at,
-        updated_at: clienteActualizado.updated_at
+        updated_at: clienteActualizado.updated_at,
+        comercial_id: (clienteActualizado as any).comercial_id,
+        comercial_nombre: (clienteActualizado as any).comercial_nombre
       };
 
       set((state) => ({

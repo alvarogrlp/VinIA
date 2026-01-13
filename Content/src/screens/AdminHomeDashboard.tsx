@@ -35,6 +35,7 @@ export const AdminHomeDashboard = () => {
     const { clientes, cargarClientes } = useClientesStore();
     const [usersCount, setUsersCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [timeFrame, setTimeFrame] = useState<'day' | 'month' | 'year'>('day');
 
     useEffect(() => {
         const loadData = async () => {
@@ -62,21 +63,49 @@ export const AdminHomeDashboard = () => {
     const lowStock = vinos.filter(v => (v as any).stock <= ((v as any).stock_minimo || 10)).length;
 
     // Chart Data (Last 7 days revenue)
-    const getMainChartData = () => {
+    // Chart Data
+    const getChartData = () => {
         const data = [];
         const now = new Date();
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short' });
-            const dateKey = d.toISOString().slice(0, 10);
 
-            const total = pedidos
-                .filter(p => p.fecha.startsWith(dateKey) && !['Cancelado', 'Borrador'].includes(p.estado))
-                .reduce((acc, p) => acc + p.total, 0);
+        if (timeFrame === 'day') {
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(now);
+                d.setDate(d.getDate() - i);
+                const dayStr = d.toLocaleDateString('es-ES', { weekday: 'short' });
+                const dateKey = d.toISOString().slice(0, 10);
 
-            data.push({ name: dayStr, value: total });
+                const total = pedidos
+                    .filter(p => p.fecha.startsWith(dateKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .reduce((acc, p) => acc + p.total, 0);
+
+                data.push({ name: dayStr, value: total });
+            }
+        } else if (timeFrame === 'month') {
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthName = d.toLocaleDateString('es-ES', { month: 'short' });
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+                const total = pedidos
+                    .filter(p => p.fecha.startsWith(monthKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .reduce((acc, p) => acc + p.total, 0);
+
+                data.push({ name: monthName, value: total });
+            }
+        } else if (timeFrame === 'year') {
+            for (let i = 4; i >= 0; i--) {
+                const year = now.getFullYear() - i;
+                const yearKey = year.toString();
+
+                const total = pedidos
+                    .filter(p => p.fecha.startsWith(yearKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .reduce((acc, p) => acc + p.total, 0);
+
+                data.push({ name: yearKey, value: total });
+            }
         }
+
         return data;
     };
 
@@ -180,12 +209,32 @@ export const AdminHomeDashboard = () => {
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="font-bold text-lg text-secondary-900 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-primary-600" />
-                            Ingresos (Últimos 7 días)
+                            Ingresos
                         </h3>
+                        <div className="flex bg-secondary-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setTimeFrame('day')}
+                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${timeFrame === 'day' ? 'bg-white text-primary-700 shadow-sm' : 'text-secondary-600 hover:text-secondary-900'}`}
+                            >
+                                7 Días
+                            </button>
+                            <button
+                                onClick={() => setTimeFrame('month')}
+                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${timeFrame === 'month' ? 'bg-white text-primary-700 shadow-sm' : 'text-secondary-600 hover:text-secondary-900'}`}
+                            >
+                                Meses
+                            </button>
+                            <button
+                                onClick={() => setTimeFrame('year')}
+                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${timeFrame === 'year' ? 'bg-white text-primary-700 shadow-sm' : 'text-secondary-600 hover:text-secondary-900'}`}
+                            >
+                                Años
+                            </button>
+                        </div>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={getMainChartData()}>
+                            <AreaChart data={getChartData()}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#b8945a" stopOpacity={0.1} />
@@ -234,31 +283,7 @@ export const AdminHomeDashboard = () => {
                                     <ArrowRight className="w-4 h-4 text-secondary-400 group-hover:text-primary-600" />
                                 </div>
                             </Link>
-                            <Link to="/pedidos" className="block p-3 rounded-lg border border-secondary-100 hover:border-primary-300 hover:bg-primary-50 transition-all group">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-secondary-700 font-medium group-hover:text-primary-800">Ver Todos los Pedidos</span>
-                                    <ArrowRight className="w-4 h-4 text-secondary-400 group-hover:text-primary-600" />
-                                </div>
-                            </Link>
-                            <Link to="/inventario" className="block p-3 rounded-lg border border-secondary-100 hover:border-primary-300 hover:bg-primary-50 transition-all group">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-secondary-700 font-medium group-hover:text-primary-800">Control de Inventario</span>
-                                    <ArrowRight className="w-4 h-4 text-secondary-400 group-hover:text-primary-600" />
-                                </div>
-                            </Link>
                         </div>
-                    </div>
-
-                    <div className="bg-primary-900 p-6 rounded-xl shadow-lg text-white">
-                        <h3 className="font-serif font-bold text-lg mb-2">VinIA Pro</h3>
-                        <p className="text-primary-100 text-sm mb-4">
-                            Sistema funcionando a pleno rendimiento.
-                            Base de datos conectada.
-                        </p>
-                        <div className="w-full bg-primary-800 rounded-full h-1.5 mb-1">
-                            <div className="bg-green-400 h-1.5 rounded-full w-full"></div>
-                        </div>
-                        <span className="text-xs text-primary-200">100% Uptime</span>
                     </div>
                 </div>
             </div>

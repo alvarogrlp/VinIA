@@ -54,7 +54,7 @@ export const clientesService = {
    * Actualizar un cliente
    */
   async update(id: string, cliente: ClienteUpdate) {
-    const data = await api.post(`/clientes/${id}`, cliente);
+    const data = await api.put(`/clientes/${id}`, cliente);
     return data as Cliente;
   },
 
