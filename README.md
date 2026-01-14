@@ -1,122 +1,66 @@
-# 🍷 VinIA - Sistema de Gestión Comercial para Distribuidores de Vino
+# VinIA
 
-**VinIA** es una aplicación profesional diseñada para comerciales del sector vinícola, inspirada en sistemas ERP como Navision. Funciona perfectamente en **PC, tablets y móviles** como Progressive Web App (PWA).
+## Descripción del Proyecto
 
-> 🚧 **Estado del Proyecto**: Esta aplicación se encuentra actualmente en una fase temprana de desarrollo.
+VinIA es una plataforma de gestión comercial especializada, desarrollada para optimizar el flujo de trabajo de los representantes de ventas en la industria vinícola.
 
-## 🤖 Visión: Inteligencia Artificial para Comerciales
+El proyecto nació para abordar una carencia específica en el mercado: el software empresarial suele ser potente pero carece de usabilidad para el usuario final en campo. Basándose en una visión directa de los desafíos diarios de los profesionales de ventas, VinIA se centra en la simplicidad, la accesibilidad y la eficiencia. La interfaz está diseñada para minimizar el tiempo administrativo, permitiendo a los agentes comerciales centrarse en las relaciones con los clientes y las ventas, impulsando en última instancia el crecimiento de los ingresos.
 
-El núcleo de la evolución futura de VinIA es la integración de un **Asistente IA** avanzado. Esta herramienta está siendo diseñada para actuar como un copiloto inteligente que potenciará la eficiencia de los comerciales mediante:
+Esta herramienta se está desarrollando actualmente con la retroalimentación continua de profesionales activos del sector para garantizar que cumple con los estándares de accesibilidad y las necesidades operativas del mundo real.
 
-- **Recomendaciones Inteligentes**: Sugerencias de vinos personalizadas basadas en el perfil del cliente y tendencias.
-- **Gestión Asistida de Pedidos**: Creación y procesamiento de pedidos mediante comandos de lenguaje natural.
-- **Atención al Cliente Aumentada**: Soporte instantáneo para resolver dudas sobre el catálogo y maridajes.
-
-## 🎯 Características principales
-
-- ✅ **Catálogo de vinos** completo con búsqueda y filtros avanzados
-- ✅ **Gestión de clientes** con toda su información comercial
-- ✅ **Creación y seguimiento de pedidos** con múltiples estados
-- ✅ **Facturación** automatizada desde pedidos
-- ✅ **Estadísticas y métricas** de ventas en tiempo real
-- ✅ **Diseño responsive** - funciona en todos los dispositivos
-- ✅ **Autenticación** de usuarios con diferentes roles (Admin, Comercial)
-
-## 🛠️ Tecnologías utilizadas
-
-### Frontend
-- **React 18** - Librería UI moderna y eficiente
-- **TypeScript** - Tipado fuerte para mayor robustez
-- **Vite** - Build tool ultrarrápido
-- **Tailwind CSS** - Framework CSS utility-first
-- **Zustand** - Gestión de estado ligera y simple
-
-### Backend
-- **Spring Boot 3** - Framework Java robusto para microservicios
-- **Spring Data JPA** - Persistencia de datos
-- **H2 Database** - Base de datos en memoria (fácil despliegue y pruebas)
-- **Spring Security** - Gestión de autenticación y autorización
-
-## 📽️ Demostración Interactiva
+## Demostración del Estado Actual
 
 <div align="center">
-
-🔴 **Haz clic en el icono para ver el video demo**  
-👇  
-<a href="https://youtu.be/chMul1mp6QY">
-  <img src="Resources/Images/Logo.png" width="200" alt="Ver demo en YouTube"/>
-</a>
-
-> 🎬 En este video se muestra una versión **muy temprana** de desarrollo, hay varios errores y limitaciones.
-
+  <p><em>Haz clic en el logo para ver el video de demostración (Grabado el 13 de Enero de 2026)</em></p>
+  
+  <a href="https://www.youtube.com/watch?v=chMul1mp6QY">
+    <img src="Resources/Images/Logo.png" width="200" alt="Ver Demo en YouTube"/>
+  </a>
 </div>
 
-## ⚡ Inicio Rápido (One-Click)
+## Visión Estratégica y Hoja de Ruta
 
-**Paso 1: Instalación (Solo la primera vez)**
-Antes de iniciar, asegúrate de instalar las dependencias del frontend:
+Aunque la iteración actual proporciona una base sólida para la gestión comercial, la hoja de ruta del proyecto incluye la integración de un asistente de IA avanzado. Esta funcionalidad está diseñada para actuar como un socio continuo para el representante de ventas, facilitando:
 
-```bash
-cd Content
-npm install
-cd ..
-```
+*   **Procesamiento Automatizado de Pedidos**: Agilizando tareas rutinarias.
+*   **Recomendaciones Inteligentes**: Proporcionando información basada en datos para clientes específicos.
+*   **Soporte a la Decisión**: Mejorando la precisión de las ventas mediante análisis en tiempo real.
 
-**Paso 2: Ejecución**
-Para arrancar todo el sistema automáticamente (Backend + Frontend) en la **misma terminal**, ejecuta el siguiente comando:
+**Fecha Objetivo de Finalización:** Junio de 2026.
 
-```bashhttp://localhost:5173/login
-npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
-```
+## Tecnologías Utilizadas
 
-> ℹ️ **NOTA**: Verás los logs del Backend (azul) y del Frontend (verde) mezclados en la misma ventana. Para detener todo, presiona `Ctrl + C` dos veces.
->
-> La aplicación se abrirá en: [http://localhost:5173](http://localhost:5173)
+La aplicación utiliza tecnologías estándar en la industria para garantizar que sea rápida, segura y fiable.
 
-## 📁 Estructura del proyecto
+*   **Frontend (Interfaz de Usuario)**: Desarrollado con **React** y **TypeScript**. Estas tecnologías permiten crear una experiencia visual moderna y fluida, similar a usar una aplicación móvil nativa, asegurando que funcione perfectamente en tablets y ordenadores.
+*   **Backend (Sistema Central)**: Funciona con **Spring Boot (Java)**. Es la tecnología de confianza para grandes empresas, elegida por su capacidad para manejar datos de forma segura y estable, garantizando que el sistema esté siempre disponible.
 
-El código fuente se encuentra en la carpeta `Content/`.
+## Alcance y Enfoque del Desarrollo
 
-```
-VinIA/
-├── Content/
-│   ├── backend/         # Microservicio Spring Boot
-│   ├── src/             # Frontend React
-│   ├── docs/            # Documentación detallada
-│   └── ...
-└── README.md
-```
+El desarrollo de VinIA prioriza la experiencia del **Comercial**. Esta elección estratégica se debe a la posibilidad de validar el software en un entorno real: gracias a la colaboración directa con profesionales del sector (contexto familiar), he podido afinar cada funcionalidad basándome en feedback inmediato y experto. Esto asegura que la aplicación no solo funciona, sino que es intuitiva y resuelve los problemas reales del día a día.
 
-## 🚀 Instalación y ejecución
+Es importante notar que, aunque la aplicación incluye roles de **Almacén** y **Administración** que son completamente funcionales (permiten gestionar stock, usuarios y cerrar el ciclo de ventas correctamente), su diseño es más utilitario. Estos roles existen principalmente para dar soporte y contexto a las operaciones del comercial, sin profundizar en la complejidad administrativa total que podría tener una gran corporación multinacional. El objetivo ha sido crear un ecosistema completo donde la estrella es la agilidad comercial.
 
-### Prerrequisitos
-- Node.js 18+
-- Java JDK 17+
-- Maven
+## Inicio Rápido
 
-### 1. Iniciar Backend (Spring Boot)
+### Requisitos Previos
+*   Node.js 18+
+*   Java JDK 17+
+*   Maven
 
-```bash
-cd Content/backend
-mvn spring-boot:run
-```
+### Instalación
 
-- Servidor: `http://localhost:8080`
-- Consola H2: `http://localhost:8080/h2-console`
-- **Usuarios**: `admin`/`admin` y `comercial`/`comercial`
+1.  **Instalar Dependencias del Frontend**
+    ```bash
+    cd Content
+    npm install
+    ```
 
-### 2. Iniciar Frontend (React)
+2.  **Ejecutar la Aplicación**
+    Para ejecutar tanto el backend como el frontend simultáneamente:
+    ```bash
+    npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
+    ```
 
-En una nueva terminal:
-
-```bash
-cd Content
-npm install
-npm run dev
-```
-
-- Aplicación: `http://localhost:5173`
-
-## 📚 Documentación
-
-La documentación detallada del proyecto se encuentra en `Content/docs/`.
+    *   **URL de la Aplicación**: [http://localhost:5173](http://localhost:5173)
+    *   **API del Backend**: [http://localhost:8080](http://localhost:8080)
