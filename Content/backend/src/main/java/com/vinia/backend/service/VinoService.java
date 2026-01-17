@@ -44,8 +44,46 @@ public class VinoService {
         auditService.log(getCurrentUsername(), "DELETE", "Vino", id, null);
     }
 
+    private String normalize(String text) {
+        if (text == null)
+            return "";
+        return java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase();
+    }
+
     public List<Vino> search(String query) {
-        return vinoRepository.search(query);
+        if (query == null || query.trim().isEmpty()) {
+            return findAll();
+        }
+
+        String normalizedQuery = normalize(query);
+        String[] terms = normalizedQuery.split("\\s+");
+
+        // Professional search: Multi-term "AND" strategy
+        // Filtering in memory to support accent-insensitivity across all fields
+        // reliably
+        return findAll().stream()
+                .filter(v -> {
+                    String fullText = normalize(
+                            (v.getNombre() != null ? v.getNombre() : "") + " " +
+                                    (v.getBodega() != null ? v.getBodega() : "") + " " +
+                                    (v.getDenominacionOrigen() != null ? v.getDenominacionOrigen() : "") + " " +
+                                    (v.getVariedadUva() != null ? v.getVariedadUva() : "") + " " +
+                                    (v.getTipo() != null ? v.getTipo() : "") + " " +
+                                    (v.getAroma() != null ? v.getAroma() : "") + " " +
+                                    (v.getSabor() != null ? v.getSabor() : "") + " " +
+                                    v.getAno());
+
+                    // Check if ALL terms are present in the wine's data
+                    for (String term : terms) {
+                        if (!fullText.contains(term)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 
     public List<Vino> findLowStock(Integer threshold) {

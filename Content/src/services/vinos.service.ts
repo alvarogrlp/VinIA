@@ -37,7 +37,7 @@ export const vinosService = {
     const searchTerm = query.trim();
     console.log('🔍 Buscando:', searchTerm);
 
-    const data = await api.get(`/vinos/search?q=${encodeURIComponent(searchTerm)}`);
+    const data = await api.get(`/vinos?search=${encodeURIComponent(searchTerm)}`);
 
     console.log('✅ Resultados encontrados:', data?.length || 0);
     return data as Vino[];
@@ -124,7 +124,7 @@ export const vinosService = {
     const searchTerm = query.trim();
     console.log('🔍 Búsqueda avanzada:', searchTerm);
 
-    const data = await api.get(`/vinos/advanced-search?q=${encodeURIComponent(searchTerm)}`);
+    const data = await api.get(`/vinos?search=${encodeURIComponent(searchTerm)}`);
     return data as Vino[];
   }
 };
