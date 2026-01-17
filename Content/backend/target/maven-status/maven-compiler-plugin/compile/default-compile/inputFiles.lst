@@ -18,6 +18,7 @@ C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\exc
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\BackendApplication.java
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\repository\PedidoRepository.java
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Vino.java
+C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\service\GeocodingService.java
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\config\DataInitializer.java
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\model\Asignacion.java
 C:\Users\alvar\Desktop\VinIA\Content\backend\src\main\java\com\vinia\backend\controller\SeedDataController.java

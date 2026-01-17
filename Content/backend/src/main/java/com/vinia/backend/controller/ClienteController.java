@@ -24,6 +24,9 @@ public class ClienteController {
     @Autowired
     private com.vinia.backend.repository.PedidoRepository pedidoRepository;
 
+    @Autowired
+    private com.vinia.backend.service.GeocodingService geocodingService;
+
     @GetMapping
     public ResponseEntity<?> getAll(@RequestParam(required = false) String search,
             @RequestParam(required = false) String userId,
@@ -131,34 +134,78 @@ public class ClienteController {
     @GetMapping("/map-data")
     public ResponseEntity<?> getMapData(@RequestParam(required = false) String userId) {
         List<Cliente> allClients = clienteService.findAll();
+        List<java.util.Map<String, Object>> mapData = new java.util.ArrayList<>();
+        List<Cliente> clientsToGeocode = new java.util.ArrayList<>();
 
-        List<java.util.Map<String, Object>> mapData = allClients.stream()
-                .filter(c -> c.isActivo() && c.getLatitud() != null && c.getLongitud() != null)
-                .map(c -> {
-                    java.util.Map<String, Object> map = new java.util.HashMap<>();
-                    map.put("id", c.getId());
-                    map.put("nombre", c.getNombre());
-                    map.put("direccion", c.getDireccion() + ", " + c.getCiudad());
-                    map.put("telefono", c.getTelefono());
-                    map.put("latitud", c.getLatitud());
-                    map.put("longitud", c.getLongitud());
+        // Separate valid clients from those needing geocoding
+        for (Cliente c : allClients) {
+            if (!c.isActivo())
+                continue;
 
-                    boolean isAssignedToMe = false;
-                    if (userId != null) {
-                        try {
-                            com.vinia.backend.model.Asignacion asignacion = adminService
-                                    .getAsignacionByCliente(c.getId());
-                            if (asignacion != null && asignacion.getComercial().getId().equals(userId)) {
-                                isAssignedToMe = true;
-                            }
-                        } catch (Exception e) {
-                            // Ignore, assume not assigned or error
+            if (c.getLatitud() != null && c.getLongitud() != null) {
+                // Prepare response for valid client
+                java.util.Map<String, Object> map = new java.util.HashMap<>();
+                map.put("id", c.getId());
+                map.put("nombre", c.getNombre());
+                map.put("direccion", c.getDireccion() + ", " + c.getCiudad());
+                map.put("telefono", c.getTelefono());
+                map.put("latitud", c.getLatitud());
+                map.put("longitud", c.getLongitud());
+
+                boolean isAssignedToMe = false;
+                if (userId != null) {
+                    try {
+                        com.vinia.backend.model.Asignacion asignacion = adminService.getAsignacionByCliente(c.getId());
+                        if (asignacion != null && asignacion.getComercial().getId().equals(userId)) {
+                            isAssignedToMe = true;
                         }
+                    } catch (Exception e) {
+                        // Ignore
                     }
-                    map.put("assignedToMe", isAssignedToMe);
-                    return map;
-                })
-                .collect(java.util.stream.Collectors.toList());
+                }
+                map.put("assignedToMe", isAssignedToMe);
+                mapData.add(map);
+            } else {
+                // Needs geocoding
+                clientsToGeocode.add(c);
+            }
+        }
+
+        // Start background geocoding task if needed
+        if (!clientsToGeocode.isEmpty()) {
+            new Thread(() -> {
+                System.out.println("Starting background geocoding for " + clientsToGeocode.size() + " clients...");
+                for (Cliente c : clientsToGeocode) {
+                    try {
+                        // Double check it lacks coords (in case of race conditions concurrent requests)
+                        if (c.getLatitud() == null || c.getLongitud() == null) {
+                            String address = (c.getDireccion() != null ? c.getDireccion() : "") + ", " +
+                                    (c.getCodigoPostal() != null ? c.getCodigoPostal() + " " : "") +
+                                    (c.getCiudad() != null ? c.getCiudad() : "") + ", " +
+                                    (c.getProvincia() != null ? c.getProvincia() : "");
+
+                            // Simple cleaning
+                            address = address.replaceAll(", ,", ",").replaceAll("^, ", "").replaceAll(", $", "");
+
+                            if (!address.trim().isEmpty()) {
+                                java.util.Optional<double[]> coords = geocodingService.getCoordinates(address);
+                                if (coords.isPresent()) {
+                                    c.setLatitud(coords.get()[0]);
+                                    c.setLongitud(coords.get()[1]);
+                                    clienteService.save(c);
+                                    System.out.println("Geocoded: " + c.getNombre());
+                                    // Respect rate limits
+                                    Thread.sleep(1100);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error background geocoding client " + c.getId() + ": " + e.getMessage());
+                    }
+                }
+                System.out.println("Background geocoding finished.");
+            }).start();
+        }
 
         return ResponseEntity.ok(mapData);
     }
