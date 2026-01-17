@@ -69,6 +69,7 @@ Es importante notar que, aunque la aplicación incluye roles de **Almacén** y *
     cd Content
     npm install
     ```
+    *(Nota: Durante el `npm install`, se descargarán automáticamente las imágenes del catálogo mediante un script de PowerShell).*
 
 2.  **Ejecutar la Aplicación**
     Para ejecutar tanto el backend como el frontend simultáneamente:
