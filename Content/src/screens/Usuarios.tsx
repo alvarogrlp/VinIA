@@ -10,13 +10,14 @@ import { Users, Plus, Trash2, AlertTriangle, UserPlus, Ban } from 'lucide-react'
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../store';
 import { AsignacionClientesModal } from '../components/AsignacionClientesModal';
+import { Select } from '../components';
 
 interface UsuarioSistema {
   id: string;
   username: string;
   nombre: string;
   apellidos: string | null;
-  rol: 'Administración' | 'Comercial' | 'Almacén';
+  rol: 'Administración' | 'Comercial' | 'Comercial Norte' | 'Comercial Sur' | 'Comercial Santa Cruz' | 'Almacén' | 'Repartidor';
   activo: boolean;
   ultimo_acceso: string | null;
   created_at: string;
@@ -38,7 +39,7 @@ export const Usuarios = () => {
   const [formPassword, setFormPassword] = useState('');
   const [formNombre, setFormNombre] = useState('');
   const [formApellidos, setFormApellidos] = useState('');
-  const [formRol, setFormRol] = useState<'Administración' | 'Comercial' | 'Almacén'>('Comercial');
+  const [formRol, setFormRol] = useState<'Administración' | 'Comercial Norte' | 'Comercial Sur' | 'Comercial Santa Cruz' | 'Almacén' | 'Repartidor'>('Comercial Norte');
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export const Usuarios = () => {
       setFormPassword('');
       setFormNombre('');
       setFormApellidos('');
-      setFormRol('Comercial');
+      setFormRol('Comercial Norte');
       setMostrarModal(false);
       await cargarUsuarios();
     } catch (err: any) {
@@ -143,9 +144,14 @@ export const Usuarios = () => {
       case 'Administración':
         return 'bg-red-100 text-red-800';
       case 'Comercial':
+      case 'Comercial Norte':
+      case 'Comercial Sur':
+      case 'Comercial Santa Cruz':
         return 'bg-blue-100 text-blue-800';
       case 'Almacén':
         return 'bg-green-100 text-green-800';
+      case 'Repartidor':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-secondary-100 text-secondary-800';
     }
@@ -266,7 +272,7 @@ export const Usuarios = () => {
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                       <div className="flex justify-end gap-2">
-                        {user.rol === 'Comercial' && user.activo && (
+                        {user.rol.startsWith('Comercial') && user.activo && (
                           <button
                             onClick={() => setUsuarioParaAsignar(user)}
                             className="p-2 text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
@@ -377,19 +383,20 @@ export const Usuarios = () => {
               </div>
 
               <div>
-                <label htmlFor="rol" className="block mb-2 text-sm font-medium text-secondary-700">
-                  Rol
-                </label>
-                <select
-                  id="rol"
+                <Select
+                  label="Rol"
                   value={formRol}
-                  onChange={(e) => setFormRol(e.target.value as any)}
-                  className="input"
-                >
-                  <option value="Comercial">Comercial</option>
-                  <option value="Administración">Administración</option>
-                  <option value="Almacén">Almacén</option>
-                </select>
+                  onChange={(val) => setFormRol(val)}
+                  options={[
+                    { value: 'Comercial Norte', label: 'Comercial Norte' },
+                    { value: 'Comercial Sur', label: 'Comercial Sur' },
+                    { value: 'Comercial Santa Cruz', label: 'Comercial Santa Cruz' },
+                    { value: 'Administración', label: 'Administración' },
+                    { value: 'Almacén', label: 'Almacén' },
+                    { value: 'Repartidor', label: 'Repartidor' }
+                  ]}
+                  className="w-full"
+                />
               </div>
 
               <div className="flex gap-3 pt-4">

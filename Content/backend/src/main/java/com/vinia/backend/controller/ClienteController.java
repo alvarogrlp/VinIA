@@ -128,6 +128,41 @@ public class ClienteController {
         }
     }
 
+    @GetMapping("/map-data")
+    public ResponseEntity<?> getMapData(@RequestParam(required = false) String userId) {
+        List<Cliente> allClients = clienteService.findAll();
+
+        List<java.util.Map<String, Object>> mapData = allClients.stream()
+                .filter(c -> c.isActivo() && c.getLatitud() != null && c.getLongitud() != null)
+                .map(c -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", c.getId());
+                    map.put("nombre", c.getNombre());
+                    map.put("direccion", c.getDireccion() + ", " + c.getCiudad());
+                    map.put("telefono", c.getTelefono());
+                    map.put("latitud", c.getLatitud());
+                    map.put("longitud", c.getLongitud());
+
+                    boolean isAssignedToMe = false;
+                    if (userId != null) {
+                        try {
+                            com.vinia.backend.model.Asignacion asignacion = adminService
+                                    .getAsignacionByCliente(c.getId());
+                            if (asignacion != null && asignacion.getComercial().getId().equals(userId)) {
+                                isAssignedToMe = true;
+                            }
+                        } catch (Exception e) {
+                            // Ignore, assume not assigned or error
+                        }
+                    }
+                    map.put("assignedToMe", isAssignedToMe);
+                    return map;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(mapData);
+    }
+
     @GetMapping("/{id}/pedidos")
     public ResponseEntity<?> getPedidosByCliente(@PathVariable String id) {
         try {

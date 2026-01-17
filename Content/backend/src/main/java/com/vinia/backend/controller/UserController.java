@@ -44,6 +44,10 @@ public class UserController {
                         user.setApellidos(body.get("apellidos"));
                     if (body.containsKey("rol"))
                         user.setRol(body.get("rol"));
+                    if (body.containsKey("telefono"))
+                        user.setTelefono(body.get("telefono"));
+                    if (body.containsKey("avatar"))
+                        user.setAvatar(body.get("avatar"));
                     usuarioRepository.save(user);
                     return ResponseEntity.ok().build();
                 })

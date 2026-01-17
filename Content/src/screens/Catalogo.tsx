@@ -6,14 +6,18 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Wine, X } from 'lucide-react';
-import { useVinosStore } from '../store';
+import { Search, Filter, Wine, X, Pencil } from 'lucide-react';
+import { useVinosStore, useAuthStore } from '../store';
+import { useNavigate } from 'react-router-dom';
 import { VinoCard } from '../components/VinoCard';
 import { VinoDetalleModal } from '../components/VinoDetalleModal';
+import { Select } from '../components';
 import type { Vino } from '../types';
 
 export const Catalogo = () => {
     const { vinos, cargando, cargarVinos, buscarVinos, filtrarVinos, error } = useVinosStore();
+    const { usuario } = useAuthStore();
+    const navigate = useNavigate();
     const [busqueda, setBusqueda] = useState('');
     const [vinoSeleccionado, setVinoSeleccionado] = useState<Vino | null>(null);
 
@@ -55,6 +59,11 @@ export const Catalogo = () => {
         setVinoSeleccionado(vino);
     };
 
+    const handleEditClick = (e: React.MouseEvent, vinoId: string) => {
+        e.stopPropagation();
+        navigate(`/inventario/editar/${vinoId}`);
+    };
+
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header y Búsqueda */}
@@ -86,27 +95,29 @@ export const Catalogo = () => {
                     <span className="text-sm font-medium">Filtros:</span>
                 </div>
 
-                <select
-                    value={filtroTipo}
-                    onChange={(e) => setFiltroTipo(e.target.value)}
-                    className="text-sm input py-1.5"
-                >
-                    <option value="">Todos los Tipos</option>
-                    {tiposVino.map(t => (
-                        <option key={t} value={t}>{t}</option>
-                    ))}
-                </select>
+                <div className="min-w-[200px]">
+                    <Select
+                        value={filtroTipo}
+                        onChange={(val) => setFiltroTipo(val)}
+                        options={[
+                            { value: '', label: 'Todos los Tipos' },
+                            ...tiposVino.map(t => ({ value: t, label: t }))
+                        ]}
+                        placeholder="Tipo de Vino"
+                    />
+                </div>
 
-                <select
-                    value={filtroDO}
-                    onChange={(e) => setFiltroDO(e.target.value)}
-                    className="text-sm input py-1.5"
-                >
-                    <option value="">Todas las D.O.</option>
-                    {dosVino.map(d => (
-                        <option key={String(d)} value={String(d)}>{d}</option>
-                    ))}
-                </select>
+                <div className="min-w-[200px]">
+                    <Select
+                        value={filtroDO}
+                        onChange={(val) => setFiltroDO(val)}
+                        options={[
+                            { value: '', label: 'Todas las D.O.' },
+                            ...dosVino.map(d => ({ value: String(d), label: String(d) }))
+                        ]}
+                        placeholder="Denominación de Origen"
+                    />
+                </div>
 
                 {(filtroTipo || filtroDO) && (
                     <button
@@ -142,11 +153,21 @@ export const Catalogo = () => {
             ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {vinosFiltrados.map((vino) => (
-                        <VinoCard
-                            key={vino.id}
-                            vino={vino}
-                            onClick={() => handleVinoClick(vino)}
-                        />
+                        <div key={vino.id} className="relative group">
+                            <VinoCard
+                                vino={vino}
+                                onClick={() => handleVinoClick(vino)}
+                            />
+                            {usuario?.rol === 'Administración' && (
+                                <button
+                                    onClick={(e) => handleEditClick(e, vino.id)}
+                                    className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-sm text-primary-600 rounded-full shadow-md hover:bg-primary-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
+                                    title="Editar Vino"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
                     ))}
                 </div>
             )}

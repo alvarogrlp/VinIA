@@ -6,13 +6,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Search, Package, AlertTriangle, Save, RefreshCw, Plus } from 'lucide-react';
+import { Search, Package, AlertTriangle, Save, RefreshCw, Plus, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useVinosStore, useAuthStore } from '../store';
 
 export const Inventario = () => {
   const navigate = useNavigate();
-  const { vinos, cargando, cargarVinos, actualizarVino } = useVinosStore();
+  const { vinos, cargando, cargarVinos, actualizarStock } = useVinosStore();
   const { usuario } = useAuthStore();
   const [busqueda, setBusqueda] = useState('');
   const [soloBajoStock, setSoloBajoStock] = useState(false);
@@ -48,7 +48,7 @@ export const Inventario = () => {
 
     try {
       setGuardando(prev => ({ ...prev, [id]: true }));
-      await actualizarVino(id, { stock: nuevoStock });
+      await actualizarStock(id, nuevoStock);
 
       // Limpiar estado de edición para este item
       setStockEditado(prev => {
@@ -214,20 +214,30 @@ export const Inventario = () => {
                         </div>
                       </td>
                       <td className="text-right">
-                        {hasChanges && (
+                        <div className="flex justify-end gap-2 items-center">
                           <button
-                            onClick={() => guardarStock(vino.id)}
-                            disabled={guardando[vino.id]}
-                            className="btn-primary !py-1 !px-3 text-sm inline-flex items-center gap-1"
+                            onClick={() => navigate(`/inventario/editar/${vino.id}`)}
+                            className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Editar vino"
                           >
-                            {guardando[vino.id] ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Save className="w-4 h-4" />
-                            )}
-                            Guardar
+                            <Pencil className="w-4 h-4" />
                           </button>
-                        )}
+
+                          {hasChanges && (
+                            <button
+                              onClick={() => guardarStock(vino.id)}
+                              disabled={guardando[vino.id]}
+                              className="btn-primary !py-1 !px-3 text-sm inline-flex items-center gap-1"
+                            >
+                              {guardando[vino.id] ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4" />
+                              )}
+                              Guardar
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

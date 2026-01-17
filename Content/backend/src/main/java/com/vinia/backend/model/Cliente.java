@@ -67,6 +67,12 @@ public class Cliente {
     @Column(name = "riesgo_actual", precision = 10, scale = 2)
     private BigDecimal riesgoActual = BigDecimal.ZERO;
 
+    @Column(name = "latitud")
+    private Double latitud;
+
+    @Column(name = "longitud")
+    private Double longitud;
+
     @Column(nullable = false)
     private boolean activo = true;
 

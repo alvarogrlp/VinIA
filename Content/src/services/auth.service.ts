@@ -34,7 +34,7 @@ export const authService = {
     password: string,
     nombre: string,
     apellidos: string,
-    rol: 'Administración' | 'Comercial' | 'Almacén'
+    rol: 'Administración' | 'Comercial Norte' | 'Comercial Sur' | 'Comercial Santa Cruz' | 'Almacén' | 'Repartidor'
   ) {
     const data = await api.post('/auth/register', {
       username,
@@ -134,7 +134,8 @@ export const authService = {
     datos: {
       nombre?: string;
       apellidos?: string;
-      rol?: 'Administración' | 'Comercial' | 'Almacén';
+      rol?: 'Administración' | 'Comercial Norte' | 'Comercial Sur' | 'Comercial Santa Cruz' | 'Almacén' | 'Repartidor';
+      avatar?: string;
     }
   ) {
     await api.post(`/users/${userId}`, datos);

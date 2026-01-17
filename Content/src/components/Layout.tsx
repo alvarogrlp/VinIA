@@ -17,7 +17,8 @@ import {
   LogOut,
   Settings,
   GlassWater,
-  Package
+  Package,
+  Map as MapIcon
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 
@@ -31,6 +32,7 @@ export const Layout = () => {
     { path: '/', icon: BarChart3, label: 'Dashboard', roles: ['Administración', 'Comercial', 'Almacén'] },
     { path: '/catalogo', icon: GlassWater, label: 'Catálogo', roles: ['Administración', 'Comercial'] },
     { path: '/clientes', icon: Users, label: 'Clientes', roles: ['Administración', 'Comercial'] },
+    { path: '/mapa', icon: MapIcon, label: 'Mapa', roles: ['Comercial'] },
     { path: '/pedidos', icon: ShoppingCart, label: 'Pedidos', roles: ['Comercial', 'Almacén'] },
     { path: '/inventario', icon: Package, label: 'Inventario', roles: ['Almacén'] },
   ];

@@ -51,7 +51,12 @@ public class CustomUserDetailsService implements UserDetailsService {
             case "Almacen":
                 return "ALMACEN";
             case "Comercial":
+            case "Comercial Norte":
+            case "Comercial Sur":
+            case "Comercial Santa Cruz":
                 return "COMERCIAL";
+            case "Repartidor":
+                return "REPARTIDOR";
             default:
                 return displayRole.toUpperCase();
         }

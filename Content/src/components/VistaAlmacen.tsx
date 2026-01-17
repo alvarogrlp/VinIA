@@ -4,6 +4,7 @@ import { usePedidosStore, useClientesStore } from '../store';
 import type { Pedido, EstadoPedido } from '../types';
 import { PedidoModal } from './PedidoModal';
 import { ConfirmModal } from './ConfirmModal';
+import { Select } from './Select';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -342,15 +343,16 @@ export const VistaAlmacen = () => {
 
                     <div className="flex items-center gap-4 mb-6">
                         <label className="font-medium">Zona:</label>
-                        <select
+                        <Select
                             value={zonaSeleccionada}
-                            onChange={(e) => setZonaSeleccionada(e.target.value as any)}
-                            className="input w-48"
-                        >
-                            <option value="Norte">Norte</option>
-                            <option value="Sur">Sur</option>
-                            <option value="Santa Cruz">Santa Cruz</option>
-                        </select>
+                            onChange={(val) => setZonaSeleccionada(val)}
+                            options={[
+                                { value: 'Norte', label: 'Norte' },
+                                { value: 'Sur', label: 'Sur' },
+                                { value: 'Santa Cruz', label: 'Santa Cruz' }
+                            ]}
+                            className="w-48"
+                        />
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg">

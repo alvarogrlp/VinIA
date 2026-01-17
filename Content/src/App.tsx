@@ -14,6 +14,7 @@ import { Catalogo } from './screens/Catalogo';
 import { Clientes } from './screens/Clientes';
 import { NuevoCliente } from './screens';
 import { NuevoVino } from './screens/NuevoVino';
+import { EditarVino } from './screens/EditarVino';
 import { Pedidos } from './screens/Pedidos';
 import { Inventario } from './screens/Inventario';
 import { NuevoPedido } from './screens/NuevoPedido';
@@ -23,6 +24,7 @@ import { DetalleComercial } from './screens/DetalleComercial';
 import { DetalleCliente } from './screens/DetalleCliente';
 import { HistoricoCliente } from './screens/HistoricoCliente';
 import { Profile } from './screens/Profile';
+import { MapaComercial } from './screens/MapaComercial';
 
 /**
  * Componente que protege rutas que requieren autenticación
@@ -80,13 +82,14 @@ function App() {
           <Route path="clientes/nuevo" element={<NuevoCliente />} />
           <Route path="clientes/:id" element={<DetalleCliente />} />
           <Route path="clientes/:id/historico" element={<HistoricoCliente />} />
+          <Route path="mapa" element={<MapaComercial />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
 
           <Route
             path="inventario"
             element={
-              <ProtectedRoute allowedRoles={['Almacén']}>
+              <ProtectedRoute allowedRoles={['Almacén', 'Administración']}>
                 <Inventario />
               </ProtectedRoute>
             }
@@ -94,8 +97,16 @@ function App() {
           <Route
             path="inventario/nuevo"
             element={
-              <ProtectedRoute allowedRoles={['Almacén']}>
+              <ProtectedRoute allowedRoles={['Almacén', 'Administración']}>
                 <NuevoVino />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="inventario/editar/:id"
+            element={
+              <ProtectedRoute allowedRoles={['Almacén', 'Administración']}>
+                <EditarVino />
               </ProtectedRoute>
             }
           />

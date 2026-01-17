@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Wine, Image as ImageIcon } from 'lucide-react';
 import { api } from '../lib/api';
+import { Select } from '../components';
 import type { TipoVino } from '../types';
 
 export const NuevoVino = () => {
@@ -39,6 +40,13 @@ export const NuevoVino = () => {
             [name]: (name === 'precio_unitario' || name === 'grado_alcohol' || name === 'stock' || name === 'stock_minimo' || name === 'ano')
                 ? Number(value)
                 : value
+        }));
+    };
+
+    const handleSelectChange = (name: string, value: any) => {
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
         }));
     };
 
@@ -125,23 +133,19 @@ export const NuevoVino = () => {
                         </div>
 
                         <div className="space-y-2">
-                            <label htmlFor="tipo" className="text-sm font-medium text-secondary-700">
-                                Tipo *
-                            </label>
-                            <select
-                                id="tipo"
-                                name="tipo"
+                            <Select
+                                label="Tipo *"
                                 value={formData.tipo}
-                                onChange={handleChange}
-                                className="w-full input"
-                            >
-                                <option value="Tinto">Tinto</option>
-                                <option value="Blanco">Blanco</option>
-                                <option value="Rosado">Rosado</option>
-                                <option value="Espumoso">Espumoso</option>
-                                <option value="Fortificado">Fortificado</option>
-                                <option value="Dulce">Dulce</option>
-                            </select>
+                                onChange={(val) => handleSelectChange('tipo', val)}
+                                options={[
+                                    { value: 'Tinto', label: 'Tinto' },
+                                    { value: 'Blanco', label: 'Blanco' },
+                                    { value: 'Rosado', label: 'Rosado' },
+                                    { value: 'Espumoso', label: 'Espumoso' },
+                                    { value: 'Fortificado', label: 'Fortificado' },
+                                    { value: 'Dulce', label: 'Dulce' }
+                                ]}
+                            />
                         </div>
 
                         <div className="space-y-2">

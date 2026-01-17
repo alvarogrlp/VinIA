@@ -10,26 +10,31 @@ import {
     Lock,
     Bell,
     Save,
-    Camera,
     LogOut,
     Mail,
     Shield
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { useNavigate } from 'react-router-dom';
+import { ImageUpload } from '../components';
+import { authService } from '../services/auth.service';
 
 export const Profile = () => {
-    const { usuario, logout } = useAuthStore();
+    const { usuario, logout, initialize } = useAuthStore();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         nombre: usuario?.nombre || '',
         apellidos: usuario?.apellidos || '',
-        email: usuario?.username || '@vinia.com', // Mock email logic
+        email: usuario?.username || '',
+        avatar: usuario?.avatar || '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
+
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const [notifications, setNotifications] = useState({
         email: true,
@@ -43,10 +48,39 @@ export const Profile = () => {
         navigate('/login');
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Aquí iría la llamada al backend para actualizar
-        alert('Cambios guardados correctamente (Simulación)');
+        setMessage(null);
+
+        if (!usuario?.id) return;
+
+        try {
+            setLoading(true);
+            await authService.updateUser(usuario.id, {
+                nombre: formData.nombre,
+                apellidos: formData.apellidos,
+                avatar: formData.avatar
+            });
+
+            // Update local session
+            const storedUser = JSON.parse(localStorage.getItem('vinia_user') || '{}');
+            const updatedUser = {
+                ...storedUser,
+                nombre: formData.nombre,
+                apellidos: formData.apellidos,
+                avatar: formData.avatar
+            };
+            localStorage.setItem('vinia_user', JSON.stringify(updatedUser));
+
+            // Re-initialize store to reflect changes
+            initialize();
+
+            setMessage({ type: 'success', text: 'Perfil actualizado correctamente' });
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Error al actualizar perfil' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -65,17 +99,22 @@ export const Profile = () => {
                 </button>
             </div>
 
+            {message && (
+                <div className={`p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {message.text}
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Columna Izquierda - Avatar y Resumen */}
+                {/* Columna Izquierda - Avatar */}
                 <div className="space-y-6">
-                    <div className="bg-white p-8 rounded-xl shadow-elegant text-center">
-                        <div className="relative inline-block mb-4">
-                            <div className="w-32 h-32 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-4xl font-bold border-4 border-white shadow-lg mx-auto">
-                                {usuario?.nombre.charAt(0)}
-                            </div>
-                            <button className="absolute bottom-0 right-0 p-2 bg-secondary-900 text-white rounded-full hover:bg-primary-600 transition-colors shadow">
-                                <Camera className="w-4 h-4" />
-                            </button>
+                    <div className="bg-white p-6 rounded-xl shadow-elegant text-center">
+                        <div className="mb-4">
+                            <ImageUpload
+                                label="Foto de Perfil"
+                                initialImage={formData.avatar}
+                                onImageChange={(base64) => setFormData(prev => ({ ...prev, avatar: base64 || '' }))}
+                            />
                         </div>
                         <h2 className="text-xl font-bold text-secondary-900">{usuario?.nombre} {usuario?.apellidos}</h2>
                         <p className="text-secondary-500 text-sm mb-4">{usuario?.rol}</p>
@@ -134,9 +173,15 @@ export const Profile = () => {
                                 </div>
                             </div>
                             <div className="flex justify-end pt-2">
-                                <button type="submit" className="btn-primary">
-                                    <Save className="w-4 h-4 mr-2" />
-                                    Guardar Cambios
+                                <button type="submit" disabled={loading} className="btn-primary">
+                                    {loading ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4 mr-2" />
+                                            Guardar Cambios
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>

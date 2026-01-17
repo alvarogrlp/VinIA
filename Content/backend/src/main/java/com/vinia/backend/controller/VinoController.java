@@ -36,20 +36,20 @@ public class VinoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ALMACEN')")
+    @PreAuthorize("hasAnyRole('ALMACEN', 'ADMIN')")
     public Vino create(@RequestBody Vino vino) {
         return vinoService.save(vino);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ALMACEN')")
+    @PreAuthorize("hasAnyRole('ALMACEN', 'ADMIN')")
     public ResponseEntity<Vino> update(@PathVariable String id, @RequestBody Vino vino) {
         vino.setId(id); // Ensure ID matches
         return ResponseEntity.ok(vinoService.save(vino));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ALMACEN')")
+    @PreAuthorize("hasAnyRole('ALMACEN', 'ADMIN')")
     public ResponseEntity<?> delete(@PathVariable String id) {
         try {
             vinoService.deleteById(id);
@@ -60,7 +60,7 @@ public class VinoController {
     }
 
     @PostMapping("/{id}/stock")
-    @PreAuthorize("hasRole('ALMACEN')")
+    @PreAuthorize("hasAnyRole('ALMACEN', 'ADMIN')")
     public ResponseEntity<Vino> updateStock(@PathVariable String id,
             @RequestBody java.util.Map<String, Integer> payload) {
         Integer cantidad = payload.get("cantidad");

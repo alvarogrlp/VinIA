@@ -88,4 +88,15 @@ export const clientesService = {
     const data = await api.get(`/clientes/${clienteId}/analysis`);
     return data;
   },
+
+  /**
+   * Obtener datos para el mapa
+   */
+  async getMapData(userId?: string) {
+    const queryParams = new URLSearchParams();
+    if (userId) queryParams.append('userId', userId);
+
+    const data = await api.get(`/clientes/map-data?${queryParams.toString()}`);
+    return data as any[]; // Typed loosely for now, or define interface
+  },
 };

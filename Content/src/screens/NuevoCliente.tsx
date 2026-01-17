@@ -17,6 +17,7 @@ import {
   Percent
 } from 'lucide-react';
 import { useClientesStore } from '../store';
+import { Select } from '../components';
 import type { TipoCliente } from '../types';
 
 export const NuevoCliente = () => {
@@ -46,6 +47,13 @@ export const NuevoCliente = () => {
     setFormData(prev => ({
       ...prev,
       [name]: name === 'descuento' ? Number(value) : value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
 
@@ -132,22 +140,18 @@ export const NuevoCliente = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="tipo" className="text-sm font-medium text-secondary-700">
-                Tipo de Cliente
-              </label>
-              <select
-                id="tipo"
-                name="tipo"
+              <Select
+                label="Tipo de Cliente"
                 value={formData.tipo}
-                onChange={handleChange}
-                className="w-full input"
-              >
-                <option value="Restaurante">Restaurante</option>
-                <option value="Hotel">Hotel</option>
-                <option value="Tienda">Tienda</option>
-                <option value="Distribuidor">Distribuidor</option>
-                <option value="Particular">Particular</option>
-              </select>
+                onChange={(val) => handleSelectChange('tipo', val)}
+                options={[
+                  { value: 'Restaurante', label: 'Restaurante' },
+                  { value: 'Hotel', label: 'Hotel' },
+                  { value: 'Tienda', label: 'Tienda' },
+                  { value: 'Distribuidor', label: 'Distribuidor' },
+                  { value: 'Particular', label: 'Particular' }
+                ]}
+              />
             </div>
 
             <div className="space-y-2">
@@ -155,7 +159,7 @@ export const NuevoCliente = () => {
                 Descuento Habitual (%)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <Percent className="w-4 h-4 text-secondary-400" />
                 </div>
                 <input
@@ -166,7 +170,8 @@ export const NuevoCliente = () => {
                   onChange={handleChange}
                   min="0"
                   max="100"
-                  className="w-full pl-10 input"
+                  className="w-full input"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="0"
                 />
               </div>
@@ -243,21 +248,17 @@ export const NuevoCliente = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="zona" className="text-sm font-medium text-secondary-700">
-                Zona de Reparto *
-              </label>
-              <select
-                id="zona"
-                name="zona"
+              <Select
+                label="Zona de Reparto *"
                 value={(formData as any).zona || 'Norte'}
-                onChange={handleChange}
-                className="w-full input"
-                required
-              >
-                <option value="Norte">Norte</option>
-                <option value="Sur">Sur</option>
-                <option value="Santa Cruz">Santa Cruz</option>
-              </select>
+                onChange={(val) => handleSelectChange('zona', val)}
+                options={[
+                  { value: 'Norte', label: 'Norte' },
+                  { value: 'Sur', label: 'Sur' },
+                  { value: 'Santa Cruz', label: 'Santa Cruz' }
+                ]}
+                error={!formData.zona ? 'La zona es obligatoria' : undefined}
+              />
             </div>
           </div>
         </div>
@@ -290,7 +291,7 @@ export const NuevoCliente = () => {
                 Teléfono
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <Phone className="w-4 h-4 text-secondary-400" />
                 </div>
                 <input
@@ -299,7 +300,8 @@ export const NuevoCliente = () => {
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
-                  className="w-full pl-10 input"
+                  className="w-full input"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="Ej: 600 123 456"
                 />
               </div>
@@ -310,7 +312,7 @@ export const NuevoCliente = () => {
                 Correo Electrónico
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <Mail className="w-4 h-4 text-secondary-400" />
                 </div>
                 <input
@@ -319,7 +321,8 @@ export const NuevoCliente = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 input"
+                  className="w-full input"
+                  style={{ paddingLeft: '3rem' }}
                   placeholder="Ej: contacto@restaurante.com"
                 />
               </div>

@@ -14,6 +14,7 @@ import { usePedidosStore, useClientesStore, useVinosStore } from '../store';
 import { api } from '../lib/api';
 import { formatearPrecio } from '../utils/helpers';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { Select } from '../components';
 
 export const NuevoPedido = () => {
   const navigate = useNavigate();
@@ -612,17 +613,18 @@ export const NuevoPedido = () => {
         <div className="card bg-white border-secondary-100 mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="col-span-2">
             <h2 className="mb-2 text-lg font-semibold text-secondary-900">Forma de Pago</h2>
-            <select
+            <Select
               value={pedidoActual?.formaPago || 'Contado'}
-              onChange={(e) => actualizarPedido({ formaPago: e.target.value })}
-              className="w-full input"
-            >
-              <option value="Contado">Contado</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Cobrado">Cobrado</option>
-              <option value="Giro 30 días">Giro 30 días</option>
-              <option value="Giro 60 días">Giro 60 días</option>
-            </select>
+              onChange={(val) => actualizarPedido({ formaPago: val })}
+              options={[
+                { value: 'Contado', label: 'Contado' },
+                { value: 'Transferencia', label: 'Transferencia' },
+                { value: 'Cobrado', label: 'Cobrado' },
+                { value: 'Giro 30 días', label: 'Giro 30 días' },
+                { value: 'Giro 60 días', label: 'Giro 60 días' },
+              ]}
+              className="w-full"
+            />
           </div>
         </div>
 

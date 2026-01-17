@@ -113,6 +113,7 @@ interface VinosState {
   obtenerVino: (id: string) => Vino | undefined;
   agregarVino: (vino: Omit<Vino, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   actualizarVino: (id: string, datos: Partial<Vino>) => Promise<void>;
+  actualizarStock: (id: string, cantidad: number) => Promise<void>;
   eliminarVino: (id: string) => Promise<void>;
   seleccionarVino: (vino: Vino | null) => void;
 }
@@ -188,6 +189,22 @@ export const useVinosStore = create<VinosState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       const vinoActualizado = await vinosService.update(id, datos as any);
+      set((state) => ({
+        vinos: state.vinos.map((vino) =>
+          vino.id === id ? vinoActualizado : vino
+        ),
+        cargando: false
+      }));
+    } catch (error: any) {
+      set({ error: error.message, cargando: false });
+      throw error;
+    }
+  },
+
+  actualizarStock: async (id, cantidad) => {
+    try {
+      set({ cargando: true, error: null });
+      const vinoActualizado = await vinosService.updateStock(id, cantidad);
       set((state) => ({
         vinos: state.vinos.map((vino) =>
           vino.id === id ? vinoActualizado : vino
