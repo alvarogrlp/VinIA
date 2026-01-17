@@ -38,9 +38,15 @@ export const ClienteDetallesModal = ({ cliente, onClose }: Props) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm">
-        <div className="w-full max-w-5xl h-[90vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in overflow-hidden">
-          
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-5xl h-[90vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in overflow-hidden"
+        >
+
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-secondary-200 bg-white">
             <div>
@@ -63,7 +69,7 @@ export const ClienteDetallesModal = ({ cliente, onClose }: Props) => {
               </div>
             ) : (
               <div className="space-y-6">
-                
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white p-4 rounded-xl border border-secondary-200 shadow-sm">
@@ -121,7 +127,7 @@ export const ClienteDetallesModal = ({ cliente, onClose }: Props) => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
+
                   {/* Top Productos */}
                   <div className="lg:col-span-1 bg-white rounded-xl border border-secondary-200 shadow-sm p-5 h-fit">
                     <h3 className="font-bold text-secondary-900 mb-4 flex items-center gap-2">
@@ -155,7 +161,7 @@ export const ClienteDetallesModal = ({ cliente, onClose }: Props) => {
                         <Clock className="w-5 h-5 text-primary-600" />
                         Últimos Pedidos
                       </h3>
-                      <button 
+                      <button
                         onClick={() => setMostrarHistorialCompleto(true)}
                         className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 hover:underline"
                       >
@@ -239,9 +245,9 @@ export const ClienteDetallesModal = ({ cliente, onClose }: Props) => {
 
       {/* Modal de Historial Completo */}
       {mostrarHistorialCompleto && (
-        <ClienteHistorialModal 
-          cliente={cliente} 
-          onClose={() => setMostrarHistorialCompleto(false)} 
+        <ClienteHistorialModal
+          cliente={cliente}
+          onClose={() => setMostrarHistorialCompleto(false)}
         />
       )}
     </>

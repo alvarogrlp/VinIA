@@ -91,8 +91,14 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm">
-      <div className="w-full max-w-4xl h-[80vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl h-[80vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div>

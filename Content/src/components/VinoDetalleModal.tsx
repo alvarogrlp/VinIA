@@ -8,8 +8,14 @@ interface VinoDetalleModalProps {
 
 export const VinoDetalleModal = ({ vino, onClose }: VinoDetalleModalProps) => {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative flex flex-col md:flex-row">
+        <div
+            onClick={onClose}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative flex flex-col md:flex-row"
+            >
 
                 {/* Close Button */}
                 <button

@@ -35,7 +35,7 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
   const pedidosFiltrados = pedidos.filter(pedido => {
     // Filtro por texto (número de pedido o nombre de vino)
     const textoBusqueda = busqueda.toLowerCase();
-    const coincideTexto = 
+    const coincideTexto =
       pedido.numero_pedido.toLowerCase().includes(textoBusqueda) ||
       pedido.lineas.some(l => l.vino.nombre.toLowerCase().includes(textoBusqueda));
 
@@ -87,7 +87,7 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
         {pedidosFiltrados.map(pedido => (
           <div key={pedido.id} className="bg-white border border-secondary-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
             {/* Cabecera del Pedido */}
-            <button 
+            <button
               onClick={() => toggleExpandir(pedido.id)}
               className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-secondary-50 transition-colors outline-none focus:bg-secondary-50 text-left"
             >
@@ -155,9 +155,15 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm">
-      <div className="w-full max-w-4xl h-[85vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in">
-        
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-secondary-900/20 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl h-[85vh] flex flex-col bg-white shadow-xl rounded-xl animate-fade-in"
+      >
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-secondary-200">
           <div>

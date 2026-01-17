@@ -38,8 +38,14 @@ export const PedidoModal = ({ pedido, onClose, onCambiarEstado, rol }: PedidoMod
     const action = getNextAction();
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div
+            onClick={onClose}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in"
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            >
                 <div className="flex items-center justify-between p-6 border-b border-secondary-200">
                     <div>
                         <h2 className="text-2xl font-bold text-secondary-900">Pedido {pedido.numero}</h2>

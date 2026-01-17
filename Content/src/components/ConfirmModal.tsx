@@ -57,8 +57,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all scale-100">
+        <div
+            onClick={onClose}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden transform transition-all scale-100"
+            >
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-secondary-400 hover:text-secondary-600 transition-colors"
