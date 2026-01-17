@@ -36,7 +36,7 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
     // Filtro por texto (número de pedido o nombre de vino)
     const textoBusqueda = busqueda.toLowerCase();
     const coincideTexto =
-      pedido.numero_pedido.toLowerCase().includes(textoBusqueda) ||
+      pedido.numero.toLowerCase().includes(textoBusqueda) ||
       pedido.lineas.some(l => l.vino.nombre.toLowerCase().includes(textoBusqueda));
 
     // Filtro por fecha
@@ -96,7 +96,7 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
                   {pedidoExpandido === pedido.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </div>
                 <div>
-                  <p className="font-bold text-secondary-900">{pedido.numero_pedido}</p>
+                  <p className="font-bold text-secondary-900">{pedido.numero}</p>
                   <div className="flex items-center gap-2 text-sm text-secondary-500">
                     <Calendar className="w-3 h-3" />
                     {new Date(pedido.fecha).toLocaleDateString()}
@@ -132,7 +132,7 @@ export const ClienteHistorialModal = ({ cliente, onClose }: Props) => {
                         <p className="text-xs text-secondary-500">{linea.vino.bodega}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-secondary-900">{linea.cantidad} x {formatearPrecio(linea.precio_unitario)}</p>
+                        <p className="text-secondary-900">{linea.cantidad} x {formatearPrecio(linea.precioUnitario)}</p>
                         <p className="font-medium text-secondary-900">{formatearPrecio(linea.subtotal)}</p>
                       </div>
                     </div>

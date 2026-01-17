@@ -26,3 +26,8 @@ dist-ssr
 # Local Database
 backend/data/
 data/
+
+# Debug and development files
+debug_*.txt
+*_log.txt
+*.log

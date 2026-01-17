@@ -10,7 +10,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
     TrendingUp,
     Users,
-    ShoppingCart,
     PlusCircle,
     Clock,
     CheckCircle,
@@ -57,7 +56,7 @@ export const CommercialDashboard = () => {
         if (!usuario) return null;
 
         const myPedidos = pedidos.filter(p => p.usuarioId === usuario.id || (p.usuario as any)?.id === usuario.id);
-        const myClients = clientes.filter(c => c.comercialId === usuario.id); // Asumiendo relación, si no existe mostramos todos o 0
+        const myClients = clientes.filter(c => c.comercial_id === usuario.id); // Asumiendo relación, si no existe mostramos todos o 0
 
         const validPedidos = myPedidos.filter(p => !['Borrador', 'Cancelado'].includes(p.estado));
 
@@ -235,7 +234,7 @@ export const CommercialDashboard = () => {
                                     formatter={(value: any) => [formatearPrecio(value), 'Ventas']}
                                 />
                                 <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                                    {getSalesData().map((entry, index) => (
+                                    {getSalesData().map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={index === 5 ? '#b8945a' : '#e5e7eb'} />
                                     ))}
                                 </Bar>

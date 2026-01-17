@@ -304,6 +304,7 @@ export interface Usuario {
   apellidos: string;
   rol: RolUsuario;
   activo: boolean;
+  avatar?: string; // Base64 encoded image or URL
   ultimo_acceso?: string;
   created_at?: string;
   updated_at?: string;

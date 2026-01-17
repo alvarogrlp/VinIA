@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   Plus,
   Trash2,
-  Save,
   User,
   ShoppingCart,
   ArrowLeft,
@@ -13,7 +12,6 @@ import {
   Box,
   CreditCard,
   MapPin,
-  FileText,
   Info
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore, useVinosStore } from '../store';
@@ -50,7 +48,6 @@ export const NuevoPedido = () => {
 
   // Historial de productos
   const [productosHabituales, setProductosHabituales] = useState<any[]>([]);
-  const [cargandoHistorial, setCargandoHistorial] = useState(false);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,7 +137,6 @@ export const NuevoPedido = () => {
       }
 
       try {
-        setCargandoHistorial(true);
         const data: any[] = await api.get(`/pedidos?clienteId=${clienteSeleccionadoId}`);
         const stats = new Map();
 
@@ -178,8 +174,6 @@ export const NuevoPedido = () => {
         setProductosHabituales(habituales);
       } catch (error) {
         console.error("Error cargando historial", error);
-      } finally {
-        setCargandoHistorial(false);
       }
     };
 

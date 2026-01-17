@@ -8,15 +8,29 @@ El proyecto nació para abordar una carencia específica en el mercado: el softw
 
 Esta herramienta se está desarrollando actualmente con la retroalimentación continua de profesionales activos del sector para garantizar que cumple con los estándares de accesibilidad y las necesidades operativas del mundo real.
 
-## Demostración del Estado Actual
+## Demostraciones del Proyecto
 
 <div align="center">
-  <p><em>Haz clic en el logo para ver el video de demostración (Grabado el 13 de Enero de 2026)</em></p>
-  
-  <a href="https://www.youtube.com/watch?v=chMul1mp6QY">
-    <img src="Resources/Images/Logo.png" width="200" alt="Ver Demo en YouTube"/>
-  </a>
+  <table style="border-collapse: collapse; border: none;">
+    <tr>
+      <td align="center" style="padding: 20px; border: none;">
+        <p><strong>Demo 1: Bases y Flujo Inicial</strong><br/><em>13 de Enero, 2026</em></p>
+        <a href="https://www.youtube.com/watch?v=chMul1mp6QY">
+          <img src="Resources/Images/Logo.png" width="180" alt="Demo 1"/>
+        </a>
+      </td>
+      <td align="center" style="padding: 20px; border: none;">
+        <p><strong>Demo 2: Funciones Finales y Refactorización</strong><br/><em>17 de Enero, 2026</em></p>
+        <a href="https://youtu.be/Bdzbu3fK1-I">
+          <img src="Resources/Images/Logo.png" width="180" alt="Demo 2"/>
+        </a>
+      </td>
+    </tr>
+  </table>
+  <p><em>Haz clic en los logos para ver las demostraciones en YouTube</em></p>
 </div>
+
+> El módulo de Inteligencia Artificial descrito en la visión estratégica se encuentra actualmente en fase de arquitectura y desarrollo, por lo que su funcionalidad no está presente en las demostraciones técnicas actuales.
 
 ## Visión Estratégica y Hoja de Ruta
 

@@ -1,4 +1,4 @@
-import { X, User, ShoppingBag, MapPin, Calendar, FileText, Truck } from 'lucide-react';
+import { X, User, ShoppingBag, FileText, Truck } from 'lucide-react';
 import type { Pedido, EstadoPedido } from '../types';
 import { formatearPrecio } from '../utils/helpers';
 
@@ -20,22 +20,6 @@ export const PedidoModal = ({ pedido, onClose, onCambiarEstado, rol }: PedidoMod
     ];
 
     const currentStepIndex = steps.findIndex(s => s.status === pedido.estado || s.status === pedido.estado.replace(/ /g, '_'));
-
-    // Logic for next state based on role
-    const getNextAction = () => {
-        if (rol === 'Almacén') {
-            if (pedido.estado === 'Pendiente' || pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') { // Should normally be En Preparación
-                return { label: 'Marcar como Preparado', next: 'EN_REPARTO' as EstadoPedido, color: 'bg-purple-600 hover:bg-purple-700' };
-            }
-            // If it stays in "En Preparación" until packed.
-            if (pedido.estado === 'Pendiente') { // If it comes directly
-                return { label: 'Empezar Preparación', next: 'EN_PREPARACION' as EstadoPedido, color: 'bg-blue-600 hover:bg-blue-700' };
-            }
-        }
-        return null;
-    };
-
-    const action = getNextAction();
 
     return (
         <div

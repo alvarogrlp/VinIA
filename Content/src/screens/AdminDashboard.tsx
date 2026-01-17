@@ -23,9 +23,7 @@ import {
     Award,
     DollarSign,
     Package,
-    UserPlus,
-    UserMinus,
-    Search
+    UserPlus
 } from 'lucide-react';
 import { usePedidosStore, useClientesStore } from '../store';
 import { AsignacionClientesModal } from '../components/AsignacionClientesModal';
@@ -45,18 +43,14 @@ interface UsuarioSistema {
 
 export const AdminDashboard = () => {
     const { pedidos, cargarPedidos } = usePedidosStore();
-    const { clientes, cargarClientes, actualizarCliente } = useClientesStore();
+    const { clientes, cargarClientes } = useClientesStore();
     const [comerciales, setComerciales] = useState<UsuarioSistema[]>([]);
     const [selectedUser, setSelectedUser] = useState<UsuarioSistema | null>(null);
     const [timeFrame, setTimeFrame] = useState<'week' | 'month' | 'year'>('month');
     const [loading, setLoading] = useState(true);
     const [showManageClientsModal, setShowManageClientsModal] = useState(false);
 
-    // Reset states when closing modal
-    const closeUserModal = () => {
-        setSelectedUser(null);
-        setShowManageClientsModal(false);
-    };
+
 
     useEffect(() => {
         const fetchData = async () => {

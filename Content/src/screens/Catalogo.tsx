@@ -15,7 +15,7 @@ import { Select } from '../components';
 import type { Vino } from '../types';
 
 export const Catalogo = () => {
-    const { vinos, cargando, cargarVinos, buscarVinos, filtrarVinos, error } = useVinosStore();
+    const { vinos, cargando, cargarVinos, buscarVinos, error } = useVinosStore();
     const { usuario } = useAuthStore();
     const navigate = useNavigate();
     const [busqueda, setBusqueda] = useState('');
