@@ -27,6 +27,13 @@ dist-ssr
 backend/data/
 data/
 
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Debug and development files
 debug_*.txt
 *_log.txt

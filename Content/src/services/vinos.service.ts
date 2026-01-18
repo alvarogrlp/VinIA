@@ -121,10 +121,39 @@ export const vinosService = {
       return this.getAll();
     }
 
-    const searchTerm = query.trim();
-    console.log('🔍 Búsqueda avanzada:', searchTerm);
+    console.log('🤖 Búsqueda IA:', query);
 
-    const data = await api.get(`/vinos?search=${encodeURIComponent(searchTerm)}`);
-    return data as Vino[];
+    try {
+      // 1. Obtener IDs y Razones desde la IA
+      console.log('🔐 Token presente:', !!localStorage.getItem('vinia_token'));
+      const aiResponse = await api.get(`/ai/search?query=${encodeURIComponent(query)}`);
+
+      // Si la respuesta es vacía o error
+      if (!Array.isArray(aiResponse) || aiResponse.length === 0) {
+        console.warn('IA no devolvió resultados, fallback a búsqueda sql');
+        return this.search(query);
+      }
+
+      // 2. Obtener catálogo completo para hidratar datos (Optimización: Podríamos tener un endpoint /bulk)
+      const allVinos = await this.getAll();
+
+      // 3. Cruzar datos manteniendo el orden de relevancia de la IA
+      const resultados = aiResponse.map((item: any) => {
+        const vinoReal = allVinos.find(v => v.id === item.vinoId);
+        if (vinoReal) {
+          // Inyectamos la razón como propiedad temporal por si la UI quiere usarla
+          return { ...vinoReal, _aiReason: item.razon };
+        }
+        return null;
+      }).filter((v): v is Vino => v !== null);
+
+      console.log(`✅ IA encontró ${resultados.length} coincidencias`);
+      return resultados;
+
+    } catch (error) {
+      console.error('Error en búsqueda IA:', error);
+      // Fallback a búsqueda normal
+      return this.search(query);
+    }
   }
 };

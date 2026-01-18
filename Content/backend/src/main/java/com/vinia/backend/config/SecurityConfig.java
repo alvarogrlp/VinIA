@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Login/Register public
                         .requestMatchers("/api/test/**").permitAll() // Seeding public
+                        .requestMatchers("/api/ai/**").permitAll() // AI endpoints temporarily public for debugging
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/error").permitAll() // Allow error dispatching
                         .anyRequest().authenticated()) // All other endpoints require auth

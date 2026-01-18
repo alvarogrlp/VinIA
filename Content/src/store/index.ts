@@ -5,7 +5,7 @@
  */
 
 import { create } from 'zustand';
-import type { Usuario, Vino, Cliente, Pedido, LineaPedido } from '../types';
+import type { Usuario, Vino, Cliente, Pedido, LineaPedido, EstadoPedido } from '../types';
 import { authService } from '../services/auth.service';
 import { vinosService } from '../services/vinos.service';
 import { clientesService } from '../services/clientes.service';
@@ -472,7 +472,7 @@ interface PedidosState {
   error: string | null;
   cargarPedidos: () => Promise<void>;
   obtenerPedido: (id: string) => Pedido | undefined;
-  crearPedido: (clienteId: string) => void;
+  crearPedido: (clienteId: string, originalOrderId?: string) => void;
   agregarLineaPedido: (linea: Omit<LineaPedido, 'id'>) => void;
   actualizarLineaPedido: (lineaId: string, datos: Partial<LineaPedido>) => void;
   eliminarLineaPedido: (lineaId: string) => void;
@@ -480,10 +480,11 @@ interface PedidosState {
   setIva: (iva: number) => void;
   actualizarPedido: (datos: Partial<Pedido>) => void;
   calcularTotales: () => void;
-  guardarPedido: () => Promise<void>;
+  guardarPedido: (estadoFinal?: EstadoPedido) => Promise<void>;
   cancelarPedido: () => void;
   cambiarEstadoPedido: (pedidoId: string, estado: Pedido['estado']) => Promise<void>;
   marcarAlbaranDescargado: (pedidoId: string) => Promise<void>;
+  eliminarPedido: (pedidoId: string) => Promise<void>;
 }
 
 export const usePedidosStore = create<PedidosState>((set, get) => ({
@@ -543,7 +544,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     return pedidos.find((pedido) => pedido.id === id);
   },
 
-  crearPedido: (clienteId: string) => {
+  crearPedido: (clienteId: string, originalOrderId?: string) => {
     const { clientes } = useClientesStore.getState();
     const { usuario } = useAuthStore.getState();
     const cliente = clientes.find(c => c.id === clienteId);
@@ -552,12 +553,12 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     const comercial = (cliente as any)?.usuario || usuario;
 
     const nuevoPedido: Pedido = {
-      id: `temp-${Date.now()}`,
+      id: originalOrderId || `temp-${Date.now()}`,
       numero: `PED-${Date.now()}`,
       clienteId,
       clienteNombre: cliente?.nombre || '',
-      fecha: new Date().toISOString(),
-      estado: 'Borrador',
+      fecha: new Date().toISOString().slice(0, 19),
+      estado: 'BORRADOR',
       lineas: [],
       subtotal: 0,
       descuento: 0,
@@ -696,78 +697,46 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     });
   },
 
-  guardarPedido: async () => {
+  guardarPedido: async (estadoFinal?: EstadoPedido) => {
     const { pedidoActual } = get();
     if (!pedidoActual || pedidoActual.lineas.length === 0) return;
 
     try {
       set({ cargando: true, error: null });
 
-      // Crear pedido en Supabase
-      const pedidoCreado = await pedidosService.create(
-        {
-          numero: "GENERATED_BY_BACKEND", // El backend genera el número definitivo
-          clienteId: pedidoActual.clienteId,
-          fecha: new Date().toISOString().slice(0, 19), // Format: YYYY-MM-DDTHH:mm:ss for LocalDateTime
-          estado: 'PENDIENTE_VALIDACION', // Backend will override if needed, but we send a default
-          subtotal: pedidoActual.subtotal,
-          descuento: pedidoActual.descuento,
-          iva: pedidoActual.iva,
-          total: pedidoActual.total,
-          notas: undefined,
-          instruccionesEntrega: pedidoActual.instruccionesEntrega,
-          direccionEnvioSnapshot: pedidoActual.direccionEnvioSnapshot,
-          formaPago: pedidoActual.formaPago,
-          usuario: pedidoActual.usuario, // Pass the whole object if API supports or just ID
-          usuarioId: pedidoActual.usuarioId // Ensure ID is passed if property exists
-        },
-        pedidoActual.lineas.map(linea => ({
-          vinoId: linea.vinoId,
-          cantidad: linea.cantidad,
-          precioUnitario: linea.precioUnitario,
-          descuento: linea.descuento,
-          subtotal: linea.subtotal,
-          anada: linea.anada,
-          lote: linea.lote,
-          tipoBulto: linea.tipoBulto,
-          cantidadBultos: linea.cantidadBultos
-        }))
-      );
+      const estadoEnvio = estadoFinal || 'EN_PREPARACION';
+      const isUpdate = pedidoActual.id && !pedidoActual.id.startsWith('temp-') && !pedidoActual.id.startsWith('PED-');
 
-      // Agregar a la lista de pedidos
-      set((state) => ({
-        pedidos: [
-          ...state.pedidos,
+      let result;
+      if (isUpdate) {
+        // Modificar el borrador existente
+        result = await pedidosService.update(pedidoActual.id, {
+          ...pedidoActual,
+          fecha: pedidoActual.fecha.includes('Z') ? pedidoActual.fecha.slice(0, 19) : pedidoActual.fecha,
+          estado: estadoEnvio,
+          lineas: pedidoActual.lineas.map(l => ({
+            ...l,
+            vino: { id: l.vinoId || l.vino?.id }
+          }))
+        });
+      } else {
+        // Crear nuevo pedido
+        result = await pedidosService.create(
           {
-            id: pedidoCreado.id,
-            numero: pedidoCreado.numero,
-            clienteId: pedidoCreado.cliente.id,
-            clienteNombre: pedidoCreado.cliente.nombre,
-            fecha: pedidoCreado.fecha,
-            estado: pedidoCreado.estado,
-            lineas: pedidoCreado.lineas.map(l => ({
-              id: l.id,
-              vinoId: l.vinoId, // Accessing flat property on LineaPedido
-              vinoNombre: l.vino.nombre,
-              cantidad: l.cantidad,
-              precioUnitario: l.precioUnitario,
-              descuento: l.descuento,
-              subtotal: l.subtotal
-            })),
-            subtotal: pedidoCreado.subtotal,
-            descuento: pedidoCreado.descuento,
-            iva: pedidoCreado.iva,
-            total: pedidoCreado.total,
-            created_at: pedidoCreado.created_at
-          }
-        ],
-        pedidoActual: null,
-        cargando: false
-      }));
+            ...pedidoActual,
+            numero: "GENERATED_BY_BACKEND",
+            fecha: new Date().toISOString().slice(0, 19),
+            estado: estadoEnvio,
+          },
+          pedidoActual.lineas
+        );
+      }
 
-      // Refresh stock
-      useVinosStore.getState().cargarVinos();
+      // Refresh both orders and wines (for stock)
+      await get().cargarPedidos();
+      await useVinosStore.getState().cargarVinos();
 
+      set({ pedidoActual: null, cargando: false });
     } catch (error: any) {
       set({ error: error.message, cargando: false });
       throw error;
@@ -782,7 +751,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     try {
       set({ cargando: true, error: null });
       // Solo actualizar en Supabase si no es Borrador (estado temporal)
-      if (estado !== 'Borrador') {
+      if (estado !== 'BORRADOR') {
         await pedidosService.updateEstado(pedidoId, estado as any);
       }
       set((state) => ({
@@ -819,6 +788,20 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       }));
     } catch (error: any) {
       set({ error: error.message, cargando: false });
+    }
+  },
+
+  eliminarPedido: async (pedidoId) => {
+    try {
+      set({ cargando: true, error: null });
+      await pedidosService.delete(pedidoId);
+      set((state) => ({
+        pedidos: state.pedidos.filter((p) => p.id !== pedidoId),
+        cargando: false
+      }));
+    } catch (error: any) {
+      set({ error: error.message, cargando: false });
+      throw error;
     }
   },
 }));

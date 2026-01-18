@@ -30,7 +30,7 @@ Esta herramienta se está desarrollando actualmente con la retroalimentación co
   <p><em>Haz clic en los logos para ver las demostraciones en YouTube</em></p>
 </div>
 
-> El módulo de Inteligencia Artificial descrito en la visión estratégica se encuentra actualmente en fase de arquitectura y desarrollo, por lo que su funcionalidad no está presente en las demostraciones técnicas actuales.
+> **Estado Actual:** El módulo de Inteligencia Artificial ya cuenta con **múltiples funcionalidades operativas** (análisis de clientes, recomendaciones, chat interactivo), aunque el proyecto sigue en desarrollo activo para refinar y ampliar estas capacidades. **En los videos aun no se muestran las funcionalidades de la IA**
 
 ## Visión Estratégica y Hoja de Ruta
 
@@ -61,6 +61,19 @@ Es importante notar que, aunque la aplicación incluye roles de **Almacén** y *
 *   Node.js 18+
 *   Java JDK 17+
 *   Maven
+*   **Google AI Studio API Key** (Gratuita)
+
+### 🤖 Configuración de Inteligencia Artificial (1 Minuto)
+Para que las funciones de IA (Chatbot, Recomendaciones, Análisis) funcionen, necesitas una clave gratuita de Google Gemini:
+
+1.  Accede a [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Pulsa en **"Create API key"**.
+3.  Abre el archivo `Content/backend/src/main/resources/application.properties`.
+4.  Busca la línea de la clave y pega la tuya:
+    ```properties
+    spring.ai.openai.api-key=TU_CLAVE_AQUI
+    ```
+    *(Por defecto el proyecto incluye una clave de demostración, pero se recomienda usar una propia para evitar límites de cuota).*
 
 ### Instalación
 

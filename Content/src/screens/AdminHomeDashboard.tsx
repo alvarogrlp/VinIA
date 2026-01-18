@@ -55,7 +55,10 @@ export const AdminHomeDashboard = () => {
 
     // KPIs
     const totalVentas = pedidos
-        .filter(p => p.estado !== 'Cancelado' && p.estado !== 'Borrador')
+        .filter(p => {
+            const s = p.estado.toUpperCase();
+            return s !== 'CANCELADO' && s !== 'BORRADOR';
+        })
         .reduce((acc, p) => acc + p.total, 0);
 
     const pedidosPendientes = pedidos.filter(p => p.estado === 'Pendiente' || p.estado === 'PENDIENTE_VALIDACION').length;
@@ -76,7 +79,10 @@ export const AdminHomeDashboard = () => {
                 const dateKey = d.toISOString().slice(0, 10);
 
                 const total = pedidos
-                    .filter(p => p.fecha.startsWith(dateKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .filter(p => {
+                        const s = p.estado.toUpperCase();
+                        return p.fecha.startsWith(dateKey) && s !== 'CANCELADO' && s !== 'BORRADOR';
+                    })
                     .reduce((acc, p) => acc + p.total, 0);
 
                 data.push({ name: dayStr, value: total });
@@ -88,7 +94,10 @@ export const AdminHomeDashboard = () => {
                 const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
                 const total = pedidos
-                    .filter(p => p.fecha.startsWith(monthKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .filter(p => {
+                        const s = p.estado.toUpperCase();
+                        return p.fecha.startsWith(monthKey) && s !== 'CANCELADO' && s !== 'BORRADOR';
+                    })
                     .reduce((acc, p) => acc + p.total, 0);
 
                 data.push({ name: monthName, value: total });
@@ -99,7 +108,10 @@ export const AdminHomeDashboard = () => {
                 const yearKey = year.toString();
 
                 const total = pedidos
-                    .filter(p => p.fecha.startsWith(yearKey) && !['Cancelado', 'Borrador'].includes(p.estado))
+                    .filter(p => {
+                        const s = p.estado.toUpperCase();
+                        return p.fecha.startsWith(yearKey) && s !== 'CANCELADO' && s !== 'BORRADOR';
+                    })
                     .reduce((acc, p) => acc + p.total, 0);
 
                 data.push({ name: yearKey, value: total });

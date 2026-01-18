@@ -21,12 +21,14 @@ com\vinia\backend\security\JwtAuthenticationFilter.class
 com\vinia\backend\model\Pedido.class
 com\vinia\backend\repository\UsuarioRepository.class
 com\vinia\backend\repository\AsignacionRepository.class
+com\vinia\backend\controller\AIController.class
 com\vinia\backend\exception\GlobalExceptionHandler.class
 com\vinia\backend\model\Cliente.class
 com\vinia\backend\service\VinoService.class
 com\vinia\backend\service\PedidoService.class
 com\vinia\backend\repository\VinoRepository.class
 com\vinia\backend\model\LineaPedido.class
+com\vinia\backend\service\GeocodingService.class
 com\vinia\backend\BackendApplication.class
 com\vinia\backend\service\ClienteService.class
 com\vinia\backend\controller\SeedDataController.class
@@ -34,3 +36,4 @@ com\vinia\backend\repository\AuditLogRepository.class
 com\vinia\backend\security\CustomUserDetailsService.class
 com\vinia\backend\controller\ClienteController.class
 com\vinia\backend\config\SecurityConfig.class
+com\vinia\backend\service\AIService.class

@@ -13,6 +13,7 @@ export const api = {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'GET',
       headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -39,6 +40,7 @@ export const api = {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -71,6 +73,7 @@ export const api = {
       method: 'PUT',
       headers,
       body: JSON.stringify(body),
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -94,6 +97,7 @@ export const api = {
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'DELETE',
       headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {

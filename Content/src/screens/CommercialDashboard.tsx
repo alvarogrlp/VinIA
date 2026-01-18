@@ -58,7 +58,10 @@ export const CommercialDashboard = () => {
         const myPedidos = pedidos.filter(p => p.usuarioId === usuario.id || (p.usuario as any)?.id === usuario.id);
         const myClients = clientes.filter(c => c.comercial_id === usuario.id); // Asumiendo relación, si no existe mostramos todos o 0
 
-        const validPedidos = myPedidos.filter(p => !['Borrador', 'Cancelado'].includes(p.estado));
+        const validPedidos = myPedidos.filter(p => {
+            const estado = p.estado.toUpperCase();
+            return estado !== 'BORRADOR' && estado !== 'CANCELADO' && estado !== 'PENDIENTE';
+        });
 
         // Ventas Mes Actual vs Mes Anterior
         const now = new Date();
@@ -77,7 +80,10 @@ export const CommercialDashboard = () => {
         const growth = lastMonthSales > 0 ? ((currentMonthSales - lastMonthSales) / lastMonthSales) * 100 : 100;
 
         // Pedidos pendientes (Acción requerida o en espera)
-        const pendingOrders = myPedidos.filter(p => p.estado === 'Borrador' || p.estado === 'Pendiente' || p.estado === 'PENDIENTE_VALIDACION');
+        const pendingOrders = myPedidos.filter(p => {
+            const s = p.estado.toUpperCase();
+            return s === 'BORRADOR';
+        });
 
         return {
             myPedidos,

@@ -50,6 +50,25 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
     }
 
+    private void checkRiesgoYConfirmar(Pedido pedido, com.vinia.backend.model.Cliente cliente) {
+        BigDecimal riesgoActual = cliente.getRiesgoActual() != null ? cliente.getRiesgoActual() : BigDecimal.ZERO;
+        BigDecimal limiteCredito = cliente.getLimiteCredito() != null ? cliente.getLimiteCredito()
+                : new BigDecimal("1000.00");
+
+        BigDecimal deudaTotal = riesgoActual.add(pedido.getTotal());
+        if (deudaTotal.compareTo(limiteCredito) > 0) {
+            pedido.setEstado(EstadoPedido.PENDIENTE_VALIDACION);
+            pedido.setBloqueado(true);
+            pedido.setMotivoBloqueo(
+                    "Límite de crédito excedido. Riesgo: " + deudaTotal + " > Limite: " + limiteCredito);
+        } else {
+            pedido.setEstado(EstadoPedido.EN_PREPARACION);
+            pedido.setBloqueado(false);
+            cliente.setRiesgoActual(deudaTotal);
+            clienteRepository.save(cliente);
+        }
+    }
+
     @Transactional
     public Pedido createPedido(Pedido pedido) {
         // 1. Fetch Client
@@ -90,37 +109,73 @@ public class PedidoService {
                             ". Solicitado: " + linea.getCantidad() + ", Disponible: " + vino.getStock());
                 }
 
-                // Deduct stock immediately to reserve it
                 vino.setStock(vino.getStock() - linea.getCantidad());
                 vinoRepository.save(vino);
             }
         }
 
-        // 5. DEBT CHECK
-        BigDecimal riesgoActual = cliente.getRiesgoActual() != null ? cliente.getRiesgoActual() : BigDecimal.ZERO;
-        BigDecimal limiteCredito = cliente.getLimiteCredito() != null ? cliente.getLimiteCredito()
-                : new BigDecimal("1000.00");
-
-        BigDecimal deudaTotal = riesgoActual.add(pedido.getTotal());
-        if (deudaTotal.compareTo(limiteCredito) > 0) {
-            pedido.setEstado(EstadoPedido.PENDIENTE_VALIDACION);
-            pedido.setBloqueado(true);
-            pedido.setMotivoBloqueo(
-                    "Límite de crédito excedido. Riesgo: " + deudaTotal + " > Limite: " + limiteCredito);
-            System.out.println("PEDIDO BLOQUEADO: " + pedido.getMotivoBloqueo());
+        // 5. DEBT CHECK (Skip if Draft)
+        if (pedido.getEstado() != EstadoPedido.BORRADOR) {
+            checkRiesgoYConfirmar(pedido, cliente);
         } else {
-            // Auto-approve if no debts
-            pedido.setEstado(EstadoPedido.EN_PREPARACION);
             pedido.setBloqueado(false);
-
-            // Update client risk immediately
-            cliente.setRiesgoActual(deudaTotal);
-            clienteRepository.save(cliente);
         }
 
         Pedido saved = pedidoRepository.save(pedido);
         auditService.log(getCurrentUsername(), "CREATE", "Pedido", saved.getNumero(),
                 "Total: " + saved.getTotal() + ", Cliente: " + cliente.getNombre());
+        return saved;
+    }
+
+    @Transactional
+    public Pedido updatePedido(String id, Pedido details) {
+        Pedido pedido = findById(id);
+        EstadoPedido oldEstado = pedido.getEstado();
+
+        // Restore stock of old lines first
+        if (pedido.getLineas() != null) {
+            for (LineaPedido oldLinea : pedido.getLineas()) {
+                Vino v = oldLinea.getVino();
+                v.setStock(v.getStock() + oldLinea.getCantidad());
+                vinoRepository.save(v);
+            }
+            pedido.getLineas().clear();
+        }
+
+        // Update fields
+        pedido.setNotas(details.getNotas());
+        pedido.setFormaPago(details.getFormaPago());
+        pedido.setDireccionEnvioSnapshot(details.getDireccionEnvioSnapshot());
+        pedido.setInstruccionesEntrega(details.getInstruccionesEntrega());
+        pedido.setSubtotal(details.getSubtotal());
+        pedido.setDescuento(details.getDescuento());
+        pedido.setIva(details.getIva());
+        pedido.setTotal(details.getTotal());
+
+        // Add new lines and deduct stock
+        if (details.getLineas() != null) {
+            for (LineaPedido newLinea : details.getLineas()) {
+                newLinea.setPedido(pedido);
+                Vino v = vinoRepository.findById(newLinea.getVino().getId())
+                        .orElseThrow(() -> new RuntimeException("Vino no encontrado"));
+                if (v.getStock() < newLinea.getCantidad()) {
+                    throw new RuntimeException("Stock insuficiente para: " + v.getNombre());
+                }
+                v.setStock(v.getStock() - newLinea.getCantidad());
+                vinoRepository.save(v);
+                pedido.getLineas().add(newLinea);
+            }
+        }
+
+        // If moving from BORRADOR to active status, perform risk check
+        if (oldEstado == EstadoPedido.BORRADOR && details.getEstado() != EstadoPedido.BORRADOR) {
+            checkRiesgoYConfirmar(pedido, pedido.getCliente());
+        } else {
+            pedido.setEstado(details.getEstado());
+        }
+
+        Pedido saved = pedidoRepository.save(pedido);
+        auditService.log(getCurrentUsername(), "UPDATE", "Pedido", saved.getNumero(), "Pedido actualizado");
         return saved;
     }
 
@@ -143,10 +198,32 @@ public class PedidoService {
             pedido.setBloqueado(false);
             pedido.setMotivoBloqueo(null);
 
-            // Update risk now if we didn't before (because it was blocked)
+            // Update risk now
             com.vinia.backend.model.Cliente cliente = pedido.getCliente();
             cliente.setRiesgoActual(cliente.getRiesgoActual().add(pedido.getTotal()));
             clienteRepository.save(cliente);
+        }
+
+        // 1b. Confirmation (Borrador -> Cualquier estado activo)
+        if (oldState == EstadoPedido.BORRADOR && nuevoEstado != EstadoPedido.BORRADOR
+                && nuevoEstado != EstadoPedido.CANCELADO) {
+            com.vinia.backend.model.Cliente cliente = pedido.getCliente();
+            BigDecimal riesgoActual = cliente.getRiesgoActual() != null ? cliente.getRiesgoActual() : BigDecimal.ZERO;
+            BigDecimal limiteCredito = cliente.getLimiteCredito() != null ? cliente.getLimiteCredito()
+                    : new BigDecimal("1000.00");
+
+            BigDecimal deudaTotal = riesgoActual.add(pedido.getTotal());
+
+            if (deudaTotal.compareTo(limiteCredito) > 0) {
+                // Force Validation if credit exceeded
+                nuevoEstado = EstadoPedido.PENDIENTE_VALIDACION;
+                pedido.setBloqueado(true);
+                pedido.setMotivoBloqueo("Límite de crédito excedido al confirmar borrador.");
+            } else {
+                // Add to risk
+                cliente.setRiesgoActual(deudaTotal);
+                clienteRepository.save(cliente);
+            }
         }
 
         // 2. Cancellation (Restore Stock)
@@ -163,7 +240,8 @@ public class PedidoService {
             // If it was counted in risk, remove it?
             // If it was PENDIENTE_VALIDACION, it wasn't added to risk yet (line 98 logic).
             // If it was EN_PREPARACION, it WAS added.
-            if (!Boolean.TRUE.equals(pedido.getBloqueado()) && oldState != EstadoPedido.PENDIENTE_VALIDACION) {
+            if (!Boolean.TRUE.equals(pedido.getBloqueado()) && oldState != EstadoPedido.PENDIENTE_VALIDACION
+                    && oldState != EstadoPedido.BORRADOR) {
                 com.vinia.backend.model.Cliente cliente = pedido.getCliente();
                 if (cliente.getRiesgoActual().compareTo(pedido.getTotal()) >= 0) {
                     cliente.setRiesgoActual(cliente.getRiesgoActual().subtract(pedido.getTotal()));
@@ -180,5 +258,38 @@ public class PedidoService {
         auditService.log(getCurrentUsername(), "UPDATE_STATUS", "Pedido", pedido.getNumero(),
                 "Old: " + oldState + ", New: " + nuevoEstado);
         return saved;
+    }
+
+    @Transactional
+    public void deletePedido(String id) {
+        Pedido pedido = findById(id);
+
+        // Restore Stock for all lines before deleting
+        if (pedido.getLineas() != null && pedido.getEstado() != EstadoPedido.CANCELADO) {
+            for (LineaPedido linea : pedido.getLineas()) {
+                Vino vino = vinoRepository.findById(linea.getVino().getId())
+                        .orElseThrow(() -> new RuntimeException("Vino " + linea.getVino().getId() + " no encontrado"));
+
+                vino.setStock(vino.getStock() + linea.getCantidad());
+                vinoRepository.save(vino);
+            }
+        }
+
+        // Restore client risk if order was active (not Draft/Blocked/Canceled)
+        if (pedido.getEstado() != EstadoPedido.BORRADOR &&
+                pedido.getEstado() != EstadoPedido.PENDIENTE_VALIDACION &&
+                pedido.getEstado() != EstadoPedido.CANCELADO &&
+                !Boolean.TRUE.equals(pedido.getBloqueado())) {
+
+            com.vinia.backend.model.Cliente cliente = pedido.getCliente();
+            if (cliente.getRiesgoActual() != null && cliente.getRiesgoActual().compareTo(pedido.getTotal()) >= 0) {
+                cliente.setRiesgoActual(cliente.getRiesgoActual().subtract(pedido.getTotal()));
+                clienteRepository.save(cliente);
+            }
+        }
+
+        pedidoRepository.delete(pedido);
+        auditService.log(getCurrentUsername(), "DELETE", "Pedido", pedido.getNumero(),
+                "Pedido eliminado permanentemente");
     }
 }

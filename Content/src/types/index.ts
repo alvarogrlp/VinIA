@@ -157,6 +157,7 @@ export interface Cliente {
  */
 export type EstadoPedido =
   | 'Borrador'
+  | 'BORRADOR'
   | 'Pendiente'
   | 'PENDIENTE'
   | 'PENDIENTE_VALIDACION'

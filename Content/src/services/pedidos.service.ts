@@ -121,7 +121,7 @@ export const pedidosService = {
    * Eliminar un pedido (y sus líneas en cascada)
    */
   async delete(id: string) {
-    await api.post(`/pedidos/${id}/delete`, {});
+    await api.delete(`/pedidos/${id}`);
   },
 
   /**

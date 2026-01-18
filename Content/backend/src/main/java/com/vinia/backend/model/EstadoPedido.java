@@ -1,6 +1,7 @@
 package com.vinia.backend.model;
 
 public enum EstadoPedido {
+    BORRADOR,
     PENDIENTE_VALIDACION,
     EN_PREPARACION,
     LISTO_PARA_REPARTO,

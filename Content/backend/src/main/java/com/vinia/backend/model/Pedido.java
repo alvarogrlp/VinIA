@@ -27,7 +27,7 @@ public class Pedido {
     private Usuario usuario;
 
     @Column(name = "fecha")
-    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @com.fasterxml.jackson.annotation.JsonFormat(shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][XXX]")
     private LocalDateTime fecha;
 
     @Enumerated(EnumType.STRING)

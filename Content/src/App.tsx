@@ -25,6 +25,7 @@ import { DetalleCliente } from './screens/DetalleCliente';
 import { HistoricoCliente } from './screens/HistoricoCliente';
 import { Profile } from './screens/Profile';
 import { MapaComercial } from './screens/MapaComercial';
+import { PedidosPendientes } from './screens/PedidosPendientes';
 
 /**
  * Componente que protege rutas que requieren autenticación
@@ -85,6 +86,7 @@ function App() {
           <Route path="mapa" element={<MapaComercial />} />
           <Route path="pedidos" element={<Pedidos />} />
           <Route path="pedidos/nuevo" element={<NuevoPedido />} />
+          <Route path="pedidos-pendientes" element={<PedidosPendientes />} />
 
           <Route
             path="inventario"

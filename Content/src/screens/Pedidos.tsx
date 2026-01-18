@@ -215,6 +215,7 @@ export const Pedidos = () => {
   const getEstadoBadge = (estado: string) => {
     const styles: Record<string, string> = {
       'Borrador': 'bg-gray-100 text-gray-800',
+      'BORRADOR': 'bg-gray-100 text-gray-800',
       'Pendiente': 'bg-yellow-100 text-yellow-800',
       'PENDIENTE_VALIDACION': 'bg-red-100 text-red-800', // ENUM raw value
       'Pendiente de Validación': 'bg-red-100 text-red-800', // Potential Display value

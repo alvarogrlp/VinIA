@@ -63,4 +63,26 @@ public class PedidoController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @PostMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
+    public ResponseEntity<Pedido> update(@PathVariable String id, @RequestBody Pedido pedido) {
+        try {
+            return ResponseEntity.ok(pedidoService.updatePedido(id, pedido));
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
+    public ResponseEntity<?> delete(@PathVariable String id) {
+        try {
+            pedidoService.deletePedido(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

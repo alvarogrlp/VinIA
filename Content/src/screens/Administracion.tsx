@@ -72,7 +72,10 @@ export const Administracion = () => {
       return (p.usuarioId === userId) || ((p.usuario as any)?.id === userId);
     });
 
-    const ventasPedidos = userPedidos.filter(p => !['Borrador', 'Cancelado'].includes(p.estado));
+    const ventasPedidos = userPedidos.filter(p => {
+      const s = p.estado.toUpperCase();
+      return s !== 'BORRADOR' && s !== 'CANCELADO';
+    });
 
     const totalVentas = ventasPedidos.reduce((sum, p) => sum + p.total, 0);
     const totalPedidos = ventasPedidos.length;
@@ -84,7 +87,10 @@ export const Administracion = () => {
   // Generar datos para la gráfica
   const getChartData = (userId: string) => {
     const { pedidos: userAllPedidos } = getUserMetrics(userId);
-    const ventasPedidos = userAllPedidos.filter(p => !['Borrador', 'Cancelado'].includes(p.estado));
+    const ventasPedidos = userAllPedidos.filter(p => {
+      const s = p.estado.toUpperCase();
+      return s !== 'BORRADOR' && s !== 'CANCELADO';
+    });
 
     const now = new Date();
     const data: any[] = [];

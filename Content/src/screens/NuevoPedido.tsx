@@ -95,13 +95,13 @@ export const NuevoPedido = () => {
       // Prevent double execution in StrictMode or due to re-renders
       if (procesadoRef.current) return;
 
-      const { clienteId, lineas, direccionEnvio, instrucciones } = location.state;
+      const { clienteId, lineas, direccionEnvio, instrucciones, originalOrderId } = location.state;
 
       // Mark as processed immediately to block subsequent runs
       procesadoRef.current = true;
 
       setClienteSeleccionadoId(clienteId);
-      crearPedido(clienteId);
+      crearPedido(clienteId, originalOrderId);
 
       setTimeout(() => {
         if (lineas && Array.isArray(lineas)) {

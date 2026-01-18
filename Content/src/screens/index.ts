@@ -11,3 +11,4 @@ export { Login } from './Login';
 export { NuevoCliente } from './NuevoCliente';
 export { MapaComercial } from './MapaComercial';
 export { EditarVino } from './EditarVino';
+export { PedidosPendientes } from './PedidosPendientes';
