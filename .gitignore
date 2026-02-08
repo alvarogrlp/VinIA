@@ -1,6 +1,7 @@
 # API Keys and Secrets
 application-local.properties
 .env
+.env.*
 *.env
 api-key.txt
 
