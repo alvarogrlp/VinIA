@@ -1,0 +1,36 @@
+# API Keys and Secrets
+application-local.properties
+.env
+*.env
+api-key.txt
+
+# Database
+data/
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Build
+target/
+build/
+dist/
+out/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
