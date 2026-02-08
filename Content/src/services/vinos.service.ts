@@ -3,6 +3,7 @@ import type { Vino } from '../types';
 
 type VinoInsert = Omit<Vino, 'id' | 'created_at' | 'updated_at'>;
 type VinoUpdate = Partial<VinoInsert>;
+type VinoWithAIReason = Vino & { _aiReason?: string };
 
 export const vinosService = {
   /**
@@ -116,9 +117,10 @@ export const vinosService = {
    * Búsqueda avanzada con filtros múltiples y scoring
    * Prioriza resultados que coinciden en campos más relevantes
    */
-  async advancedSearch(query: string) {
+  async advancedSearch(query: string): Promise<VinoWithAIReason[]> {
     if (!query || query.trim().length === 0) {
-      return this.getAll();
+      const vinos = await this.getAll();
+      return vinos.map(v => ({ ...v, _aiReason: undefined }));
     }
 
     console.log('🤖 Búsqueda IA:', query);
@@ -131,21 +133,24 @@ export const vinosService = {
       // Si la respuesta es vacía o error
       if (!Array.isArray(aiResponse) || aiResponse.length === 0) {
         console.warn('IA no devolvió resultados, fallback a búsqueda sql');
-        return this.search(query);
+        const vinos = await this.search(query);
+        return vinos.map(v => ({ ...v, _aiReason: undefined }));
       }
 
       // 2. Obtener catálogo completo para hidratar datos (Optimización: Podríamos tener un endpoint /bulk)
       const allVinos = await this.getAll();
 
       // 3. Cruzar datos manteniendo el orden de relevancia de la IA
-      const resultados = aiResponse.map((item: any) => {
-        const vinoReal = allVinos.find(v => v.id === item.vinoId);
-        if (vinoReal) {
-          // Inyectamos la razón como propiedad temporal por si la UI quiere usarla
-          return { ...vinoReal, _aiReason: item.razon };
-        }
-        return null;
-      }).filter((v): v is Vino => v !== null);
+      const resultados: VinoWithAIReason[] = aiResponse
+        .map((item: any) => {
+          const vinoReal = allVinos.find(v => v.id === item.vinoId);
+          if (vinoReal) {
+            // Inyectamos la razón como propiedad temporal por si la UI quiere usarla
+            return { ...vinoReal, _aiReason: item.razon } as VinoWithAIReason;
+          }
+          return null;
+        })
+        .filter((v): v is VinoWithAIReason => v !== null);
 
       console.log(`✅ IA encontró ${resultados.length} coincidencias`);
       return resultados;
@@ -153,7 +158,8 @@ export const vinosService = {
     } catch (error) {
       console.error('Error en búsqueda IA:', error);
       // Fallback a búsqueda normal
-      return this.search(query);
+      const vinos = await this.search(query);
+      return vinos.map(v => ({ ...v, _aiReason: undefined }));
     }
   }
 };

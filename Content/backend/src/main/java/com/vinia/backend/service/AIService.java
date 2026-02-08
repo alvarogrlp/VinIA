@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.text.Normalizer;
 
 @Service
 @RequiredArgsConstructor
@@ -28,14 +29,20 @@ public class AIService {
         private final VinoRepository vinoRepository;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
-        @Value("${spring.ai.openai.api-key}")
+        @Value("${spring.ai.openai.api-key:}")
         private String apiKey;
 
-        @Value("${spring.ai.openai.base-url}")
+        @Value("${spring.ai.openai.base-url:}")
         private String baseUrl;
 
-        @Value("${spring.ai.openai.chat.options.model}")
+        @Value("${spring.ai.openai.chat.options.model:gemma-3-27b-it}")
         private String modelName;
+
+        // Check if AI is configured
+        private boolean isAiConfigured() {
+                return apiKey != null && !apiKey.trim().isEmpty() &&
+                                baseUrl != null && !baseUrl.trim().isEmpty();
+        }
 
         // Cache del catálogo para evitar consultas repetidas
         private String catalogoCache = null;
@@ -59,6 +66,10 @@ public class AIService {
 
         // 1. Recomendador con Sales Pitch (Optimizado)
         public String getRecommendations(String clienteId) {
+                if (!isAiConfigured()) {
+                        return "[]";
+                }
+
                 Cliente cliente = clienteRepository.findById(clienteId)
                                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
@@ -115,6 +126,10 @@ public class AIService {
 
         // 2. Voz a Pedido (Optimizado)
         public String parseOrderFromText(String text) {
+                if (!isAiConfigured()) {
+                        return "{\"items\": []}";
+                }
+
                 String catalogoSimple = getCatalogoResumen();
 
                 String prompt = """
@@ -149,6 +164,10 @@ public class AIService {
 
         // 3. Customer Insights (Optimizado)
         public String analyzeCustomerInsights(String clienteId) {
+                if (!isAiConfigured()) {
+                        return "Servicio de IA no configurado";
+                }
+
                 Cliente cliente = clienteRepository.findById(clienteId)
                                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
 
@@ -184,6 +203,10 @@ public class AIService {
 
         // 4. Búsqueda Semántica (Optimizado)
         public String semanticSearch(String query) {
+                if (!isAiConfigured()) {
+                        return "[]";
+                }
+
                 String catalogoDetallado = getCatalogoResumen();
 
                 String prompt = """
@@ -215,19 +238,27 @@ public class AIService {
                 try {
                         // Paso 1: IA extrae la intención
                         String intentPrompt = String.format("""
-                                        Actúa como procesador de pedidos.
+                                        Actúa como procesador de pedidos de vinos.
                                         Input: "%s"
 
                                         Reglas:
                                         1. Identifica CLIENTE
-                                        2. Identifica productos y cantidades
+                                        2. Identifica productos, cantidades Y FORMATO (botellas o cajas)
                                         3. Si producto incompleto, infiere bodega del anterior
+                                        4. Distingue claramente entre "botella" y "caja"
+                                        5. Si no se especifica formato, asume BOTELLAS
 
                                         JSON:
                                         {
                                           "tipo": "PEDIDO" | "RECOMENDACION" | "CONSULTA",
                                           "busqueda_cliente": "nombre o null",
-                                          "items": [{"busqueda_vino": "nombre", "cantidad": 1}]
+                                          "items": [
+                                            {
+                                              "busqueda_vino": "nombre del vino",
+                                              "cantidad": 1,
+                                              "formato": "BOTELLA" | "CAJA"
+                                            }
+                                          ]
                                         }
                                         """, message);
                         String intentResponse = callAi(intentPrompt);
@@ -247,7 +278,13 @@ public class AIService {
                 } catch (Exception e) {
                         System.err.println("Chat Error: " + e.getMessage());
                         e.printStackTrace();
-                        return "{\"reply\": \"Lo siento, hubo un error.\", \"action\": \"NONE\"}";
+
+                        // Check if it's an AI configuration error
+                        if (!isAiConfigured()) {
+                                return "{\"reply\": \"⚠️ El servicio de IA no está configurado. Para usar el chatbot, configura la variable de entorno SPRING_AI_GOOGLE_AI_GEMINI_API_KEY. Consulta backend/AI_SETUP.md para más información.\", \"action\": \"NONE\"}";
+                        }
+
+                        return "{\"reply\": \"Lo siento, hubo un error al procesar tu solicitud.\", \"action\": \"NONE\"}";
                 }
         }
 
@@ -259,6 +296,11 @@ public class AIService {
 
         // Helper method (Direct REST Call)
         private String callAi(String prompt) throws Exception {
+                if (!isAiConfigured()) {
+                        throw new RuntimeException(
+                                        "AI service not configured. Please set SPRING_AI_GOOGLE_AI_GEMINI_API_KEY environment variable.");
+                }
+
                 try {
                         // Ensure the URI is correct for Gemini OpenAI compatibility
                         String uri = baseUrl;
@@ -363,34 +405,77 @@ public class AIService {
                 // Buscar vinos
                 List<Vino> todosVinos = vinoRepository.findAll();
                 List<Map<String, Object>> itemsEncontrados = new ArrayList<>();
+                List<String> vinosNoProcesados = new ArrayList<>();
 
                 if (itemsNode.isArray()) {
                         for (JsonNode item : itemsNode) {
                                 String busquedaVino = item.path("busqueda_vino").asText("");
                                 int cantidad = item.path("cantidad").asInt(1);
+                                String formato = item.path("formato").asText("BOTELLA").toUpperCase();
 
-                                // Búsqueda fuzzy en BD
+                                // Normalizar búsqueda (quitar tildes)
+                                String busquedaNormalizada = normalizarTexto(busquedaVino);
+
+                                boolean encontrado = false;
+                                // Búsqueda fuzzy en BD con normalización de tildes
                                 for (Vino v : todosVinos) {
-                                        String nombreCompleto = v.getNombre().toLowerCase();
-                                        if (nombreCompleto.contains(busquedaVino.toLowerCase()) ||
-                                                        busquedaVino.toLowerCase().contains(nombreCompleto)) {
+                                        String nombreNormalizado = normalizarTexto(v.getNombre());
+                                        String bodegaNormalizada = normalizarTexto(v.getBodega());
+
+                                        // Buscar en nombre o bodega
+                                        if (nombreNormalizado.contains(busquedaNormalizada) ||
+                                                        busquedaNormalizada.contains(nombreNormalizado) ||
+                                                        bodegaNormalizada.contains(busquedaNormalizada)) {
                                                 Map<String, Object> itemMap = new HashMap<>();
                                                 itemMap.put("vinoId", v.getId());
                                                 itemMap.put("cantidad", cantidad);
+                                                itemMap.put("tipoBulto", formato); // BOTELLA o CAJA
                                                 itemsEncontrados.add(itemMap);
+                                                encontrado = true;
                                                 break; // Tomar el primer match
                                         }
+                                }
+
+                                // Si no se encontró, agregar a la lista de no procesados
+                                if (!encontrado) {
+                                        vinosNoProcesados.add(busquedaVino);
                                 }
                         }
                 }
 
                 if (itemsEncontrados.isEmpty()) {
-                        return "{\"reply\": \"No pude encontrar los vinos mencionados en el catálogo. ¿Podrías ser más específico?\", \"action\": \"NONE\"}";
+                        return "{\"reply\": \"No pude encontrar ninguno de los vinos mencionados en el catálogo. ¿Podrías ser más específico?\", \"action\": \"NONE\"}";
                 }
 
                 // Construir respuesta
                 Map<String, Object> response = new HashMap<>();
-                response.put("reply", "Perfecto, he anotado el pedido para " + clienteNombre);
+
+                // Construir detalle de lo que se procesó
+                StringBuilder detalleItems = new StringBuilder();
+                for (Map<String, Object> item : itemsEncontrados) {
+                        if (detalleItems.length() > 0)
+                                detalleItems.append(", ");
+                        String formato = (String) item.getOrDefault("tipoBulto", "BOTELLA");
+                        int cant = (int) item.getOrDefault("cantidad", 1);
+                        Vino v = vinoRepository.findById((String) item.get("vinoId")).orElse(null);
+                        String nombreVino = v != null ? v.getNombre() : "vino";
+                        detalleItems.append(cant).append(" ")
+                                        .append(formato.equals("CAJA") ? "caja(s)" : "bot.")
+                                        .append(" ").append(nombreVino);
+                }
+
+                // Mensaje personalizado según si hubo vinos no procesados
+                String mensaje;
+                if (!vinosNoProcesados.isEmpty()) {
+                        mensaje = String.format("✅ Para %s: %s. ⚠️ No pude procesar: %s",
+                                        clienteNombre,
+                                        detalleItems.toString(),
+                                        String.join(", ", vinosNoProcesados));
+                } else {
+                        mensaje = String.format("✅ Pedido para %s: %s", clienteNombre, detalleItems.toString());
+                }
+
+                response.put("reply", mensaje);
                 response.put("action", "CREATE_ORDER");
 
                 Map<String, Object> data = new HashMap<>();
@@ -429,5 +514,23 @@ public class AIService {
                                 .formatted(catalogoResumen, message);
 
                 return callAi(prompt);
+        }
+
+        /**
+         * Normaliza texto removiendo tildes y convirtiendo a minúsculas
+         * para búsqueda fuzzy insensible a acentos
+         */
+        private String normalizarTexto(String texto) {
+                if (texto == null)
+                        return "";
+
+                // Normalizar a NFD (descomponer caracteres con tildes)
+                String normalizado = Normalizer.normalize(texto, Normalizer.Form.NFD);
+
+                // Eliminar marcas diacríticas (tildes, acentos, etc.)
+                normalizado = normalizado.replaceAll("\\p{M}", "");
+
+                // Convertir a minúsculas
+                return normalizado.toLowerCase();
         }
 }

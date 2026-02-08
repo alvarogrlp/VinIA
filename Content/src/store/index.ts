@@ -145,8 +145,9 @@ export const useVinosStore = create<VinosState>((set, get) => ({
       set({ cargando: true, error: null });
       console.log('🔍 Búsqueda de vinos:', query);
 
-      // Usar búsqueda avanzada para mejor precisión y scoring
-      const data = await vinosService.advancedSearch(query);
+      // Usar búsqueda normal (sin IA) - más rápida para el catálogo
+      // La IA solo se usa en el chatbot y en búsqueda semántica explícita
+      const data = await vinosService.search(query);
 
       console.log('✅ Resultados de búsqueda:', data.length, 'vinos');
       set({ vinos: data, cargando: false });
@@ -582,7 +583,7 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
 
       const nuevaLinea: LineaPedido = {
         ...linea,
-        id: `temp-${Date.now()}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         subtotal: linea.cantidad * linea.precioUnitario * (1 - linea.descuento / 100),
       };
 
@@ -716,7 +717,8 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
           estado: estadoEnvio,
           lineas: pedidoActual.lineas.map(l => ({
             ...l,
-            vino: { id: l.vinoId || l.vino?.id }
+            // No incluir vino si no está completo, solo vinoId es necesario
+            vino: undefined
           }))
         });
       } else {

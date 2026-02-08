@@ -180,14 +180,22 @@ export const VinIAChatBot = () => {
                         items.forEach((item: any) => {
                             const vino = vinos.find(v => v.id === item.vinoId);
                             if (vino) {
+                                const tipoBulto = item.tipoBulto || 'BOTELLA';
+                                const cantidadBultos = item.cantidad || 1;
+                                // Calcular cantidad total de botellas
+                                const botellasPorBulto = tipoBulto === 'CAJA' ? (vino.botellas_por_caja || 6) : 1;
+                                const totalBotellas = cantidadBultos * botellasPorBulto;
+
                                 agregarLineaPedido({
                                     vinoId: vino.id,
                                     vinoNombre: vino.nombre,
                                     vino: vino,
-                                    cantidad: item.cantidad || 1,
+                                    cantidad: totalBotellas,
                                     precioUnitario: vino.precio_unitario,
                                     descuento: 0,
-                                    subtotal: 0
+                                    subtotal: totalBotellas * vino.precio_unitario,
+                                    tipoBulto: tipoBulto,
+                                    cantidadBultos: cantidadBultos
                                 });
                                 addedCount++;
                             }
@@ -231,11 +239,11 @@ export const VinIAChatBot = () => {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 w-16 h-16 bg-white rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition-transform z-50 group border-2 border-primary-500 overflow-hidden"
+                className="fixed bottom-6 right-6 w-16 h-16 bg-secondary-900 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 group border border-primary-500/50 overflow-hidden"
                 title="Abrir Asistente VinIA"
             >
-                <div className="absolute inset-0 bg-primary-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                <img src="/VinIA_Logo.png" alt="VinIA" className="w-12 h-12 object-contain" />
+                <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <img src="/VinIA_Logo.png" alt="VinIA" className="w-10 h-10 object-contain invert brightness-0 filter" />
                 {/* Notification Badge if needed */}
             </button>
         );
@@ -244,16 +252,16 @@ export const VinIAChatBot = () => {
     return (
         <div className="fixed bottom-6 right-6 w-[380px] h-[600px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 border border-secondary-200 animate-slide-up font-sans">
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 flex items-center justify-between text-white shrink-0">
+            <div className="bg-secondary-900 p-4 flex items-center justify-between text-white shrink-0 border-b border-secondary-800">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                        <Sparkles className="w-6 h-6" />
+                    <div className="w-10 h-10 bg-secondary-800 rounded-full flex items-center justify-center border border-secondary-700">
+                        <Sparkles className="w-5 h-5 text-primary-400" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg">VinIA Assistant</h3>
-                        <p className="text-xs text-indigo-100 flex items-center gap-1">
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            En línea
+                        <h3 className="font-bold text-lg font-mono tracking-tight !text-white">VinIA <span className="text-primary-500">Assistant</span></h3>
+                        <p className="text-xs text-secondary-400 flex items-center gap-1.5 font-mono">
+                            <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(184,148,90,0.5)]"></span>
+                            SYSTEM ONLINE
                         </p>
                     </div>
                 </div>
@@ -274,7 +282,7 @@ export const VinIAChatBot = () => {
                     >
                         <div
                             className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${msg.role === 'user'
-                                ? 'bg-indigo-600 text-white rounded-tr-none'
+                                ? 'bg-primary-600 text-white rounded-tr-none border border-primary-500'
                                 : 'bg-white text-secondary-800 border border-secondary-200 rounded-tl-none'
                                 }`}
                         >
@@ -284,8 +292,8 @@ export const VinIAChatBot = () => {
                             {msg.action === 'RECOMMENDATION' && msg.data?.vinos && (
                                 <div className="mt-3 space-y-2">
                                     {msg.data.vinos.map((vino: any, idx: number) => (
-                                        <div key={idx} className="bg-secondary-50 p-2 rounded border border-secondary-200 text-xs">
-                                            <div className="font-bold text-indigo-700">{vino.nombre}</div>
+                                        <div key={idx} className="bg-secondary-50 p-2 rounded border border-secondary-200 text-xs text-left">
+                                            <div className="font-bold text-secondary-900">{vino.nombre}</div>
                                             <div className="text-secondary-600">{vino.razon}</div>
                                         </div>
                                     ))}
@@ -307,9 +315,9 @@ export const VinIAChatBot = () => {
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={() => handleQuickAction('create_order')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-400 transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
                                 >
-                                    <ShoppingCart className="w-4 h-4 text-indigo-600" />
+                                    <ShoppingCart className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
                                     <div>
                                         <div className="text-xs font-semibold text-secondary-900">Crear Pedido</div>
                                         <div className="text-[10px] text-secondary-500">Nuevo pedido</div>
@@ -318,9 +326,9 @@ export const VinIAChatBot = () => {
 
                                 <button
                                     onClick={() => handleQuickAction('recommendations')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-purple-200 rounded-lg hover:bg-purple-50 hover:border-purple-400 transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
                                 >
-                                    <Sparkles className="w-4 h-4 text-purple-600" />
+                                    <Sparkles className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
                                     <div>
                                         <div className="text-xs font-semibold text-secondary-900">Recomendaciones</div>
                                         <div className="text-[10px] text-secondary-500">Sugerencias IA</div>
@@ -329,9 +337,9 @@ export const VinIAChatBot = () => {
 
                                 <button
                                     onClick={() => handleQuickAction('catalog')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-400 transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
                                 >
-                                    <MessageSquare className="w-4 h-4 text-green-600" />
+                                    <MessageSquare className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
                                     <div>
                                         <div className="text-xs font-semibold text-secondary-900">Ver Catálogo</div>
                                         <div className="text-[10px] text-secondary-500">Consultar vinos</div>
@@ -340,9 +348,9 @@ export const VinIAChatBot = () => {
 
                                 <button
                                     onClick={() => handleQuickAction('history')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
                                 >
-                                    <User className="w-4 h-4 text-blue-600" />
+                                    <User className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
                                     <div>
                                         <div className="text-xs font-semibold text-secondary-900">Historial</div>
                                         <div className="text-[10px] text-secondary-500">Ver pedidos</div>
@@ -356,9 +364,9 @@ export const VinIAChatBot = () => {
                 {isTyping && (
                     <div className="flex justify-start">
                         <div className="bg-white rounded-2xl rounded-tl-none p-3 border border-secondary-200 shadow-sm flex items-center gap-1">
-                            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></span>
-                            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-75"></span>
-                            <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-150"></span>
+                            <span className="w-1.5 h-1.5 bg-secondary-400 rounded-full animate-bounce"></span>
+                            <span className="w-1.5 h-1.5 bg-secondary-400 rounded-full animate-bounce delay-75"></span>
+                            <span className="w-1.5 h-1.5 bg-secondary-400 rounded-full animate-bounce delay-150"></span>
                         </div>
                     </div>
                 )}
@@ -386,7 +394,7 @@ export const VinIAChatBot = () => {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder="Escribe o dicta tu mensaje..."
-                            className="flex-1 bg-secondary-100 border-transparent focus:bg-white focus:border-indigo-500 rounded-full px-4 py-2 text-sm transition-all"
+                            className="flex-1 bg-secondary-50 border border-secondary-200 focus:bg-white focus:border-secondary-900 focus:ring-1 focus:ring-secondary-900 rounded-md px-4 py-2 text-sm transition-all outline-none"
                             disabled={isTyping}
                             autoFocus
                         />
@@ -394,7 +402,7 @@ export const VinIAChatBot = () => {
                         <button
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isTyping}
-                            className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                         >
                             {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </button>

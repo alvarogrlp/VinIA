@@ -61,19 +61,28 @@ Es importante notar que, aunque la aplicación incluye roles de **Almacén** y *
 *   Node.js 18+
 *   Java JDK 17+
 *   Maven
-*   **Google AI Studio API Key** (Gratuita)
+*   **Google AI Studio API Key** (Opcional, gratuita - solo para funcionalidades de IA)
 
-### 🤖 Configuración de Inteligencia Artificial (1 Minuto)
-Para que las funciones de IA (Chatbot, Recomendaciones, Análisis) funcionen, necesitas una clave gratuita de Google Gemini:
+### 🤖 Configuración de Inteligencia Artificial (Opcional)
+
+Las funcionalidades de IA (Chatbot, Recomendaciones, Análisis) son **opcionales**. La aplicación funciona perfectamente sin ellas.
+
+**Para habilitar IA:**
 
 1.  Accede a [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  Pulsa en **"Create API key"**.
-3.  Abre el archivo `Content/backend/src/main/resources/application.properties`.
-4.  Busca la línea de la clave y pega la tuya:
-    ```properties
-    spring.ai.openai.api-key=TU_CLAVE_AQUI
+2.  Pulsa en **"Create API key"** (es gratuito).
+3.  Copia la clave generada.
+4.  Configura la variable de entorno:
+    ```powershell
+    # Windows PowerShell
+    $env:SPRING_AI_GOOGLE_AI_GEMINI_API_KEY="tu-clave-aqui"
+    
+    # O usa el script automático
+    cd Content/backend
+    .\setup-api-key.ps1
     ```
-    *(Por defecto el proyecto incluye una clave de demostración, pero se recomienda usar una propia para evitar límites de cuota).*
+
+Para más detalles, consulta `Content/backend/AI_SETUP.md`.
 
 ### Instalación
 
@@ -85,8 +94,23 @@ Para que las funciones de IA (Chatbot, Recomendaciones, Análisis) funcionen, ne
     *(Nota: Durante el `npm install`, se descargarán automáticamente las imágenes del catálogo mediante un script de PowerShell).*
 
 2.  **Ejecutar la Aplicación**
-    Para ejecutar tanto el backend como el frontend simultáneamente:
+    
+    **Opción A: Con IA habilitada** (recomendado)
+    ```powershell
+    .\start-with-ai.ps1
+    ```
+    
+    **Opción B: Sin IA**
+    ```powershell
+    .\start.ps1
+    ```
+    
+    **Opción C: Manual**
     ```bash
+    # Configurar API key (opcional)
+    $env:SPRING_AI_GOOGLE_AI_GEMINI_API_KEY="tu-clave-aqui"
+    
+    # Arrancar backend y frontend
     npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
     ```
 

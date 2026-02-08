@@ -169,14 +169,14 @@ export const Catalogo = () => {
 
             {/* AI Results Explanation */}
             {isAIMode && aiResults.length > 0 && (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+                <div className="bg-gradient-to-tl from-secondary-100 to-white border border-primary-200 rounded-xl p-6 mb-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-5">
-                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
-                            <Sparkles className="w-5 h-5 text-white" />
+                        <div className="p-2 bg-gradient-to-br from-secondary-800 to-black rounded-lg shadow-lg">
+                            <Sparkles className="w-5 h-5 text-primary-400" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-indigo-900">Resultados de Búsqueda Inteligente</h3>
-                            <p className="text-sm text-indigo-700">La IA ha seleccionado estos vinos basándose en tu consulta</p>
+                            <h3 className="font-semibold text-secondary-900">Resultados de Búsqueda Inteligente</h3>
+                            <p className="text-sm text-secondary-600">La IA ha seleccionado estos vinos basándose en tu consulta</p>
                         </div>
                     </div>
 
@@ -186,22 +186,22 @@ export const Catalogo = () => {
                             return (
                                 <div
                                     key={res.vinoId}
-                                    className="bg-white rounded-lg p-4 border border-indigo-200 hover:border-indigo-400 transition-all cursor-pointer hover:shadow-lg"
+                                    className="bg-white rounded-lg p-4 border border-secondary-200 hover:border-primary-400 transition-all cursor-pointer hover:shadow-md group"
                                     onClick={() => vino && handleVinoClick(vino)}
                                 >
                                     <div className="flex items-start gap-2 mb-3">
-                                        <div className="flex-shrink-0 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                        <div className="flex-shrink-0 w-7 h-7 bg-secondary-900 rounded-full flex items-center justify-center text-white font-bold text-sm group-hover:bg-primary-600 transition-colors">
                                             {idx + 1}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-bold text-indigo-900 mb-1 truncate">{res.nombre}</h4>
-                                            <p className="text-xs text-indigo-700 leading-relaxed">{res.razon}</p>
+                                            <h4 className="font-bold text-secondary-900 mb-1 truncate">{res.nombre}</h4>
+                                            <p className="text-xs text-secondary-600 leading-relaxed font-medium">{res.razon}</p>
                                         </div>
                                     </div>
                                     {vino && (
-                                        <div className="pt-3 border-t border-indigo-100 flex items-center justify-between">
-                                            <span className="text-sm text-secondary-600">{vino.bodega}</span>
-                                            <span className="font-bold text-indigo-600">
+                                        <div className="pt-3 border-t border-secondary-100 flex items-center justify-between">
+                                            <span className="text-sm text-secondary-500">{vino.bodega}</span>
+                                            <span className="font-bold text-primary-700">
                                                 {vino.precio_unitario.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                                             </span>
                                         </div>

@@ -250,10 +250,10 @@ export const DetalleCliente = () => {
 
                     {/* AI Assistant Section - Redesigned */}
                     <div className="bg-white shadow-sm rounded-xl border border-secondary-200 overflow-hidden">
-                        <div className="p-6 border-b border-secondary-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <div className="p-6 border-b border-secondary-200 bg-gradient-to-r from-secondary-50 to-white">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-                                    <Sparkles className="w-5 h-5 text-white" />
+                                <div className="p-2.5 bg-gradient-to-br from-secondary-900 to-black rounded-xl shadow-lg border border-secondary-800">
+                                    <Sparkles className="w-5 h-5 text-primary-400" />
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-semibold text-secondary-900">VinIA Assistant</h2>
@@ -267,7 +267,7 @@ export const DetalleCliente = () => {
                             {/* Recommendations */}
                             <div>
                                 <div className="flex items-center gap-2 mb-4">
-                                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                    <TrendingUp className="w-4 h-4 text-primary-600" />
                                     <h3 className="text-sm font-semibold text-secondary-900">Oportunidades de Venta</h3>
                                 </div>
 
@@ -286,17 +286,17 @@ export const DetalleCliente = () => {
                                                 <div
                                                     key={idx}
                                                     onClick={() => vino && setSelectedWine(vino)}
-                                                    className="group bg-gradient-to-br from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 rounded-lg p-4 border border-emerald-200 transition-all duration-200 cursor-pointer hover:shadow-md"
+                                                    className="group bg-white hover:bg-primary-50/30 rounded-lg p-4 border border-secondary-200 hover:border-primary-400 transition-all duration-200 cursor-pointer hover:shadow-md"
                                                 >
                                                     <div className="flex items-start gap-3">
-                                                        <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                        <div className="flex-shrink-0 w-8 h-8 bg-secondary-900 rounded-full flex items-center justify-center text-white font-bold text-sm group-hover:bg-primary-600 transition-colors">
                                                             {idx + 1}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="font-semibold text-emerald-900 mb-1 truncate group-hover:text-emerald-700 transition-colors">
+                                                            <h4 className="font-semibold text-secondary-900 mb-1 truncate group-hover:text-primary-700 transition-colors">
                                                                 {rec.nombre}
                                                             </h4>
-                                                            <p className="text-sm text-emerald-800 leading-relaxed">
+                                                            <p className="text-sm text-secondary-600 leading-relaxed font-medium">
                                                                 {rec.salesPitch}
                                                             </p>
                                                         </div>

@@ -145,9 +145,9 @@ export const PedidosPendientes = () => {
                                             precioUnitario: l.precioUnitario,
                                             descuento: l.descuento,
                                             subtotal: l.subtotal,
-                                            anada: l.anada, // Si existe en la linea
-                                            tipoBulto: 'BOTELLA', // Defecto si no está
-                                            cantidadBultos: l.cantidad
+                                            anada: l.anada,
+                                            tipoBulto: l.tipoBulto || 'BOTELLA', // Preservar el valor original
+                                            cantidadBultos: l.cantidadBultos || l.cantidad
                                         }));
 
                                         navigate('/pedidos/nuevo', {
