@@ -4,9 +4,9 @@
  */
 
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { usePedidosStore } from '../store';
-import { Clock, ShoppingCart, ChevronRight, AlertCircle, Calendar, DollarSign, User, Trash2 } from 'lucide-react';
+import { Clock, ShoppingCart, ChevronRight, AlertCircle, User, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { ConfirmModal } from '../components/ConfirmModal';
 

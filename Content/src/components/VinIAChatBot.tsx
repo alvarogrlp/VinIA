@@ -336,7 +336,16 @@ export const VinIAChatBot = () => {
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'assistant',
-                text: "Lo siento, tuve un problema de conexión. ¿Podrías repetirlo?",
+                text: `Lo siento, tuve un problema de conexión.
+                
+Detalles técnicos: ${error instanceof Error ? error.message : String(error)}
+
+Posibles causas:
+1. El backend no se está ejecutando o no es accesible.
+2. Problema de configuración CORS (revisa si http://localhost:3000 está permitido).
+3. La API Key de OpenAI/Gemini no es válida o se ha excedido la cuota.
+
+Intenta reiniciar el backend.`,
                 timestamp: new Date()
             }]);
         } finally {

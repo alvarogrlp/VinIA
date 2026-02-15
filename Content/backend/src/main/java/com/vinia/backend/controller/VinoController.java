@@ -19,11 +19,17 @@ public class VinoController {
     private VinoService vinoService;
 
     @GetMapping
-    public List<Vino> getAll(@RequestParam(required = false) String search) {
-        if (search != null && !search.isEmpty()) {
-            return vinoService.search(search);
+    public ResponseEntity<?> getAll(@RequestParam(required = false) String search) {
+        try {
+            if (search != null && !search.isEmpty()) {
+                return ResponseEntity.ok(vinoService.search(search));
+            }
+            return ResponseEntity.ok(vinoService.findAll());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Error loading wines: " + (e.getMessage() != null ? e.getMessage() : e.toString()));
         }
-        return vinoService.findAll();
     }
 
     @GetMapping("/{id}")

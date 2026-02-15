@@ -6,8 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useClientesStore, useVinosStore } from '../store';
-import { ArrowLeft, Phone, Mail, MapPin, Calendar, TrendingUp, Package, DollarSign, Sparkles, Lightbulb, Building, ShoppingBag } from 'lucide-react';
-import { formatearPrecio } from '../utils/helpers';
+import { ArrowLeft, Phone, Mail, MapPin, Calendar, TrendingUp, Sparkles, Building, ShoppingBag } from 'lucide-react';
 import { api } from '../lib/api';
 import { aiService, type AIRecommendation } from '../services/ai.service';
 

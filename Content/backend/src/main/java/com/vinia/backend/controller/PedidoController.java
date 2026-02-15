@@ -63,7 +63,7 @@ public class PedidoController {
     public ResponseEntity<?> create(@RequestBody Pedido pedido) {
         try {
             return ResponseEntity.ok(pedidoService.createPedido(pedido));
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest()
                     .body("Error creating order: " + (e.getMessage() != null ? e.getMessage() : e.toString()));

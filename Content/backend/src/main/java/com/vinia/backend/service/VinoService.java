@@ -113,6 +113,8 @@ public class VinoService {
         Vino vino = findById(id);
         int oldStock = vino.getStock();
         vino.setStock(stock);
+        if (vino.getStock() == null)
+            vino.setStock(0);
         Vino saved = vinoRepository.save(vino);
         auditService.log(getCurrentUsername(), "UPDATE_STOCK", "Vino", id, "Old: " + oldStock + ", New: " + stock);
         return saved;

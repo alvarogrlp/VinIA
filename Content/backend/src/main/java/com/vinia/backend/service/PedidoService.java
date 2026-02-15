@@ -115,6 +115,11 @@ public class PedidoService {
         if (pedido.getTotal() == null)
             pedido.setTotal(BigDecimal.ZERO);
 
+        // Ensure Request Date is set
+        if (pedido.getFecha() == null) {
+            pedido.setFecha(java.time.LocalDateTime.now());
+        }
+
         // 4. Link Lines AND DEDUCT STOCK
         if (pedido.getLineas() != null) {
             for (LineaPedido linea : pedido.getLineas()) {

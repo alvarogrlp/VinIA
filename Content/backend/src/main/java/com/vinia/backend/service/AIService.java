@@ -309,7 +309,7 @@ public class AIService {
 
                         // Check if it's an AI configuration error
                         if (!isAiConfigured()) {
-                                return "{\"reply\": \"⚠️ El servicio de IA no está configurado. Para usar el chatbot, configura la variable de entorno SPRING_AI_GOOGLE_AI_GEMINI_API_KEY. Consulta backend/AI_SETUP.md para más información.\", \"action\": \"NONE\"}";
+                                return "{\"reply\": \"⚠️ El servicio de IA no está configurado. Para usar el chatbot, configura la variable de entorno SPRING_AI_OPENAI_API_KEY. Consulta backend/AI_SETUP.md para más información.\", \"action\": \"NONE\"}";
                         }
 
                         return "{\"reply\": \"Lo siento, hubo un error al procesar tu solicitud: "
@@ -327,7 +327,7 @@ public class AIService {
         private String callAi(String prompt) throws Exception {
                 if (!isAiConfigured()) {
                         throw new RuntimeException(
-                                        "AI service not configured. Please set SPRING_AI_GOOGLE_AI_GEMINI_API_KEY environment variable.");
+                                        "AI service not configured. Please set SPRING_AI_OPENAI_API_KEY environment variable.");
                 }
 
                 try {
@@ -339,12 +339,13 @@ public class AIService {
                                 uri += "chat/completions";
                         }
 
-                        // OpenAI JSON Body structure
-                        Map<String, Object> message = Map.of("role", "user", "content", prompt);
-                        Map<String, Object> requestBody = Map.of(
-                                        "model", modelName,
-                                        "messages", List.of(message),
-                                        "temperature", 0.7);
+                        // OpenAI JSON Body structure with response_format hint
+                        Map<String, Object> message = Map.of("role", "user", "content",
+                                        prompt + "\n\nIMPORTANTE: Responde SOLO con el JSON solicitado, sin texto adicional, sin explicaciones, sin markdown.");
+                        Map<String, Object> requestBody = new HashMap<>();
+                        requestBody.put("model", modelName);
+                        requestBody.put("messages", List.of(message));
+                        requestBody.put("temperature", 0.7);
 
                         RestClient restClient = RestClient.create();
 
@@ -362,17 +363,22 @@ public class AIService {
                         if (choices.isArray() && choices.size() > 0) {
                                 String content = choices.get(0).path("message").path("content").asText();
 
-                                // Clean Markdown
+                                // Clean Markdown code blocks
                                 if (content.contains("```json")) {
                                         content = content.replace("```json", "").replace("```", "");
+                                } else if (content.contains("```")) {
+                                        content = content.replace("```", "");
                                 }
 
                                 String trimmed = content.trim();
 
                                 if (trimmed.isEmpty()) {
-                                        System.err.println("WARNING: AI returned empty content");
+                                        logger.warn("AI returned empty content");
                                         throw new RuntimeException("Empty AI response");
                                 }
+
+                                // Try to extract JSON if the response contains surrounding text
+                                trimmed = extractJson(trimmed);
 
                                 return trimmed;
                         }
@@ -380,14 +386,106 @@ public class AIService {
                         throw new RuntimeException("No choices returned from AI");
 
                 } catch (Exception e) {
-                        System.err.println("AI Error Details: " + e.getMessage());
-                        e.printStackTrace();
+                        logger.error("AI Error Details: {}", e.getMessage());
                         if (e instanceof org.springframework.web.client.HttpClientErrorException) {
                                 org.springframework.web.client.HttpClientErrorException he = (org.springframework.web.client.HttpClientErrorException) e;
-                                System.err.println("Response Body: " + he.getResponseBodyAsString());
+                                logger.error("Response Body: {}", he.getResponseBodyAsString());
                         }
                         throw e;
                 }
+        }
+
+        /**
+         * Extracts a JSON object or array from a string that may contain surrounding
+         * text.
+         * Finds the first '{' or '[' and matches it with its closing counterpart.
+         */
+        private String extractJson(String text) {
+                if (text == null || text.isEmpty())
+                        return text;
+
+                // If it already starts with { or [, try parsing directly first
+                if (text.startsWith("{") || text.startsWith("[")) {
+                        try {
+                                objectMapper.readTree(text);
+                                return text; // Valid JSON as-is
+                        } catch (Exception e) {
+                                // Not valid JSON, try extraction
+                        }
+                }
+
+                // Find the first { or [ in the text
+                int jsonStart = -1;
+                char openChar = ' ';
+                char closeChar = ' ';
+
+                for (int i = 0; i < text.length(); i++) {
+                        char c = text.charAt(i);
+                        if (c == '{' || c == '[') {
+                                jsonStart = i;
+                                openChar = c;
+                                closeChar = (c == '{') ? '}' : ']';
+                                break;
+                        }
+                }
+
+                if (jsonStart == -1) {
+                        return text; // No JSON found, return as-is
+                }
+
+                // Find the matching closing bracket
+                int depth = 0;
+                boolean inString = false;
+                boolean escaped = false;
+
+                for (int i = jsonStart; i < text.length(); i++) {
+                        char c = text.charAt(i);
+
+                        if (escaped) {
+                                escaped = false;
+                                continue;
+                        }
+
+                        if (c == '\\' && inString) {
+                                escaped = true;
+                                continue;
+                        }
+
+                        if (c == '"') {
+                                inString = !inString;
+                                continue;
+                        }
+
+                        if (!inString) {
+                                if (c == openChar || (openChar == '{' && c == '{')
+                                                || (openChar == '[' && c == '[')) {
+                                        if (c == '{' || c == '[') {
+                                                depth++;
+                                        }
+                                }
+                                if (c == closeChar || (closeChar == '}' && c == '}')
+                                                || (closeChar == ']' && c == ']')) {
+                                        if (c == '}' || c == ']') {
+                                                depth--;
+                                        }
+                                }
+
+                                if (depth == 0) {
+                                        String extracted = text.substring(jsonStart, i + 1);
+                                        try {
+                                                objectMapper.readTree(extracted);
+                                                logger.debug("Successfully extracted JSON from AI response");
+                                                return extracted;
+                                        } catch (Exception e) {
+                                                // Continue searching
+                                        }
+                                }
+                        }
+                }
+
+                // Fallback: return original text
+                logger.warn("Could not extract valid JSON from AI response, returning as-is");
+                return text;
         }
 
         // Procesar pedido usando búsqueda en BD

@@ -83,10 +83,20 @@ export const pedidosService = {
     pedidoData: PedidoInsert,
     lineasData: Omit<LineaPedidoInsert, 'pedido_id'>[]
   ) {
+    // Resolve the client ID from either the pre-nested 'cliente' object
+    // (set by guardarPedido in the store) or from the flat 'clienteId' field.
+    const clienteRef = (pedidoData as any).cliente?.id
+      || pedidoData.clienteId
+      || (pedidoData as any).cliente_id;
+
+    if (!clienteRef) {
+      throw new Error('No se puede crear el pedido: falta el ID del cliente.');
+    }
+
     // Transformar datos para que coincidan con la estructura del Backend (JPA/Hibernate)
     const pedidoBackend = {
       numero: pedidoData.numero,
-      cliente: { id: pedidoData.clienteId },
+      cliente: { id: clienteRef },
       fecha: pedidoData.fecha,
       estado: pedidoData.estado || 'PENDIENTE_VALIDACION',
       subtotal: pedidoData.subtotal,
@@ -110,6 +120,8 @@ export const pedidosService = {
         cantidadBultos: linea.cantidadBultos
       }))
     };
+
+    console.log('📦 Sending order to backend:', JSON.stringify(pedidoBackend, null, 2));
 
     // El backend espera un único objeto Pedido que contiene la lista de líneas
     const data = await api.post('/pedidos', pedidoBackend);
