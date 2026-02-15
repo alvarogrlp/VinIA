@@ -170,16 +170,4 @@ Si eres programador y quieres modificar el código, aquí tienes los pasos para 
 
     *   **Acceso Dev**: Abre [http://localhost:5173](http://localhost:5173)
 
----
-
-## 🌐 Túnel con ngrok (Acceso Remoto)
-
-En esta rama, la aplicación está configurada para conectarse al backend a través de una URL profesional de ngrok. Para levantar el túnel rápidamente, utiliza este comando:
-
-```bash
-ngrok http --url=unparenthetically-distraught-jan.ngrok-free.dev 8080
-```
-
-> **Nota**: Asegúrate de tener el backend corriendo en el puerto 8080 antes de iniciar el túnel.
-
 
