@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
   <img src="https://img.shields.io/badge/JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white" alt="JUnit 5" />
   <img src="https://img.shields.io/badge/Mockito-78C2AD?style=for-the-badge" alt="Mockito" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
 </div>
 
 ## Descripción del Proyecto
@@ -76,57 +77,77 @@ El proyecto utiliza un stack moderno y robusto para garantizar rendimiento, esca
 *   **Maven**: Herramienta de gestión de proyectos y dependencias.
 *   **JUnit 5, Mockito & Spring Security Test**: Testing profesional unitario, de integración y seguridad.
 
+### Despliegue y Contenedores
+*   **Docker & Docker Compose**: Contenedorización para un despliegue sencillo, rápido y profesional.
+*   **Nginx**: Servidor web de alto rendimiento y proxy inverso.
+
 ## Alcance y Enfoque del Desarrollo
 
 El desarrollo de VinIA prioriza la experiencia del **Comercial**. Esta elección estratégica se debe a la posibilidad de validar el software en un entorno real: gracias a la colaboración directa con profesionales del sector (contexto familiar), he podido afinar cada funcionalidad basándome en feedback inmediato y experto. Esto asegura que la aplicación no solo funciona, sino que es intuitiva y resuelve los problemas reales del día a día.
 
 Es importante notar que, aunque la aplicación incluye roles de **Almacén** y **Administración** que son completamente funcionales (permiten gestionar stock, usuarios y cerrar el ciclo de ventas correctamente), su diseño es más utilitario. Estos roles existen principalmente para dar soporte y contexto a las operaciones del comercial, sin profundizar en la complejidad administrativa total que podría tener una gran corporación multinacional. El objetivo ha sido crear un ecosistema completo donde la estrella es la agilidad comercial.
 
-## Inicio Rápido
+## Cómo probar la aplicación (Modo Fácil)
 
-### Requisitos Previos
+Si no tienes conocimientos técnicos avanzados, esta es la forma más sencilla de ver VinIA funcionando en tu ordenador.
+
+### Paso 0: Requisitos Previos
+
+Solo necesitas tener instalado un programa: **Docker Desktop**.
+*   Es la herramienta que permite ejecutar la aplicación en un contenedor aislado sin configurar nada más.
+*   Puedes descargarlo gratis aquí: [https://www.docker.com/products/docker-desktop/](https://www.docker.com/products/docker-desktop/)
+*   Instálalo y asegúrate de que esté abierto (verás un icono de una ballena en tu barra de tareas).
+
+### Paso 1: Configurar la IA (Opcional)
+Si quieres probar el chat inteligente y las recomendaciones, necesitas una "llave" gratuita de Google:
+
+1.  **Conseguirla (1 minuto)**:
+    *   Entra en [Google AI Studio](https://aistudio.google.com/) e inicia sesión con tu cuenta de Google.
+    *   Pulsa en el botón azul que dice **"Get API key"** (suele estar arriba a la izquierda).
+    *   Haz clic en **"Create API key"**.
+    *   Si te pregunta, elige la opción de **"Create API key in new project"**.
+    *   Se generará un código largo que empieza por `AIza...`. **Cópialo**.
+
+2.  **Ponerla en la App**:
+    *   Ve a la carpeta `Content/backend/src/main/resources/`.
+    *   Haz clic derecho en el archivo `application.properties` -> Abrir con -> **Bloc de notas**.
+    *   Busca el texto `TU_CLAVE_COPIADA_AQUI` y bórralo.
+    *   Pega ahí la clave que acabas de copiar.
+    *   Guarda y cierra el archivo.
+
+*(Si te saltas este paso, la app funcionará igual, pero no tendrás las funciones de la IA).*
+
+### Paso 2: ¡Arrancar!
+
+1.  Busca el archivo de inicio según tu ordenador:
+    *   **Si usas Windows**: Busca el archivo `start-vinia.bat` y haz **doble clic** sobre él.
+    *   **Si usas Mac o Linux**: Abre una terminal en esta carpeta y escribe `./start-vinia.sh` (o arrastra el archivo a la terminal y pulsa Enter).
+2.  Se abrirá una ventana que empezará a preparar todo automáticamente.
+    *   *Paciencia: La primera vez puede tardar unos 5-10 minutos mientras se descarga "el motor" de la app.*
+3.  Cuando veas que termina de cargar, abre tu navegador y visita: **[http://localhost:3000](http://localhost:3000)**
+
+¡Listo! Ya puedes iniciar sesión con las credenciales de prueba.
+
+### Credenciales de Acceso (Usuario / Contraseña)
+
+| Rol | Usuario | Contraseña | ¿Qué puedes hacer? |
+| :--- | :--- | :--- | :--- |
+| **Comercial** | `carlos` | `1234` | Ver catálogo, hacer pedidos, probar el Chatbot IA. |
+| **Almacén** | `almacen` | `almacen` | Gestionar stock de vinos. |
+| **Admin** | `admin` | `admin` | Ver estadísticas globales y gestionar usuarios. |
+
+---
+
+## Para Desarrolladores (Modo Avanzado)
+
+Si eres programador y quieres modificar el código, aquí tienes los pasos para la ejecución manual sin Docker.
+
+### Requisitos Técnicos
 *   Node.js 18+
 *   Java JDK 17+
 *   Maven
-*   **Google AI Studio API Key** (Gratuita - necesaria para los módulos de IA)
 
-### Configuración de Inteligencia Artificial (Google AI Studio)
-
-Para obtener tu clave de API y habilitar las funciones inteligentes (Chat, Recomendaciones), sigue estos pasos sencillos:
-
-1.  **Accede a Google AI Studio**:
-    Ve a [https://aistudio.google.com/](https://aistudio.google.com/) e inicia sesión con tu cuenta de Google.
-
-2.  **Obtener la Clave**:
-    *   Haz clic en el botón azul **"Get API key"** (normalmente arriba a la izquierda).
-    *   Pulsa en **"Create API key"**.
-    *   Selecciona un proyecto de Google Cloud existente o deja que cree uno nuevo automáticamente ("Create API key in new project").
-    *   Copia la clave que empieza por `AIza...`.
-
-3.  **Configurar en el Proyecto**:
-    Abre el archivo `Content/backend/src/main/resources/application.properties` y pega tu clave:
-    ```properties
-    spring.ai.openai.api-key=TU_CLAVE_COPIADA_AQUI
-    ```
-
-4.  **Modelo Recomendado**:
-    Asegúrate de que esta línea esté configurada (ya viene por defecto):
-    ```properties
-    spring.ai.openai.chat.options.model=gemma-3-27b-it
-    ```
-    *Este modelo ofrece el mejor equilibrio entre razonamiento y velocidad para este caso de uso.*
-
-### Credenciales de Acceso (Prueba)
-
-Para explorar las diferentes funcionalidades y roles del sistema, puedes utilizar estas credenciales preestablecidas:
-
-| Rol | Usuario | Contraseña |
-| :--- | :--- | :--- |
-| **Comercial** | `carlos` | `1234` |
-| **Almacén** | `almacen` | `almacen` |
-| **Administrador** | `admin` | `admin` |
-
-### Instalación y Ejecución
+### Ejecución Manual en Entorno de Desarrollo
 
 1.  **Instalar Dependencias del Frontend**
     ```bash
@@ -135,7 +156,7 @@ Para explorar las diferentes funcionalidades y roles del sistema, puedes utiliza
     ```
 
 2.  **Ejecutar la Aplicación**
-    Usa el comando correspondiente a tu sistema operativo. Esto lanzará tanto el Backend (puerto 8080) como el Frontend (puerto 5173) simultáneamente.
+    Usa el comando correspondiente a tu sistema operativo. Esto lanzará tanto el Backend (puerto 8080) como el Frontend (puerto 5173) con recarga en caliente (hot-reload).
 
     **Windows (PowerShell):**
     ```powershell
@@ -147,6 +168,18 @@ Para explorar las diferentes funcionalidades y roles del sistema, puedes utiliza
     npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
     ```
 
-    *   **Acceso**: Abre [http://localhost:5173](http://localhost:5173) en tu navegador.
+    *   **Acceso Dev**: Abre [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 🌐 Túnel con ngrok (Acceso Remoto)
+
+En esta rama, la aplicación está configurada para conectarse al backend a través de una URL profesional de ngrok. Para levantar el túnel rápidamente, utiliza este comando:
+
+```bash
+ngrok http --url=unparenthetically-distraught-jan.ngrok-free.dev 8080
+```
+
+> **Nota**: Asegúrate de tener el backend corriendo en el puerto 8080 antes de iniciar el túnel.
 
 

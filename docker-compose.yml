@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./Content/backend
+    container_name: vinia-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Optional: set API key here or in .env file
+      - SPRING_AI_OPENAI_API_KEY=${SPRING_AI_OPENAI_API_KEY}
+    volumes:
+      - vinia-data:/app/data
+
+  frontend:
+    build:
+      context: ./Content
+      dockerfile: Dockerfile
+    container_name: vinia-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  vinia-data:

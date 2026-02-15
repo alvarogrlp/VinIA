@@ -1,6 +1,4 @@
-import { api } from '../lib/api';
-
-const API_URL = 'http://localhost:8080/api';
+import { api, API_URL } from '../lib/api';
 
 export interface AIRecommendation {
     vinoId: string;
