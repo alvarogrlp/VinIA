@@ -118,9 +118,9 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Panel Izquierdo: Clientes Disponibles */}
-          <div className="flex flex-col w-1/2 border-r border-secondary-200">
+          <div className="flex flex-col w-full md:w-1/2 h-1/2 md:h-full border-b md:border-b-0 border-r-0 md:border-r border-secondary-200">
             <div className="p-4 border-b border-secondary-200 bg-secondary-50">
               <h3 className="mb-3 font-semibold text-secondary-900">Clientes Disponibles</h3>
               <div className="relative">
@@ -169,7 +169,7 @@ export const AsignacionClientesModal = ({ comercial, onClose }: Props) => {
           </div>
 
           {/* Panel Derecho: Clientes Asignados */}
-          <div className="flex flex-col w-1/2 bg-secondary-50/50">
+          <div className="flex flex-col w-full md:w-1/2 h-1/2 md:h-full bg-secondary-50/50">
             <div className="p-4 border-b border-secondary-200 bg-secondary-50">
               <h3 className="font-semibold text-secondary-900">
                 Clientes Asignados ({asignados.length})

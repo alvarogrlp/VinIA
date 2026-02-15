@@ -14,6 +14,7 @@ import java.util.List;
         @Index(name = "idx_vino_tipo", columnList = "tipo"),
         @Index(name = "idx_vino_denominacion", columnList = "denominacion_origen")
 })
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Vino {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -72,6 +73,8 @@ public class Vino {
     @ElementCollection
     @CollectionTable(name = "vino_maridajes", joinColumns = @JoinColumn(name = "vino_id"))
     @Column(name = "maridaje")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private List<String> maridaje;
 
     @Column(name = "nota_cata", columnDefinition = "TEXT")

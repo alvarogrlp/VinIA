@@ -200,9 +200,9 @@ export const HistoricoCliente = () => {
                     <h3 className="font-semibold text-secondary-900">Filtros Avanzados</h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                     {/* Buscador */}
-                    <div className="relative">
+                    <div className="relative lg:col-span-2">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary-400" />
                         <input
                             type="text"
@@ -215,7 +215,7 @@ export const HistoricoCliente = () => {
                     </div>
 
                     {/* Fechas */}
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-2 gap-2 lg:col-span-2">
                         <input
                             type="date"
                             value={fechaInicio}
@@ -223,7 +223,6 @@ export const HistoricoCliente = () => {
                             className="input w-full text-sm"
                             placeholder="Desde"
                         />
-                        <span className="text-secondary-400">-</span>
                         <input
                             type="date"
                             value={fechaFin}
@@ -260,7 +259,7 @@ export const HistoricoCliente = () => {
                             setFechaFin('');
                             setRangoPrecio({ min: '', max: '' });
                         }}
-                        className="btn-outline text-sm justify-center text-secondary-500 hover:text-secondary-700"
+                        className="btn-outline !px-2 w-fit text-sm justify-center text-secondary-500 hover:text-secondary-700 h-10"
                     >
                         Limpiar Filtros
                     </button>
@@ -279,62 +278,71 @@ export const HistoricoCliente = () => {
                             {/* Cabecera del Pedido */}
                             <div
                                 onClick={() => togglePedido(pedido.id)}
-                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer bg-secondary-50 hover:bg-white transition-colors"
+                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer bg-secondary-50 hover:bg-white transition-colors gap-4"
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-full ${pedidosExpandidos.has(pedido.id) ? 'bg-primary-100 text-primary-600' : 'bg-white text-secondary-400'}`}>
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className={`p-2 rounded-full shrink-0 ${pedidosExpandidos.has(pedido.id) ? 'bg-primary-100 text-primary-600' : 'bg-white text-secondary-400'}`}>
                                         {pedidosExpandidos.has(pedido.id) ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-secondary-900">{pedido.numero}</h3>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start sm:block">
+                                            <h3 className="font-bold text-secondary-900 truncate">{pedido.numero}</h3>
+                                            <span className="sm:hidden text-xs px-2 py-0.5 rounded-full bg-white border border-secondary-200 text-secondary-700 font-medium whitespace-nowrap ml-2">
+                                                {pedido.estado.replace(/_/g, ' ')}
+                                            </span>
+                                        </div>
                                         <div className="flex flex-col text-sm text-secondary-500">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="w-3 h-3" />
-                                                <span>Creado: {new Date(pedido.fecha).toLocaleDateString()} {new Date(pedido.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <div className="flex items-center gap-2 truncate">
+                                                <Calendar className="w-3 h-3 shrink-0" />
+                                                <span className="truncate">Creado: {new Date(pedido.fecha).toLocaleDateString()}</span>
                                             </div>
                                             {pedido.fechaEntrega && (
-                                                <div className="flex items-center gap-2 text-green-600">
-                                                    <CheckSquare className="w-3 h-3" />
-                                                    <span>Entregado: {new Date(pedido.fechaEntrega).toLocaleDateString()}</span>
+                                                <div className="flex items-center gap-2 text-green-600 truncate">
+                                                    <CheckSquare className="w-3 h-3 shrink-0" />
+                                                    <span className="truncate">Entregado: {new Date(pedido.fechaEntrega).toLocaleDateString()}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3 mt-4 sm:mt-0 min-w-fit">
-                                    {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
+                                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-secondary-200">
+                                    <div className="flex items-center gap-2">
+                                        {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
+                                            <button
+                                                onClick={(e) => handleCancelarPedido(e, pedido.id)}
+                                                className="text-xs px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-sm"
+                                            >
+                                                CANCELAR
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={(e) => handleCancelarPedido(e, pedido.id)}
-                                            className="text-xs px-3 py-1.5 rounded bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRepetirPedido(pedido);
+                                            }}
+                                            className="text-xs sm:text-sm px-3 py-1 rounded-full bg-primary-100 text-primary-700 font-medium hover:bg-primary-200 transition-colors whitespace-nowrap"
                                         >
-                                            CANCELAR
+                                            Repetir
                                         </button>
-                                    )}
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRepetirPedido(pedido);
-                                        }}
-                                        className="text-sm px-3 py-1 mr-2 rounded-full bg-primary-100 text-primary-700 font-medium hover:bg-primary-200 transition-colors"
-                                    >
-                                        Repetir Pedido
-                                    </button>
-                                    <span className="text-sm px-3 py-1 rounded-full bg-white border border-secondary-200 text-secondary-700 font-medium">
-                                        {pedido.estado.replace(/_/g, ' ')}
-                                    </span>
-                                    <div className="text-right">
-                                        <p className="text-lg font-bold text-primary-700">{formatearPrecio(pedido.total)}</p>
-                                        {pedido.descuento > 0 && <p className="text-xs text-green-600 font-medium">Dto. {pedido.descuento}%</p>}
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <span className="hidden sm:inline-block text-sm px-3 py-1 rounded-full bg-white border border-secondary-200 text-secondary-700 font-medium">
+                                            {pedido.estado.replace(/_/g, ' ')}
+                                        </span>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-primary-700">{formatearPrecio(pedido.total)}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Detalles del Pedido (Expandible) */}
                             {pedidosExpandidos.has(pedido.id) && (
-                                <div className="border-t border-secondary-200 divide-y divide-secondary-100 animate-fade-in">
-                                    {/* Cabecera Tabla */}
-                                    <div className="grid grid-cols-12 gap-4 p-3 bg-secondary-50/50 text-xs font-semibold text-secondary-500 uppercase tracking-wider">
+                                <div className="border-t border-secondary-200 animate-fade-in bg-white">
+                                    {/* HEADERS (Desktop Only) */}
+                                    <div className="hidden md:grid grid-cols-12 gap-4 p-3 bg-secondary-50/50 text-xs font-semibold text-secondary-500 uppercase tracking-wider border-b border-secondary-100">
                                         <div className="col-span-5">Producto</div>
                                         <div className="col-span-2 text-center">Cant.</div>
                                         <div className="col-span-2 text-right">Precio Ud.</div>
@@ -342,59 +350,106 @@ export const HistoricoCliente = () => {
                                         <div className="col-span-2 text-right">Total</div>
                                     </div>
 
-                                    {/* Lineas */}
-                                    {pedido.lineas.map((linea, idx) => (
-                                        <div key={idx} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-primary-50/30 transition-colors">
-                                            <div className="col-span-5">
-                                                <div
-                                                    className={`flex items-center gap-3 ${linea.vino ? 'cursor-pointer hover:bg-secondary-100 p-1 rounded transition-colors group' : ''}`}
-                                                    onClick={(e) => {
-                                                        if (linea.vino) {
-                                                            e.stopPropagation();
-                                                            setVinoSeleccionado(linea.vino);
-                                                        }
-                                                    }}
-                                                    title={linea.vino ? "Ver ficha técnica del vino" : ""}
-                                                >
-                                                    <div className="p-2 bg-secondary-100 rounded text-secondary-500 group-hover:bg-primary-100 group-hover:text-primary-600 transition-colors">
-                                                        <Package className="w-4 h-4" />
+                                    {/* CONTENT */}
+                                    <div className="divide-y divide-secondary-100">
+                                        {pedido.lineas.map((linea, idx) => (
+                                            <div key={idx} className="hover:bg-primary-50/30 transition-colors">
+                                                {/* Desktop Row */}
+                                                <div className="hidden md:grid grid-cols-12 gap-4 p-4 items-center">
+                                                    <div className="col-span-5">
+                                                        <div className={`flex items-center gap-3 ${linea.vino ? 'cursor-pointer hover:bg-secondary-100 p-1 rounded transition-colors group' : ''}`}
+                                                            onClick={(e) => {
+                                                                if (linea.vino) {
+                                                                    e.stopPropagation();
+                                                                    setVinoSeleccionado(linea.vino);
+                                                                }
+                                                            }}
+                                                            title={linea.vino ? "Ver ficha técnica del vino" : ""}
+                                                        >
+                                                            <div className="p-2 bg-secondary-100 rounded text-secondary-500 group-hover:bg-primary-100 group-hover:text-primary-600 transition-colors">
+                                                                <Package className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <p className={`font-medium ${linea.vino ? 'text-primary-800 underline decoration-dotted decoration-primary-300' : 'text-secondary-900'}`}>
+                                                                    {linea.vinoNombre}
+                                                                </p>
+                                                                {linea.anada && <span className="text-xs text-secondary-500">Añada {linea.anada}</span>}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className={`font-medium ${linea.vino ? 'text-primary-800 underline decoration-dotted decoration-primary-300' : 'text-secondary-900'}`}>
-                                                            {linea.vinoNombre}
-                                                        </p>
-                                                        {linea.anada && <span className="text-xs text-secondary-500">Añada {linea.anada}</span>}
+                                                    <div className="col-span-2 text-center">
+                                                        <div className="font-medium text-secondary-900">
+                                                            {linea.cantidad}
+                                                            <span className="text-xs text-secondary-500 ml-1">bots</span>
+                                                        </div>
+                                                        {linea.cantidadBultos && (
+                                                            <div className="text-xs text-secondary-400">
+                                                                {linea.cantidadBultos} {linea.tipoBulto === 'CAJA' ? 'Cajas' : 'Bultos'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="col-span-2 text-right text-secondary-600 font-mono text-sm">
+                                                        {formatearPrecio(linea.precioUnitario)}
+                                                    </div>
+                                                    <div className="col-span-1 text-center text-xs font-medium text-secondary-500">
+                                                        {linea.descuento > 0 ? <span className="text-green-600">-{linea.descuento}%</span> : '-'}
+                                                    </div>
+                                                    <div className="col-span-2 text-right font-bold text-secondary-900 font-mono text-sm">
+                                                        {formatearPrecio(linea.subtotal)}
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="col-span-2 text-center">
-                                                <div className="font-medium text-secondary-900">
-                                                    {linea.cantidad}
-                                                    <span className="text-xs text-secondary-500 ml-1">bots</span>
-                                                </div>
-                                                {linea.cantidadBultos && (
-                                                    <div className="text-xs text-secondary-400">
-                                                        {linea.cantidadBultos} {linea.tipoBulto === 'CAJA' ? 'Cajas' : 'Bultos'}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="col-span-2 text-right text-secondary-600 font-mono text-sm">
-                                                {formatearPrecio(linea.precioUnitario)}
-                                            </div>
-                                            <div className="col-span-1 text-center text-xs font-medium text-secondary-500">
-                                                {linea.descuento > 0 ? <span className="text-green-600">-{linea.descuento}%</span> : '-'}
-                                            </div>
-                                            <div className="col-span-2 text-right font-bold text-secondary-900 font-mono text-sm">
-                                                {formatearPrecio(linea.subtotal)}
-                                            </div>
-                                        </div>
-                                    ))}
 
-                                    {/* Footer Detalles (Impuestos, envio, etc si hubiera) */}
-                                    <div className="p-3 bg-secondary-50 flex justify-end gap-6 text-sm text-secondary-600">
-                                        <span>Subtotal: {formatearPrecio(pedido.subtotal)}</span>
-                                        <span>IVA ({pedido.iva}%): {formatearPrecio((pedido.total - pedido.subtotal))}</span>
-                                        <span className="font-bold text-secondary-900">Total: {formatearPrecio(pedido.total)}</span>
+                                                {/* Mobile Row */}
+                                                <div className="md:hidden p-4 flex flex-col gap-3">
+                                                    {/* Header: Product Name */}
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-secondary-100 rounded text-secondary-500 shrink-0 mt-0.5">
+                                                            <Package className="w-4 h-4" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-secondary-900 leading-tight">
+                                                                {linea.vinoNombre}
+                                                            </p>
+                                                            {linea.anada && <span className="text-xs text-secondary-500">Añada {linea.anada}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Details Grid */}
+                                                    <div className="grid grid-cols-3 gap-2 text-xs bg-secondary-50 rounded-lg p-3">
+                                                        <div className="flex flex-col items-center border-r border-secondary-200">
+                                                            <span className="text-secondary-400 mb-0.5 uppercase text-[10px]">Cantidad</span>
+                                                            <span className="font-bold text-secondary-900">{linea.cantidad} bots</span>
+                                                            {linea.cantidadBultos && <span className="text-[10px] text-secondary-500">({linea.cantidadBultos} {linea.tipoBulto === 'CAJA' ? 'Cajas' : 'Bultos'})</span>}
+                                                        </div>
+                                                        <div className="flex flex-col items-center border-r border-secondary-200">
+                                                            <span className="text-secondary-400 mb-0.5 uppercase text-[10px]">Precio Ud.</span>
+                                                            <span className="font-medium text-secondary-900">{formatearPrecio(linea.precioUnitario)}</span>
+                                                            {linea.descuento > 0 && <span className="text-[10px] text-green-600">-{linea.descuento}% Dto.</span>}
+                                                        </div>
+                                                        <div className="flex flex-col items-center justify-center">
+                                                            <span className="text-secondary-400 mb-0.5 uppercase text-[10px]">Subtotal</span>
+                                                            <span className="font-bold text-primary-700 text-sm">{formatearPrecio(linea.subtotal)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Footer Detalles */}
+                                    <div className="p-4 bg-secondary-50 border-t border-secondary-200 flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-6 text-sm text-secondary-600 items-end sm:items-center">
+                                        <div className="flex justify-between w-full sm:w-auto gap-4">
+                                            <span>Subtotal:</span>
+                                            <span className="font-medium">{formatearPrecio(pedido.subtotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between w-full sm:w-auto gap-4">
+                                            <span>IVA ({pedido.iva}%):</span>
+                                            <span className="font-medium">{formatearPrecio((pedido.total - pedido.subtotal))}</span>
+                                        </div>
+                                        <div className="flex justify-between w-full sm:w-auto gap-4 border-t sm:border-0 border-secondary-200 pt-2 sm:pt-0 mt-1 sm:mt-0">
+                                            <span className="font-bold text-secondary-900 text-base">Total:</span>
+                                            <span className="font-bold text-primary-700 text-lg">{formatearPrecio(pedido.total)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}

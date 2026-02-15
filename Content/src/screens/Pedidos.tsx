@@ -1,8 +1,13 @@
 /**
- * VinIA - Gestión de Pedidos (ERP Dashboard)
+ * VinIA - Order Management Dashboard (ERP)
  * 
- * Dashboard centralizado para la gestión del ciclo de vida de los pedidos.
- * Filtra y muestra acciones según el rol del usuario (Comercial, Admin, Almacén, Repartidor).
+ * Central hub for managing the full lifecycle of orders.
+ * 
+ * Features:
+ * - Role-based views: Custom tabs for Commercial, Admin, Warehouse, and Delivery roles.
+ * - Filtering: Search by client or order number, and filter by status tabs.
+ * - Actions: State transitions (Approve, Prepare, Deliver), cancellation, and export.
+ * - Integration: Connects with PedidoStore for state and backend synchronization.
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -305,91 +310,93 @@ export const Pedidos = () => {
 
       {/* Lista */}
       <div className="card overflow-hidden">
-        <table className="table w-full">
-          <thead className="bg-secondary-50">
-            <tr>
-              <th className="p-4 text-left">Pedido</th>
-              <th className="p-4 text-left">Cliente</th>
-              <th className="p-4 text-left">Fecha</th>
-              <th className="p-4 text-left">Forma Pago</th>
-              <th className="p-4 text-left">Estado</th>
-              {usuario?.rol !== 'Comercial' && <th className="p-4 text-left">Comercial</th>}
-              <th className="p-4 text-right">Total</th>
-              <th className="p-4 text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-secondary-100">
-            {pedidosFiltrados.map((pedido) => (
-              <tr key={pedido.id} className="hover:bg-primary-50 transition-colors">
-                <td className="p-4 font-medium">{pedido.numero}</td>
-                <td className="p-4">
-                  <div className="font-medium text-secondary-900">{pedido.clienteNombre}</div>
-                  <div className="text-xs text-secondary-500">CIF: {pedido.cliente?.cif}</div>
-                </td>
-                <td className="p-4 text-sm text-secondary-600">
-                  {new Date(pedido.fecha).toLocaleDateString()}
-                </td>
-                <td className="p-4 text-sm">
-                  {pedido.formaPago || 'Contado'}
-                </td>
-                <td className="p-4">
-                  {getEstadoBadge(pedido.estado)}
-                </td>
-                {usuario?.rol !== 'Comercial' && (
-                  <td className="p-4 text-sm text-secondary-600">
-                    {pedido.usuario?.nombre ? `${pedido.usuario.nombre} ${pedido.usuario.apellidos}` : '-'}
-                  </td>
-                )}
-                <td className="p-4 text-right font-bold text-secondary-900">
-                  {formatearPrecio(pedido.total)}
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center gap-2 items-center">
-                    {/* Cancel Action for Commercial & Admin */}
-                    {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
-                      <button
-                        onClick={() => handleCancelar(pedido.id)}
-                        className="px-3 py-1 text-[10px] font-bold bg-red-600 text-white rounded hover:bg-red-700 transition-all shadow-sm"
-                      >
-                        CANCELAR
-                      </button>
-                    )}
-
-                    {/* Validation Actions */}
-                    {tabActiva === 'validacion' && (pedido.estado === 'PENDIENTE_VALIDACION' || pedido.estado === 'Pendiente de Validación') && (
-                      <button onClick={() => handleAprobar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-green-600 hover:bg-green-700">
-                        Aprobar
-                      </button>
-                    )}
-
-                    {/* Picking Actions */}
-                    {tabActiva === 'picking' && (pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') && (
-                      <button onClick={() => handlePreparado(pedido.id)} className="btn-primary py-1 px-3 text-xs">
-                        Preparado
-                      </button>
-                    )}
-
-                    {/* Delivery Actions */}
-                    {(tabActiva === 'reparto' || tabActiva === 'envios') && (pedido.estado === 'EN_REPARTO' || pedido.estado === 'En Reparto') && usuario?.rol !== 'Almacén' && (
-                      <button onClick={() => handleEntregar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
-                        Entregar
-                      </button>
-                    )}
-
-                    {/* Details (Always visible) */}
-                    <button
-                      onClick={() => handleVerDetalles(pedido)}
-                      className="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
-                      title="Ver detalles completos"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="table w-full">
+            <thead className="bg-secondary-50">
+              <tr>
+                <th className="p-4 text-left">Pedido</th>
+                <th className="p-4 text-left">Cliente</th>
+                <th className="p-4 text-left">Fecha</th>
+                <th className="p-4 text-left">Forma Pago</th>
+                <th className="p-4 text-left">Estado</th>
+                {usuario?.rol !== 'Comercial' && <th className="p-4 text-left">Comercial</th>}
+                <th className="p-4 text-right">Total</th>
+                <th className="p-4 text-center">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-secondary-100">
+              {pedidosFiltrados.map((pedido) => (
+                <tr key={pedido.id} className="hover:bg-primary-50 transition-colors">
+                  <td className="p-4 font-medium">{pedido.numero}</td>
+                  <td className="p-4">
+                    <div className="font-medium text-secondary-900">{pedido.clienteNombre}</div>
+                    <div className="text-xs text-secondary-500">CIF: {pedido.cliente?.cif}</div>
+                  </td>
+                  <td className="p-4 text-sm text-secondary-600">
+                    {new Date(pedido.fecha).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-sm">
+                    {pedido.formaPago || 'Contado'}
+                  </td>
+                  <td className="p-4">
+                    {getEstadoBadge(pedido.estado)}
+                  </td>
+                  {usuario?.rol !== 'Comercial' && (
+                    <td className="p-4 text-sm text-secondary-600">
+                      {pedido.usuario?.nombre ? `${pedido.usuario.nombre} ${pedido.usuario.apellidos}` : '-'}
+                    </td>
+                  )}
+                  <td className="p-4 text-right font-bold text-secondary-900">
+                    {formatearPrecio(pedido.total)}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex justify-center gap-2 items-center">
+                      {/* Cancel Action for Commercial & Admin */}
+                      {(usuario?.rol === 'Comercial' || usuario?.rol === 'Administración') && esCancelable(pedido.estado) && (
+                        <button
+                          onClick={() => handleCancelar(pedido.id)}
+                          className="px-3 py-1 text-[10px] font-bold bg-red-600 text-white rounded hover:bg-red-700 transition-all shadow-sm"
+                        >
+                          CANCELAR
+                        </button>
+                      )}
+
+                      {/* Validation Actions */}
+                      {tabActiva === 'validacion' && (pedido.estado === 'PENDIENTE_VALIDACION' || pedido.estado === 'Pendiente de Validación') && (
+                        <button onClick={() => handleAprobar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-green-600 hover:bg-green-700">
+                          Aprobar
+                        </button>
+                      )}
+
+                      {/* Picking Actions */}
+                      {tabActiva === 'picking' && (pedido.estado === 'EN_PREPARACION' || pedido.estado === 'En Preparación') && (
+                        <button onClick={() => handlePreparado(pedido.id)} className="btn-primary py-1 px-3 text-xs">
+                          Preparado
+                        </button>
+                      )}
+
+                      {/* Delivery Actions */}
+                      {(tabActiva === 'reparto' || tabActiva === 'envios') && (pedido.estado === 'EN_REPARTO' || pedido.estado === 'En Reparto') && usuario?.rol !== 'Almacén' && (
+                        <button onClick={() => handleEntregar(pedido.id)} className="btn-primary py-1 px-3 text-xs bg-purple-600 hover:bg-purple-700">
+                          Entregar
+                        </button>
+                      )}
+
+                      {/* Details (Always visible) */}
+                      <button
+                        onClick={() => handleVerDetalles(pedido)}
+                        className="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                        title="Ver detalles completos"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {pedidosFiltrados.length === 0 && (
           <div className="p-8 text-center text-secondary-500">
             No hay pedidos en esta sección.

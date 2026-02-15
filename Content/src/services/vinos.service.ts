@@ -10,10 +10,10 @@ export const vinosService = {
    * Obtener todos los vinos activos
    */
   async getAll() {
-    console.log('📡 Consultando API: GET /vinos');
+
     const data = await api.get('/vinos');
 
-    console.log('✅ Datos recibidos de API:', data?.length || 0, 'registros');
+
     return data as Vino[];
   },
 
@@ -36,11 +36,11 @@ export const vinosService = {
     }
 
     const searchTerm = query.trim();
-    console.log('🔍 Buscando:', searchTerm);
+
 
     const data = await api.get(`/vinos?search=${encodeURIComponent(searchTerm)}`);
 
-    console.log('✅ Resultados encontrados:', data?.length || 0);
+
     return data as Vino[];
   },
 
@@ -123,11 +123,11 @@ export const vinosService = {
       return vinos.map(v => ({ ...v, _aiReason: undefined }));
     }
 
-    console.log('🤖 Búsqueda IA:', query);
+
 
     try {
       // 1. Obtener IDs y Razones desde la IA
-      console.log('🔐 Token presente:', !!localStorage.getItem('vinia_token'));
+
       const aiResponse = await api.get(`/ai/search?query=${encodeURIComponent(query)}`);
 
       // Si la respuesta es vacía o error
@@ -152,7 +152,7 @@ export const vinosService = {
         })
         .filter((v): v is VinoWithAIReason => v !== null);
 
-      console.log(`✅ IA encontró ${resultados.length} coincidencias`);
+
       return resultados;
 
     } catch (error) {

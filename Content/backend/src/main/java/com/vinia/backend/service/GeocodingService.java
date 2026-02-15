@@ -10,12 +10,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 
+/**
+ * Service for Geocoding operations.
+ * 
+ * Uses OpenStreetMap's Nominatim API to convert addresses into geographic
+ * coordinates (latitude, longitude).
+ * Includes user-agent headers and error handling for external API requests.
+ */
 @Service
 public class GeocodingService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String NOMINATIM_API = "https://nominatim.openstreetmap.org/search";
 
+    /**
+     * Retrieves coordinates for a given address string.
+     * 
+     * @param address The full address to geocode.
+     * @return Optional containing a double array [latitude, longitude] if found, or
+     *         empty if failed.
+     */
     public Optional<double[]> getCoordinates(String address) {
         try {
             String url = NOMINATIM_API + "?q=" + address.replace(" ", "+") + "&format=json&limit=1";

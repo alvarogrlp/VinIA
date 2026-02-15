@@ -34,7 +34,7 @@ export const api = {
     }
 
     const url = `${API_URL}${endpoint}`;
-    console.log('API Request:', url, 'POST', body);
+
 
     const response = await fetch(url, {
       method: 'POST',

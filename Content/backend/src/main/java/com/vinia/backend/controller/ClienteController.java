@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
+/**
+ * REST Controller for managing Clients (Clientes).
+ * Handles CRUD operations, search functionality, and map data retrieval.
+ */
 @RestController
 @RequestMapping("/api/clientes")
 @CrossOrigin(origins = "*")
@@ -27,6 +31,19 @@ public class ClienteController {
     @Autowired
     private com.vinia.backend.service.GeocodingService geocodingService;
 
+    /**
+     * Retrieves all clients with optional filtering.
+     * 
+     * Supports role-based filtering:
+     * - Commercials only see their assigned clients (unless searching global if
+     * allowed).
+     * - Admins see all clients enriched with assignment data.
+     * 
+     * @param search Optional search query (name, CIF, email).
+     * @param userId Optional ID of the requesting user.
+     * @param role   Optional role of the requesting user.
+     * @return List of clients or enriched client data maps.
+     */
     @GetMapping
     public ResponseEntity<?> getAll(@RequestParam(required = false) String search,
             @RequestParam(required = false) String userId,
@@ -93,6 +110,12 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.findAll());
     }
 
+    /**
+     * Retrieves a specific client by ID.
+     * 
+     * @param id The client ID.
+     * @return The client object.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> getById(@PathVariable String id) {
         try {
@@ -102,12 +125,25 @@ public class ClienteController {
         }
     }
 
+    /**
+     * Creates a new client.
+     * 
+     * @param cliente The client data.
+     * @return The created client.
+     */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
     public Cliente create(@RequestBody Cliente cliente) {
         return clienteService.save(cliente);
     }
 
+    /**
+     * Updates an existing client.
+     * 
+     * @param id      The ID of the client to update.
+     * @param cliente The updated client data.
+     * @return The updated client.
+     */
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'COMERCIAL')")
     public ResponseEntity<Cliente> update(@PathVariable String id, @RequestBody Cliente cliente) {
@@ -120,6 +156,12 @@ public class ClienteController {
         }
     }
 
+    /**
+     * Deletes a client by ID.
+     * 
+     * @param id The client ID.
+     * @return 200 OK or 404 Not Found.
+     */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> delete(@PathVariable String id) {
@@ -131,6 +173,15 @@ public class ClienteController {
         }
     }
 
+    /**
+     * Retrieves data specifically formatted for the commercial map view.
+     * 
+     * Includes logic to initiate background geocoding for clients lacking
+     * coordinates.
+     * 
+     * @param userId Optional user ID to determine 'assignedToMe' status.
+     * @return List of map data objects (coords, name, assignment status).
+     */
     @GetMapping("/map-data")
     public ResponseEntity<?> getMapData(@RequestParam(required = false) String userId) {
         List<Cliente> allClients = clienteService.findAll();
@@ -174,7 +225,6 @@ public class ClienteController {
         // Start background geocoding task if needed
         if (!clientsToGeocode.isEmpty()) {
             new Thread(() -> {
-                System.out.println("Starting background geocoding for " + clientsToGeocode.size() + " clients...");
                 for (Cliente c : clientsToGeocode) {
                     try {
                         // Double check it lacks coords (in case of race conditions concurrent requests)
@@ -193,7 +243,6 @@ public class ClienteController {
                                     c.setLatitud(coords.get()[0]);
                                     c.setLongitud(coords.get()[1]);
                                     clienteService.save(c);
-                                    System.out.println("Geocoded: " + c.getNombre());
                                     // Respect rate limits
                                     Thread.sleep(1100);
                                 }
@@ -203,13 +252,18 @@ public class ClienteController {
                         System.err.println("Error background geocoding client " + c.getId() + ": " + e.getMessage());
                     }
                 }
-                System.out.println("Background geocoding finished.");
             }).start();
         }
 
         return ResponseEntity.ok(mapData);
     }
 
+    /**
+     * Retrieves all orders for a specific client.
+     * 
+     * @param id The client ID.
+     * @return List of orders.
+     */
     @GetMapping("/{id}/pedidos")
     public ResponseEntity<?> getPedidosByCliente(@PathVariable String id) {
         try {

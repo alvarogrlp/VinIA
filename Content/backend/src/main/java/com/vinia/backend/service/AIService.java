@@ -20,9 +20,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.text.Normalizer;
 
+import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AIService {
+
+        private static final Logger logger = LoggerFactory.getLogger(AIService.class);
 
         private final ClienteRepository clienteRepository;
         private final PedidoRepository pedidoRepository;
@@ -236,9 +243,26 @@ public class AIService {
         // 5. Chat Integrado (Orquestador) - Optimizado
         public String chat(String message, String contextJson) {
                 try {
+                        // Leer activeFlow del contexto
+                        String activeFlow = "";
+                        try {
+                                JsonNode contextNode = objectMapper.readTree(contextJson);
+                                activeFlow = contextNode.path("activeFlow").asText("");
+                        } catch (Exception e) {
+                                // Ignorar error de parseo de contexto
+                        }
+
+                        String flowInstruction = "";
+                        if ("RECOMMENDATION".equals(activeFlow)) {
+                                flowInstruction = "CONTEXTO ACTIVO: RECOMENDACIÓN. El usuario probablemente está indicando el CLIENTE para recomendarle vinos. Prioriza tipo='RECOMENDACION'.";
+                        } else if ("HISTORY".equals(activeFlow)) {
+                                flowInstruction = "CONTEXTO ACTIVO: HISTORIAL. El usuario busca información sobre pedidos pasados. Prioriza tipo='HISTORIAL'.";
+                        }
+
                         // Paso 1: IA extrae la intención
                         String intentPrompt = String.format("""
                                         Actúa como procesador de pedidos de vinos.
+                                        %s
                                         Input: "%s"
 
                                         Reglas:
@@ -249,20 +273,23 @@ public class AIService {
                                         5. Si no se especifica formato, asume BOTELLAS
 
                                         JSON:
-                                        {
-                                          "tipo": "PEDIDO" | "RECOMENDACION" | "CONSULTA",
-                                          "busqueda_cliente": "nombre o null",
-                                          "items": [
-                                            {
-                                              "busqueda_vino": "nombre del vino",
-                                              "cantidad": 1,
-                                              "formato": "BOTELLA" | "CAJA"
-                                            }
-                                          ]
-                                        }
-                                        """, message);
+                                          {
+                                            "tipo": "PEDIDO" | "RECOMENDACION" | "CONSULTA" | "HISTORIAL",
+                                            "busqueda_cliente": "nombre o null",
+                                            "filtros_historial": {
+                                                "vino": "nombre vino o null",
+                                                "fecha": "hoy/ayer/semana o null"
+                                            },
+                                            "items": [
+                                              {
+                                                "busqueda_vino": "nombre del vino",
+                                                "cantidad": 1,
+                                                "formato": "BOTELLA" | "CAJA"
+                                              }
+                                            ]
+                                          }
+                                        """, flowInstruction, message);
                         String intentResponse = callAi(intentPrompt);
-                        System.out.println("Intent: " + intentResponse);
 
                         JsonNode intent = objectMapper.readTree(intentResponse);
                         String tipo = intent.path("tipo").asText("CONSULTA");
@@ -270,21 +297,23 @@ public class AIService {
                         if ("PEDIDO".equals(tipo)) {
                                 return procesarPedido(intent, contextJson);
                         } else if ("RECOMENDACION".equals(tipo)) {
-                                return procesarRecomendacion(message);
+                                return procesarRecomendacion(intent, contextJson, message);
+                        } else if ("HISTORIAL".equals(tipo)) {
+                                return procesarHistorial(intent, contextJson, message);
                         } else {
                                 return "{\"reply\": \"¿En qué puedo ayudarte?\", \"action\": \"NONE\"}";
                         }
 
                 } catch (Exception e) {
-                        System.err.println("Chat Error: " + e.getMessage());
-                        e.printStackTrace();
+                        logger.error("Error al procesar solicitud de chat", e);
 
                         // Check if it's an AI configuration error
                         if (!isAiConfigured()) {
                                 return "{\"reply\": \"⚠️ El servicio de IA no está configurado. Para usar el chatbot, configura la variable de entorno SPRING_AI_GOOGLE_AI_GEMINI_API_KEY. Consulta backend/AI_SETUP.md para más información.\", \"action\": \"NONE\"}";
                         }
 
-                        return "{\"reply\": \"Lo siento, hubo un error al procesar tu solicitud.\", \"action\": \"NONE\"}";
+                        return "{\"reply\": \"Lo siento, hubo un error al procesar tu solicitud: "
+                                        + e.getMessage().replace("\"", "'") + "\", \"action\": \"NONE\"}";
                 }
         }
 
@@ -327,8 +356,6 @@ public class AIService {
                                         .retrieve()
                                         .body(String.class);
 
-                        System.out.println("AI Response Body: " + responseBody);
-
                         // Parse response: choices[0].message.content
                         JsonNode root = objectMapper.readTree(responseBody);
                         JsonNode choices = root.path("choices");
@@ -341,7 +368,6 @@ public class AIService {
                                 }
 
                                 String trimmed = content.trim();
-                                System.out.println("AI Parsed Content: " + trimmed);
 
                                 if (trimmed.isEmpty()) {
                                         System.err.println("WARNING: AI returned empty content");
@@ -486,34 +512,173 @@ public class AIService {
                 return objectMapper.writeValueAsString(response);
         }
 
-        // Procesar recomendación
-        private String procesarRecomendacion(String message) throws Exception {
+        // Procesar recomendación (Mejorado con contexto de cliente)
+        private String procesarRecomendacion(JsonNode intent, String contextJson, String message) throws Exception {
+                // 1. Identificar Cliente
+                String busquedaCliente = intent.path("busqueda_cliente").asText("");
+                String clienteId = null;
+                Cliente cliente = null;
+
+                if (!busquedaCliente.isEmpty()) {
+                        List<Cliente> clientes = clienteRepository.findAll();
+                        for (Cliente c : clientes) {
+                                if (c.getNombre().toLowerCase().contains(busquedaCliente.toLowerCase())) {
+                                        clienteId = c.getId();
+                                        cliente = c;
+                                        break;
+                                }
+                        }
+                }
+
+                if (clienteId == null) {
+                        try {
+                                JsonNode context = objectMapper.readTree(contextJson);
+                                clienteId = context.path("clienteId").asText("");
+                                if (!clienteId.isEmpty()) {
+                                        cliente = clienteRepository.findById(clienteId).orElse(null);
+                                }
+                        } catch (Exception e) {
+                        }
+                }
+
+                String perfilCliente = "";
+                if (cliente != null) {
+                        // Access fields inside transactional method to avoid lazy loading issues if any
+                        perfilCliente = String.format("CLIENTE: %s. Zona: %s. Tipo: %s. Notas: %s",
+                                        cliente.getNombre(),
+                                        cliente.getZona() != null ? cliente.getZona() : "",
+                                        cliente.getTipo() != null ? cliente.getTipo() : "",
+                                        cliente.getNotas() != null ? cliente.getNotas() : "");
+                } else {
+                        perfilCliente = "CLIENTE: Desconocido (generico)";
+                }
+
                 String catalogoResumen = getCatalogoResumen();
 
                 String prompt = """
                                 Eres un sumiller experto.
+
+                                %s
 
                                 CATÁLOGO:
                                 %s
 
                                 USUARIO: "%s"
 
-                                Recomienda 3 vinos del catálogo con razón breve.
+                                TAREA: Recomienda 3 vinos del catálogo para este cliente. Si el usuario pide algo específico (ej: "tintos"), respétalo. Da una razón de venta personalizada.
 
                                 RESPUESTA JSON:
                                 {
-                                  "reply": "Aquí tienes mis recomendaciones...",
+                                  "reply": "Aquí tienes mis recomendaciones para [Nombre Cliente]...",
                                   "action": "RECOMMENDATION",
                                   "data": {
                                     "vinos": [
-                                      {"vinoId": "...", "nombre": "...", "razon": "..."}
+                                      {
+                                        "vinoId": "ID del vino",
+                                        "nombre": "Nombre del vino",
+                                        "razon": "Razón enfocada al cliente"
+                                      }
                                     ]
                                   }
                                 }
                                 """
-                                .formatted(catalogoResumen, message);
+                                .formatted(perfilCliente, catalogoResumen, message);
 
                 return callAi(prompt);
+        }
+
+        // Procesar consulta de historial (Mejorado con filtros)
+        private String procesarHistorial(JsonNode intent, String contextJson, String message) throws Exception {
+                // 1. Identificar Cliente
+                String busquedaCliente = intent.path("busqueda_cliente").asText("");
+                String clienteId = null;
+
+                if (!busquedaCliente.isEmpty()) {
+                        List<Cliente> clientes = clienteRepository.findAll();
+                        for (Cliente c : clientes) {
+                                if (c.getNombre().toLowerCase().contains(busquedaCliente.toLowerCase())) {
+                                        clienteId = c.getId();
+                                        break;
+                                }
+                        }
+                }
+
+                if (clienteId == null) {
+                        try {
+                                JsonNode context = objectMapper.readTree(contextJson);
+                                clienteId = context.path("clienteId").asText("");
+                        } catch (Exception e) {
+                        }
+                }
+
+                if (clienteId == null || clienteId.isEmpty()) {
+                        return "{\"reply\": \"Para consultar el historial necesito saber de qué cliente hablamos. ¿Puedes indicarme el nombre?\", \"action\": \"NONE\"}";
+                }
+
+                Cliente cliente = clienteRepository.findById(clienteId).orElse(null);
+                String nombreCliente = cliente != null ? cliente.getNombre() : "el cliente";
+
+                // 2. Obtener Filtros
+                JsonNode filtros = intent.path("filtros_historial");
+                String filtroVino = filtros.path("vino").asText("");
+
+                List<Pedido> pedidos = pedidoRepository.findByClienteIdOrderByFechaDesc(clienteId);
+
+                // 3. Filtrar en memoria (Stream)
+                List<String> resultados = new ArrayList<>();
+                int maxResults = 5;
+
+                for (Pedido p : pedidos) {
+                        boolean match = true;
+                        // Filtro por vino (busca en las líneas)
+                        if (!filtroVino.isEmpty() && !"null".equals(filtroVino)) {
+                                boolean tieneVino = p.getLineas().stream()
+                                                .anyMatch(l -> l.getVino().getNombre().toLowerCase()
+                                                                .contains(filtroVino.toLowerCase()) ||
+                                                                l.getVino().getBodega().toLowerCase()
+                                                                                .contains(filtroVino.toLowerCase()));
+                                if (!tieneVino)
+                                        match = false;
+                        }
+
+                        if (match) {
+                                String resumenPedido = String.format("- %s (%s): %.2f€",
+                                                p.getFecha().toLocalDate().toString(), p.getEstado(), p.getTotal());
+
+                                // Añadir desfio de lineas si hay filtro especifico
+                                if (!filtroVino.isEmpty() && !"null".equals(filtroVino)) {
+                                        String detalles = p.getLineas().stream()
+                                                        .filter(l -> l.getVino().getNombre().toLowerCase()
+                                                                        .contains(filtroVino.toLowerCase()))
+                                                        .map(l -> l.getCantidad() + "x " + l.getVino().getNombre())
+                                                        .collect(Collectors.joining(", "));
+                                        resumenPedido += " [" + detalles + "]";
+                                }
+
+                                resultados.add(resumenPedido);
+                                if (resultados.size() >= maxResults)
+                                        break;
+                        }
+                }
+
+                String respuestaTexto;
+                if (resultados.isEmpty()) {
+                        if (!filtroVino.isEmpty()) {
+                                respuestaTexto = String.format("No encontré pedidos de %s que incluyan '%s'.",
+                                                nombreCliente, filtroVino);
+                        } else {
+                                respuestaTexto = String.format("%s no tiene pedidos recientes.", nombreCliente);
+                        }
+                } else {
+                        respuestaTexto = String.format("Aquí tienes los últimos pedidos de %s%s:\\n\\n%s",
+                                        nombreCliente,
+                                        (!filtroVino.isEmpty() ? " coincidiendo con '" + filtroVino + "'" : ""),
+                                        String.join("\\n", resultados));
+                }
+
+                return String.format(
+                                "{\"reply\": \"%s\", \"action\": \"HISTORY_VIEW\", \"data\": {\"clienteId\": \"%s\"}}",
+                                respuestaTexto, clienteId);
         }
 
         /**

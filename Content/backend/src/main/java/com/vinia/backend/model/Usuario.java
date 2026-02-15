@@ -22,6 +22,7 @@ public class Usuario {
     private String username; // Added for auth
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password; // Added for auth
 
     @Column(length = 20)

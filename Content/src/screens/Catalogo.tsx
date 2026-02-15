@@ -1,12 +1,5 @@
-/**
- * VinIA - Pantalla de Catálogo de Vinos
- * 
- * Muestra el listado completo de vinos disponibles con opciones de búsqueda
- * y filtrado avanzado. Permite ver detalles de cada vino.
- */
-
 import { useState, useEffect } from 'react';
-import { Search, Filter, Wine, X, Pencil, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Filter, Wine, X, Pencil, Sparkles, Loader2, Grid, List } from 'lucide-react';
 import { useVinosStore, useAuthStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 import { VinoCard } from '../components/VinoCard';
@@ -27,6 +20,9 @@ export const Catalogo = () => {
     const [isAISearching, setIsAISearching] = useState(false);
     const [aiResults, setAiResults] = useState<AISearchResult[]>([]);
     const [isAIMode, setIsAIMode] = useState(false);
+
+    // View Mode State (Mobile)
+    const [mobileViewMode, setMobileViewMode] = useState<'grid' | 'list'>('grid');
 
     // Filtros locales
     const [filtroTipo, setFiltroTipo] = useState<string>('');
@@ -120,7 +116,7 @@ export const Catalogo = () => {
                         placeholder="Buscar por nombre, bodega, tipo..."
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
-                        className="w-full input pl-10 pr-10"
+                        className="w-full input !pl-10 !pr-10"
                     />
                     {busqueda && (
                         <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary-100 rounded-full text-secondary-500">
@@ -142,7 +138,7 @@ export const Catalogo = () => {
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') handleAISearch();
                         }}
-                        className={`w-full input pl-10 pr-32 ${isAIMode ? 'border-primary-500 bg-primary-50/30' : ''}`}
+                        className={`w-full input !pl-10 !pr-10 ${isAIMode ? 'border-primary-500 bg-primary-50/30' : ''}`}
                     />
 
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -151,18 +147,8 @@ export const Catalogo = () => {
                                 <X className="w-4 h-4" />
                             </button>
                         )}
-                        <button
-                            onClick={handleAISearch}
-                            disabled={isAISearching || !busquedaIA}
-                            className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${isAIMode
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'bg-gradient-to-r from-primary-600 to-secondary-600 text-white hover:from-primary-700 hover:to-secondary-700'
-                                }`}
-                            title="Búsqueda Inteligente (IA)"
-                        >
-                            {isAISearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                            {isAIMode ? 'Activo' : 'Buscar con IA'}
-                        </button>
+                        {/* Botón eliminado, búsqueda solo por Enter */}
+                        {isAISearching && <Loader2 className="w-4 h-4 animate-spin text-primary-600" />}
                     </div>
                 </div>
             </div>
@@ -260,9 +246,32 @@ export const Catalogo = () => {
                 </div>
             )}
 
+            {/* View Toggle Bar (Mobile Focus) & Results Count */}
+            <div className="flex justify-between items-center px-1">
+                <p className="text-sm text-secondary-500 pl-1">
+                    {vinosFiltrados.length} {vinosFiltrados.length === 1 ? 'vino' : 'vinos'}
+                </p>
+                <div className="flex items-center gap-1 bg-secondary-100 p-0.5 rounded-lg border border-secondary-200 sm:hidden">
+                    <button
+                        onClick={() => setMobileViewMode('grid')}
+                        className={`p-1.5 rounded-md transition-all ${mobileViewMode === 'grid' ? 'bg-white shadow text-primary-600' : 'text-secondary-400'}`}
+                        title="Ver en cuadrícula"
+                    >
+                        <Grid className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => setMobileViewMode('list')}
+                        className={`p-1.5 rounded-md transition-all ${mobileViewMode === 'list' ? 'bg-white shadow text-primary-600' : 'text-secondary-400'}`}
+                        title="Ver en lista"
+                    >
+                        <List className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
             {/* Grid de Vinos */}
             {cargando || isAISearching ? (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className={`grid gap-6 ${mobileViewMode === 'grid' ? 'grid-cols-2 gap-3' : 'grid-cols-1'} sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`}>
                     {[...Array(8)].map((_, i) => (
                         <div key={i} className="h-[400px] bg-secondary-100 rounded-lg animate-pulse" />
                     ))}
@@ -278,13 +287,15 @@ export const Catalogo = () => {
                     <p className="text-secondary-500">Intenta con otros términos o filtros</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className={`grid ${mobileViewMode === 'grid' ? 'grid-cols-2 gap-3' : 'grid-cols-1 gap-6'} sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-20`}>
                     {vinosFiltrados.map((vino) => (
                         <div key={vino.id} className="relative group">
-                            <VinoCard
-                                vino={vino}
-                                onClick={() => handleVinoClick(vino)}
-                            />
+                            <div className={`${mobileViewMode === 'grid' ? 'text-xs' : ''}`}> {/* Wrapper to potentially styles items down if needed, but VinoCard handles styles internally usually. */}
+                                <VinoCard
+                                    vino={vino}
+                                    onClick={() => handleVinoClick(vino)}
+                                />
+                            </div>
                             {usuario?.rol === 'Administración' && (
                                 <button
                                     onClick={(e) => handleEditClick(e, vino.id)}

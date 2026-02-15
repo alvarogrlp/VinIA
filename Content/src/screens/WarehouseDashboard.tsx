@@ -1,8 +1,8 @@
 /**
- * VinIA - Warehouse Dashboard (Almacén)
+ * VinIA - Warehouse Dashboard
  * 
- * Dashboard específico para el rol de Almacén.
- * Prioriza la preparación de pedidos y el control de stock.
+ * Specific dashboard for the Warehouse / Almacén role.
+ * Prioritizes order preparation, stock control, and critical inventory alerts.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -36,7 +36,10 @@ export const WarehouseDashboard = () => {
         productosBajoStock,
         alertasStockCritico
     } = useMemo(() => {
-        const pendientes = pedidos.filter(p => p.estado === 'Pendiente' || p.estado === 'PENDIENTE_VALIDACION');
+        const pendientes = pedidos.filter(p => {
+            const s = (p.estado || '').toUpperCase();
+            return ['PENDIENTE', 'PENDIENTE_VALIDACION', 'PENDIENTE DE VALIDACION', 'EN_PREPARACION'].includes(s);
+        });
         // Low stock logic
         const bajoStock = vinos.filter((v: any) => v.stock <= (v.stock_minimo || 10));
         const critico = vinos.filter(v => v.stock === 0);

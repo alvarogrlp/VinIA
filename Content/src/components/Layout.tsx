@@ -13,8 +13,6 @@ import {
   Package,
   Map as MapIcon,
   Clock,
-  ChevronRight,
-  AlertCircle
 } from 'lucide-react';
 import { useAuthStore, usePedidosStore } from '../store';
 import { VinIAChatBot } from './VinIAChatBot';
@@ -23,16 +21,11 @@ export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { usuario, logout } = useAuthStore();
-  const { pedidos, cargarPedidos } = usePedidosStore();
+  const { cargarPedidos } = usePedidosStore();
 
   useEffect(() => {
     cargarPedidos();
   }, []);
-
-  const pendingOrders = pedidos.filter(p => {
-    const s = (p.estado || '').toUpperCase();
-    return s === 'BORRADOR' || s.includes('PENDIENTE');
-  });
 
   // Items del menú de navegación
   const menuItems = [
@@ -153,19 +146,73 @@ export const Layout = () => {
               {menuItems.filter(item => item.roles.includes(usuario?.rol || '')).map((item) => {
                 const Icon = item.icon;
                 return (
-                  <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} className={`nav-item ${isActive(item.path) ? 'active' : ''}`}>
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+                  >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
                   </Link>
                 );
               })}
-              {usuario?.rol === 'Administración' && adminItems.map((item) => (
-                <Link key={item.path} to={item.path} onClick={() => setSidebarOpen(false)} className={`nav-item ${isActive(item.path) ? 'active' : ''}`}>
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
+
+              {/* Sección solo para administradores */}
+              {usuario?.rol === 'Administración' && (
+                <>
+                  <div className="pt-4 mt-4 border-t border-secondary-200">
+                    <p className="px-4 mb-2 text-xs font-semibold tracking-wider uppercase text-secondary-500">
+                      Administración
+                    </p>
+                  </div>
+                  {adminItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </>
+              )}
             </nav>
+
+            {/* Perfil de usuario - Móvil */}
+            <div className="p-4 border-t border-secondary-200">
+              <Link
+                to="/perfil"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-50 transition-colors hover:bg-primary-100 group"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-200 group-hover:bg-primary-300">
+                  <User className="w-5 h-5 text-primary-700" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-secondary-900 truncate">
+                    {usuario?.nombre}
+                  </p>
+                  <p className="text-xs text-secondary-600 truncate">
+                    {usuario?.rol}
+                  </p>
+                </div>
+              </Link>
+              <button
+                onClick={() => {
+                  logout();
+                  setSidebarOpen(false);
+                }}
+                className="w-full mt-2 p-2 text-xs flex items-center justify-center text-red-600 hover:bg-red-50 rounded"
+              >
+                <LogOut className="w-3 h-3 mr-1" /> Cerrar sesión
+              </button>
+            </div>
           </aside>
         </div>
       )}
@@ -186,8 +233,8 @@ export const Layout = () => {
 
       {/* Sidebar Derecho eliminado - Ahora es una pantalla completa */}
 
-      {/* Asistente Virtual Flotante */}
-      <VinIAChatBot />
+      {/* Asistente Virtual Flotante - Solo visible para el rol Comercial */}
+      {usuario?.rol === 'Comercial' && <VinIAChatBot />}
     </div>
   );
 };

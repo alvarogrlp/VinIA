@@ -31,7 +31,6 @@ com\vinia\backend\model\LineaPedido.class
 com\vinia\backend\service\GeocodingService.class
 com\vinia\backend\BackendApplication.class
 com\vinia\backend\service\ClienteService.class
-com\vinia\backend\controller\SeedDataController.class
 com\vinia\backend\repository\AuditLogRepository.class
 com\vinia\backend\security\CustomUserDetailsService.class
 com\vinia\backend\controller\ClienteController.class

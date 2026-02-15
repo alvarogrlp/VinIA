@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, Mic, X, MessageSquare, Loader2, Sparkles, ShoppingCart, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Mic, X, Loader2, Sparkles, ShoppingCart, User, Minus } from 'lucide-react';
 import { useLocation } from 'react-router-dom'; // For context
 import { aiService } from '../services/ai.service';
 import { usePedidosStore, useVinosStore } from '../store';
-import type { Vino } from '../types';
 
+
+/**
+ * Interface representing a chat message in the conversation.
+ */
 interface Message {
     id: string;
     role: 'user' | 'assistant';
@@ -14,28 +17,46 @@ interface Message {
     timestamp: Date;
 }
 
+/**
+ * VinIAChatBot Component
+ * 
+ * An intelligent virtual assistant component integrated into the VinIA application.
+ * It provides the following functionalities:
+ * - Natural language interaction with the user.
+ * - Context-aware responses based on the current screen (e.g., client details).
+ * - Voice recognition for hands-free operation.
+ * - Execution of actions such as creating orders and providing wine recommendations.
+ * - Glassmorphism UI design with minimize and close capabilities.
+ * 
+ * @returns {JSX.Element} The rendered ChatBot component.
+ */
 export const VinIAChatBot = () => {
     const [isOpen, setIsOpen] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: 'welcome',
-            role: 'assistant',
-            text: '¡Hola! Soy VinIA, tu asistente inteligente. ¿En qué puedo ayudarte?',
-            timestamp: new Date()
-        }
-    ]);
+
+    // Initial State Definition
+    const initialMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        text: '¡Hola! Soy VinIA, tu asistente inteligente. ¿En qué puedo ayudarte?',
+        timestamp: new Date()
+    };
+
+    const [messages, setMessages] = useState<Message[]>([initialMessage]);
     const [isTyping, setIsTyping] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(true);
     const [inputEnabled, setInputEnabled] = useState(false);
+
+    const [activeFlow, setActiveFlow] = useState<'RECOMMENDATION' | 'HISTORY' | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const location = useLocation();
 
     // Stores
     const { crearPedido, agregarLineaPedido, guardarPedido } = usePedidosStore();
-    const { vinos, obtenerVino, cargarVinos } = useVinosStore();
+    const { vinos, cargarVinos } = useVinosStore();
 
     // Auto-scroll logic
     useEffect(() => {
@@ -47,7 +68,49 @@ export const VinIAChatBot = () => {
         if (vinos.length === 0) cargarVinos();
     }, [cargarVinos, vinos.length]);
 
-    // Handle Voice
+    /**
+     * Resets the chat state to its initial configuration.
+     * Clears user messages, input, and active flows.
+     */
+    const resetChat = () => {
+        setMessages([initialMessage]);
+        setShowQuickActions(true);
+        setInputEnabled(false);
+        setInput('');
+        setActiveFlow(null);
+    };
+
+    /**
+     * Handles the close action.
+     * Triggers the closing animation and then resets the state.
+     */
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsOpen(false);
+            setIsClosing(false);
+            resetChat();
+        }, 300);
+    };
+
+    /**
+     * Handles the minimize action.
+     * Triggers the closing animation but preserves the current chat state.
+     */
+    const handleMinimize = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsOpen(false);
+            setIsClosing(false);
+        }, 300);
+    };
+
+    /**
+     * Toggles the voice recognition functionality.
+     * 
+     * Uses the Web Speech API (if available) to capture user audio
+     * and convert it to text input.
+     */
     const toggleRecording = () => {
         const win = window as any;
         const SpeechRecognition = win.webkitSpeechRecognition || win.SpeechRecognition;
@@ -58,9 +121,6 @@ export const VinIAChatBot = () => {
         }
 
         if (isRecording) {
-            // Stop handled by 'end' event usually, but we can force functionality if needed
-            // For now, let's rely on the native object if we had the instance stored.
-            // Simplified: Just toggle state UI, the recognition logic below handles one-shot.
             setIsRecording(false);
             return;
         }
@@ -75,13 +135,18 @@ export const VinIAChatBot = () => {
         recognition.onresult = (event: any) => {
             const transcript = event.results[0][0].transcript;
             setInput(transcript);
-            handleSend(transcript); // Auto-send on voice end? Optional. Let's send it.
+            handleSend(transcript);
         };
         recognition.onerror = () => setIsRecording(false);
 
         recognition.start();
     };
 
+    /**
+     * Handles the execution of quick actions selected by the user.
+     * 
+     * @param action - The identifier of the action to perform (e.g., 'create_order', 'recommendations').
+     */
     const handleQuickAction = (action: string) => {
         let message = '';
         setShowQuickActions(false);
@@ -108,28 +173,70 @@ export const VinIAChatBot = () => {
             return;
         }
 
-        switch (action) {
-            case 'catalog':
-                message = 'Muéstrame el catálogo de vinos disponibles';
+        if (action === 'recommendations') {
+            setActiveFlow('RECOMMENDATION');
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                role: 'user',
+                text: 'Dame recomendaciones de vinos',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, userMsg]);
+
+            setTimeout(() => {
+                const assistantMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    text: 'Claro, soy tu sumiller virtual. 🍷\n\n¿Para qué cliente necesitas las recomendaciones?',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, assistantMsg]);
                 setInputEnabled(true);
-                break;
-            case 'recommendations':
-                message = 'Dame recomendaciones de vinos';
-                setInputEnabled(true);
-                break;
-            case 'history':
-                message = 'Consulta el historial de pedidos';
-                setInputEnabled(true);
-                break;
+            }, 600);
+            return;
         }
+
+        if (action === 'history') {
+            setActiveFlow('HISTORY');
+            const userMsg: Message = {
+                id: Date.now().toString(),
+                role: 'user',
+                text: 'Consulta el historial de pedidos',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, userMsg]);
+
+            setTimeout(() => {
+                const assistantMsg: Message = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    text: 'Sin problema. 📋\n\n¿Qué quieres saber y de qué cliente? (Ej: "Últimos pedidos de El Calderito" o "¿El Calderito ha pedido Tajinaste?")',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, assistantMsg]);
+                setInputEnabled(true);
+            }, 600);
+            return;
+        }
+
         handleSend(message);
     };
 
+    /**
+     * Main function to handle sending messages.
+     * 
+     * - Adds the user's message to the state.
+     * - Gathers context (current page, client ID).
+     * - Calls the AI service.
+     * - Processes the AI response and any associated actions (e.g., creating an order).
+     * 
+     * @param textOverride - Optional text to send (used for quick actions or voice input).
+     */
     const handleSend = async (textOverride?: string) => {
         const textToSend = textOverride || input;
         if (!textToSend.trim()) return;
 
-        setShowQuickActions(false); // Hide quick actions after first message
+        setShowQuickActions(false);
 
         // 1. Add User Message
         const userMsg: Message = {
@@ -144,23 +251,22 @@ export const VinIAChatBot = () => {
 
         try {
             // 2. Prepare Context (Current Screen, Client ID from URL if any)
-            // Extract Client ID from path /clientes/detalle/:id
             const pathParts = location.pathname.split('/');
             let clienteId = '';
             if (location.pathname.includes('/clientes/') && pathParts.length > 0) {
-                // rough check, can be improved
                 clienteId = pathParts[pathParts.length - 1];
             }
 
             const context = {
                 screen: location.pathname,
-                clienteId: clienteId || ''
+                clienteId: clienteId || '',
+                activeFlow: activeFlow
             };
 
             // 3. Call AI
             const response = await aiService.chat(textToSend, context);
 
-            console.log("AI Response:", response);
+
 
             // 4. Handle Action
             let actionFeedback = "";
@@ -169,7 +275,6 @@ export const VinIAChatBot = () => {
             if (response.action === "CREATE_ORDER") {
                 const items = actionData?.items || [];
                 if (items.length > 0) {
-                    // Use clienteId from AI response if available, otherwise use current context
                     const targetClienteId = actionData?.clienteId || clienteId;
 
                     if (!targetClienteId) {
@@ -182,7 +287,6 @@ export const VinIAChatBot = () => {
                             if (vino) {
                                 const tipoBulto = item.tipoBulto || 'BOTELLA';
                                 const cantidadBultos = item.cantidad || 1;
-                                // Calcular cantidad total de botellas
                                 const botellasPorBulto = tipoBulto === 'CAJA' ? (vino.botellas_por_caja || 6) : 1;
                                 const totalBotellas = cantidadBultos * botellasPorBulto;
 
@@ -205,6 +309,11 @@ export const VinIAChatBot = () => {
                             actionFeedback = " ✅ Pedido borrador creado con éxito.";
                         } else {
                             actionFeedback = " ⚠️ No pude encontrar los vinos exactos en el catálogo.";
+                        }
+
+                        // Reset chat after action completion
+                        if (addedCount > 0) {
+                            setTimeout(resetChat, 3500);
                         }
                     }
                 }
@@ -235,46 +344,61 @@ export const VinIAChatBot = () => {
         }
     };
 
-    if (!isOpen) {
+    const isNuevoPedido = location.pathname.includes('nuevo') || location.pathname.includes('editar');
+
+    if (!isOpen && !isClosing) {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 w-16 h-16 bg-secondary-900 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 group border border-primary-500/50 overflow-hidden"
+                className={`fixed right-6 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 z-50 group overflow-hidden transform hover:scale-110 shadow-[0_4px_20px_rgba(184,148,90,0.6)] backdrop-blur-md border border-primary-400/50 bg-gradient-to-br from-primary-500/90 to-primary-700/90 hover:from-primary-500 hover:to-primary-600 ring-2 ring-white/20 ${isNuevoPedido ? 'bottom-24 lg:bottom-6' : 'bottom-6'}`}
                 title="Abrir Asistente VinIA"
             >
-                <div className="absolute inset-0 bg-primary-600 opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                <img src="/VinIA_Logo.png" alt="VinIA" className="w-10 h-10 object-contain invert brightness-0 filter" />
-                {/* Notification Badge if needed */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+                <div className="relative w-9 h-9 flex items-center justify-center">
+                    <img src="/VinIA_Logo.png" alt="VinIA" className="w-full h-full object-contain filter brightness-0 invert opacity-95 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm" />
+                </div>
             </button>
         );
     }
 
     return (
-        <div className="fixed bottom-6 right-6 w-[380px] h-[600px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50 border border-secondary-200 animate-slide-up font-sans">
+        <div className={`fixed right-6 w-[380px] h-[600px] max-h-[85vh] bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden z-50 border border-white/50 ${isClosing ? 'animate-shrink-down' : 'animate-grow-up'} font-sans ring-1 ring-black/5 ${isNuevoPedido ? 'bottom-24 lg:bottom-6' : 'bottom-6'}`}>
             {/* Header */}
-            <div className="bg-secondary-900 p-4 flex items-center justify-between text-white shrink-0 border-b border-secondary-800">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-secondary-800 rounded-full flex items-center justify-center border border-secondary-700">
-                        <Sparkles className="w-5 h-5 text-primary-400" />
+            <div className="bg-gradient-to-r from-primary-700 to-primary-900 p-4 flex items-center justify-between text-white shrink-0 shadow-md relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/VinIA_Logo.png')] bg-no-repeat bg-[length:150%] bg-center opacity-5 mix-blend-overlay pointer-events-none"></div>
+                <div className="flex items-center gap-3 relative z-10">
+                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center border border-white/20 backdrop-blur-sm shadow-inner">
+                        <Sparkles className="w-5 h-5 text-primary-200" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg font-mono tracking-tight !text-white">VinIA <span className="text-primary-500">Assistant</span></h3>
-                        <p className="text-xs text-secondary-400 flex items-center gap-1.5 font-mono">
-                            <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(184,148,90,0.5)]"></span>
+                        <h3 className="font-bold text-lg font-mono tracking-tight text-white drop-shadow-sm">VinIA <span className="text-primary-300">Assistant</span></h3>
+                        <p className="text-xs text-primary-200/80 flex items-center gap-1.5 font-mono">
+                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.6)]"></span>
                             SYSTEM ONLINE
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                >
-                    <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-1 relative z-10">
+                    <button
+                        onClick={handleMinimize}
+                        className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+                        title="Minimizar"
+                    >
+                        <Minus className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={handleClose}
+                        className="p-2 hover:bg-red-500/20 hover:text-red-300 rounded-full transition-colors text-white/80"
+                        title="Cerrar y reiniciar"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary-50 scrollbar-thin scrollbar-thumb-primary-200/50 scrollbar-track-transparent">
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
@@ -282,8 +406,8 @@ export const VinIAChatBot = () => {
                     >
                         <div
                             className={`max-w-[85%] rounded-2xl p-3 shadow-sm ${msg.role === 'user'
-                                ? 'bg-primary-600 text-white rounded-tr-none border border-primary-500'
-                                : 'bg-white text-secondary-800 border border-secondary-200 rounded-tl-none'
+                                ? 'bg-primary-600 text-white rounded-tr-none border border-primary-500 shadow-md shadow-primary-900/10'
+                                : 'bg-white text-secondary-800 border border-secondary-200 rounded-tl-none shadow-sm'
                                 }`}
                         >
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
@@ -311,48 +435,44 @@ export const VinIAChatBot = () => {
                 {showQuickActions && messages.length === 1 && (
                     <div className="flex justify-start">
                         <div className="max-w-[85%] space-y-2">
-                            <p className="text-xs text-secondary-600 mb-2">Acciones rápidas:</p>
+                            <p className="text-xs text-secondary-600 mb-2 font-medium ml-1">Acciones rápidas:</p>
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={() => handleQuickAction('create_order')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-xl hover:border-primary-400 hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
                                 >
-                                    <ShoppingCart className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
+                                    <div className="p-1.5 rounded-lg bg-primary-50 group-hover:bg-primary-100 transition-colors">
+                                        <ShoppingCart className="w-4 h-4 text-primary-600" />
+                                    </div>
                                     <div>
-                                        <div className="text-xs font-semibold text-secondary-900">Crear Pedido</div>
+                                        <div className="text-xs font-bold text-secondary-900">Crear Pedido</div>
                                         <div className="text-[10px] text-secondary-500">Nuevo pedido</div>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => handleQuickAction('recommendations')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-xl hover:border-primary-400 hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
                                 >
-                                    <Sparkles className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
+                                    <div className="p-1.5 rounded-lg bg-primary-50 group-hover:bg-primary-100 transition-colors">
+                                        <Sparkles className="w-4 h-4 text-primary-600" />
+                                    </div>
                                     <div>
-                                        <div className="text-xs font-semibold text-secondary-900">Recomendaciones</div>
-                                        <div className="text-[10px] text-secondary-500">Sugerencias IA</div>
+                                        <div className="text-xs font-bold text-secondary-900">Recomendar</div>
+                                        <div className="text-[10px] text-secondary-500">Sugerencias AI</div>
                                     </div>
                                 </button>
 
-                                <button
-                                    onClick={() => handleQuickAction('catalog')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
-                                >
-                                    <MessageSquare className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
-                                    <div>
-                                        <div className="text-xs font-semibold text-secondary-900">Ver Catálogo</div>
-                                        <div className="text-[10px] text-secondary-500">Consultar vinos</div>
-                                    </div>
-                                </button>
 
                                 <button
                                     onClick={() => handleQuickAction('history')}
-                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-400 hover:shadow-md transition-all text-left group"
+                                    className="flex items-center gap-2 p-3 bg-white border border-secondary-200 rounded-xl hover:border-primary-400 hover:shadow-md hover:-translate-y-0.5 transition-all text-left group"
                                 >
-                                    <User className="w-4 h-4 text-primary-600 group-hover:scale-110 transition-transform" />
+                                    <div className="p-1.5 rounded-lg bg-primary-50 group-hover:bg-primary-100 transition-colors">
+                                        <User className="w-4 h-4 text-primary-600" />
+                                    </div>
                                     <div>
-                                        <div className="text-xs font-semibold text-secondary-900">Historial</div>
+                                        <div className="text-xs font-bold text-secondary-900">Historial</div>
                                         <div className="text-[10px] text-secondary-500">Ver pedidos</div>
                                     </div>
                                 </button>
@@ -380,8 +500,8 @@ export const VinIAChatBot = () => {
                         <button
                             onClick={toggleRecording}
                             className={`p-2 rounded-full transition-colors ${isRecording
-                                ? 'bg-red-100 text-red-600 animate-pulse'
-                                : 'bg-secondary-100 text-secondary-500 hover:bg-secondary-200'
+                                ? 'bg-red-500 text-white animate-pulse shadow-red-200'
+                                : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
                                 }`}
                             title="Dictar mensaje"
                         >
@@ -394,7 +514,7 @@ export const VinIAChatBot = () => {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder="Escribe o dicta tu mensaje..."
-                            className="flex-1 bg-secondary-50 border border-secondary-200 focus:bg-white focus:border-secondary-900 focus:ring-1 focus:ring-secondary-900 rounded-md px-4 py-2 text-sm transition-all outline-none"
+                            className="flex-1 bg-secondary-50 border border-secondary-200 focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-2 text-sm transition-all outline-none placeholder:text-secondary-400"
                             disabled={isTyping}
                             autoFocus
                         />
@@ -402,15 +522,15 @@ export const VinIAChatBot = () => {
                         <button
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isTyping}
-                            className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                            className="p-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
                         >
                             {isTyping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </button>
                     </div>
                 </div>
             ) : (
-                <div className="p-3 bg-secondary-50 text-center border-t border-secondary-100 shrink-0">
-                    <p className="text-xs text-secondary-400 italic py-2">Selecciona una opción para comenzar</p>
+                <div className="p-3 bg-secondary-50 text-center border-t border-secondary-200 shrink-0">
+                    <p className="text-xs text-secondary-500 italic py-2">Selecciona una opción para comenzar</p>
                 </div>
             )}
         </div>

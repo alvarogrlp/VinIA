@@ -10,7 +10,15 @@ interface LoginResponse {
 
 export const authService = {
   /**
-   * Iniciar sesión con username y contraseña
+   * Authenticates a user with username and password.
+   * 
+   * - Sends credentials to the backend.
+   * - Persists the returned user object and token in localStorage.
+   * - Sets a session timestamp for expiration checks.
+   * 
+   * @param username The user's login identifier.
+   * @param password The user's password.
+   * @returns A promise resolving to the logged-in user details.
    */
   async signIn(username: string, password: string): Promise<LoginResponse> {
     const response = await api.post('/auth/login', { username, password });
@@ -18,7 +26,7 @@ export const authService = {
     const user = response.user;
     const token = response.token;
 
-    // Guardar en localStorage para persistencia entre sesiones
+    // Persist session
     localStorage.setItem('vinia_user', JSON.stringify(user));
     localStorage.setItem('vinia_token', token);
     localStorage.setItem('vinia_session_timestamp', Date.now().toString());
@@ -68,7 +76,12 @@ export const authService = {
   },
 
   /**
-   * Obtener el usuario actual desde localStorage
+   * Retrieves the currently logged-in user from local storage.
+   * 
+   * - Checks if the session timestamp is valid (not older than 7 days).
+   * - Logs out automatically if the session has expired.
+   * 
+   * @returns The user object if a valid session exists, null otherwise.
    */
   async getCurrentUser(): Promise<LoginResponse | null> {
     const userStr = localStorage.getItem('vinia_user');
@@ -77,14 +90,13 @@ export const authService = {
     try {
       const user = JSON.parse(userStr);
 
-      // Verificar que la sesión no haya expirado (opcional: 7 días)
+      // Verify expiration (7 days)
       const timestamp = localStorage.getItem('vinia_session_timestamp');
       if (timestamp) {
         const sessionAge = Date.now() - Number.parseInt(timestamp, 10);
-        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 días en milisegundos
+        const maxAge = 7 * 24 * 60 * 60 * 1000;
 
         if (sessionAge > maxAge) {
-          // Sesión expirada
           await this.signOut();
           return null;
         }

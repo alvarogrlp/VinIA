@@ -318,6 +318,42 @@ h6 {
   animation: fadeIn 0.3s ease-out;
 }
 
+@keyframes growFromBottomRight {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: bottom right;
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: bottom right;
+  }
+}
+
+.animate-grow-up {
+  animation: growFromBottomRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shrinkToBottomRight {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: bottom right;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: bottom right;
+  }
+}
+
+.animate-shrink-down {
+  animation: shrinkToBottomRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Estilos para scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 10px;

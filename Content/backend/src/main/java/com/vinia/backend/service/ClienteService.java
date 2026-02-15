@@ -69,8 +69,6 @@ public class ClienteService {
             asignacion.setActivo(true);
             asignacion.setFechaAsignacion(LocalDateTime.now());
             asignacionRepository.save(asignacion);
-            System.out.println(
-                    "Auto-assigned client " + cliente.getNombre() + " (" + zona + ") to " + targetUser.getNombre());
         }
     }
 

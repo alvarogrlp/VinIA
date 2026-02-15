@@ -127,10 +127,8 @@ export const useVinosStore = create<VinosState>((set, get) => ({
   cargarVinos: async () => {
     try {
       set({ cargando: true, error: null });
-      console.log('🍷 Cargando vinos desde Supabase...');
       const data = await vinosService.getAll();
-      console.log('✅ Vinos cargados:', data.length, 'vinos');
-      console.log('📦 Primeros 3 vinos:', data.slice(0, 3));
+
 
       // Los datos ya vienen con la estructura correcta de Supabase
       set({ vinos: data, cargando: false });
@@ -143,13 +141,13 @@ export const useVinosStore = create<VinosState>((set, get) => ({
   buscarVinos: async (query: string) => {
     try {
       set({ cargando: true, error: null });
-      console.log('🔍 Búsqueda de vinos:', query);
+
 
       // Usar búsqueda normal (sin IA) - más rápida para el catálogo
       // La IA solo se usa en el chatbot y en búsqueda semántica explícita
       const data = await vinosService.search(query);
 
-      console.log('✅ Resultados de búsqueda:', data.length, 'vinos');
+
       set({ vinos: data, cargando: false });
     } catch (error: any) {
       console.error('❌ Error en búsqueda:', error);
@@ -463,9 +461,13 @@ export const useClientesStore = create<ClientesState>((set, get) => ({
 }));
 
 // ============================================
-// PEDIDOS STORE - Gestión de pedidos con Supabase
+// PEDIDOS STORE
 // ============================================
 
+/**
+ * Interface defining the shape of the Pedidos Store.
+ * Manages the state and operations for orders within the application.
+ */
 interface PedidosState {
   pedidos: Pedido[];
   pedidoActual: Pedido | null;
@@ -545,6 +547,16 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     return pedidos.find((pedido) => pedido.id === id);
   },
 
+  /**
+   * Initializes a new order (draft).
+   * 
+   * - Sets up initial state with temporary ID.
+   * - Assigns the client and responsible user (commercial).
+   * - Sets default values for tax, dates, and status.
+   * 
+   * @param clienteId - The ID of the client for whom the order is created.
+   * @param originalOrderId - Optional ID if duplicating an order.
+   */
   crearPedido: (clienteId: string, originalOrderId?: string) => {
     const { clientes } = useClientesStore.getState();
     const { usuario } = useAuthStore.getState();
@@ -698,6 +710,16 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
     });
   },
 
+  /**
+   * Saves the current order to the backend.
+   * 
+   * - Handles both creation (POST) and updates (PUT).
+   * - Cleans up payload data (removing temporary IDs, formatting dates).
+   * - Validates the order state before sending.
+   * - Updates the local store with the response from the server.
+   * 
+   * @param estadoFinal - Optional status to set for the order (e.g., 'PENDIENTE', 'BORRADOR').
+   */
   guardarPedido: async (estadoFinal?: EstadoPedido) => {
     const { pedidoActual } = get();
     if (!pedidoActual || pedidoActual.lineas.length === 0) return;
@@ -708,30 +730,61 @@ export const usePedidosStore = create<PedidosState>((set, get) => ({
       const estadoEnvio = estadoFinal || 'EN_PREPARACION';
       const isUpdate = pedidoActual.id && !pedidoActual.id.startsWith('temp-') && !pedidoActual.id.startsWith('PED-');
 
-      let result;
+      // Preparar objeto Pedido base
+      const pedidoBase: any = {
+        ...pedidoActual,
+        fecha: pedidoActual.fecha.includes('Z') ? pedidoActual.fecha.slice(0, 19) : pedidoActual.fecha,
+        estado: estadoEnvio,
+        cliente: { id: pedidoActual.clienteId }, // Referencia corta al cliente
+        usuario: pedidoActual.usuario?.id ? { id: pedidoActual.usuario.id } : (pedidoActual.usuarioId ? { id: pedidoActual.usuarioId } : undefined),
+      };
+
+      // Limpiar campos que no deben enviarse completos o que son del frontend
+      delete pedidoBase.clienteNombre; // Solo backend necesita cliente.id
+      delete pedidoBase.clienteId;     // Mapeado a cliente: { id }
+      delete pedidoBase.usuarioId;     // Mapeado a usuario: { id }
+      delete pedidoBase.lineas;        // Se procesarán aparte
+
+
       if (isUpdate) {
-        // Modificar el borrador existente
-        result = await pedidosService.update(pedidoActual.id, {
-          ...pedidoActual,
-          fecha: pedidoActual.fecha.includes('Z') ? pedidoActual.fecha.slice(0, 19) : pedidoActual.fecha,
-          estado: estadoEnvio,
-          lineas: pedidoActual.lineas.map(l => ({
-            ...l,
-            // No incluir vino si no está completo, solo vinoId es necesario
-            vino: undefined
-          }))
+        // UPDATE: El backend espera estructura de entidad completa (nested objects)
+        const lineasForUpdate = pedidoActual.lineas.map(l => ({
+          id: l.id && (l.id.startsWith('temp-') || l.id.length < 10) ? undefined : l.id,
+          vino: { id: l.vinoId },
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario,
+          descuento: l.descuento || 0,
+          subtotal: l.subtotal,
+          tipoBulto: l.tipoBulto || 'BOTELLA',
+          cantidadBultos: l.cantidadBultos || 1,
+          anada: l.anada,
+          lote: l.lote
+        }));
+
+        await pedidosService.update(pedidoActual.id, {
+          ...pedidoBase,
+          lineas: lineasForUpdate
         });
       } else {
-        // Crear nuevo pedido
-        result = await pedidosService.create(
-          {
-            ...pedidoActual,
-            numero: "GENERATED_BY_BACKEND",
-            fecha: new Date().toISOString().slice(0, 19),
-            estado: estadoEnvio,
-          },
-          pedidoActual.lineas
-        );
+        // CREATE: El servicio espera estructura plana para transformación (vinoId)
+        if (pedidoBase.id && pedidoBase.id.startsWith('temp-')) {
+          delete pedidoBase.id;
+        }
+        pedidoBase.numero = "GENERATED_BY_BACKEND";
+
+        const lineasForCreate = pedidoActual.lineas.map(l => ({
+          vinoId: l.vinoId,
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario,
+          descuento: l.descuento || 0,
+          subtotal: l.subtotal,
+          tipoBulto: l.tipoBulto || 'BOTELLA',
+          cantidadBultos: l.cantidadBultos || 1,
+          anada: l.anada,
+          lote: l.lote
+        }));
+
+        await pedidosService.create(pedidoBase, lineasForCreate);
       }
 
       // Refresh both orders and wines (for stock)

@@ -2,6 +2,12 @@ import { api } from '../lib/api';
 import type { Pedido, LineaPedido } from '../types';
 
 // Define types that match what the store expects
+/**
+ * Enhanced Order Type containing full nested relationships.
+ * 
+ * Used for detailed views where client and wine information is required
+ * without separate API calls.
+ */
 export interface PedidoCompleto extends Omit<Pedido, 'cliente'> {
   cliente: {
     id: string;
@@ -24,7 +30,9 @@ type LineaPedidoInsert = Omit<LineaPedido, 'id' | 'vino' | 'vinoNombre'>;
 
 export const pedidosService = {
   /**
-   * Obtener todos los pedidos con información del cliente
+   * Retrieves all orders from the backend.
+   * 
+   * @returns A promise resolving to an array of full order objects.
    */
   async getAll() {
     const data = await api.get('/pedidos');
@@ -32,7 +40,10 @@ export const pedidosService = {
   },
 
   /**
-   * Obtener un pedido completo por ID (con cliente y líneas)
+   * Retrieves a specific order by ID.
+   * 
+   * @param id The ID of the order.
+   * @returns The full order details.
    */
   async getById(id: string) {
     const data = await api.get(`/pedidos/${id}`);
@@ -40,7 +51,10 @@ export const pedidosService = {
   },
 
   /**
-   * Obtener pedidos de un cliente específico con líneas para búsqueda
+   * Retrieves history of orders for a specific client.
+   * 
+   * @param clienteId The ID of the client.
+   * @returns List of orders associated with the client.
    */
   async getByCliente(clienteId: string) {
     const data = await api.get(`/pedidos/cliente/${clienteId}`);
@@ -56,13 +70,14 @@ export const pedidosService = {
   },
 
   /**
-   * Crear un nuevo pedido con sus líneas
-   */
-  /**
-   * Crear un nuevo pedido con sus líneas
-   */
-  /**
-   * Crear un nuevo pedido con sus líneas
+   * Creates a new order.
+   * 
+   * Transforms the frontend data structure into the specific JSON format
+   * expected by the Spring Boot backend (nesting IDs).
+   * 
+   * @param pedidoData The basic order information.
+   * @param lineasData The array of line items.
+   * @returns The created order response.
    */
   async create(
     pedidoData: PedidoInsert,

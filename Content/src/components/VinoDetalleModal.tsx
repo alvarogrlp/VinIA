@@ -26,7 +26,7 @@ export const VinoDetalleModal = ({ vino, onClose }: VinoDetalleModalProps) => {
                 </button>
 
                 {/* Left: Image & Quick Stats */}
-                <div className="w-full md:w-1/3 bg-gray-50 p-8 flex flex-col items-center justify-center border-r border-gray-100">
+                <div className="w-full md:w-1/3 bg-gray-50 p-6 md:p-8 flex flex-col items-center justify-center border-r border-gray-100">
                     <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-lg mb-6 bg-white">
                         {vino.imagen_url ? (
                             <img
@@ -68,7 +68,7 @@ export const VinoDetalleModal = ({ vino, onClose }: VinoDetalleModalProps) => {
                 </div>
 
                 {/* Right: Detailed Info */}
-                <div className="w-full md:w-2/3 p-8 pb-16 bg-white">
+                <div className="w-full md:w-2/3 p-6 md:p-8 pb-16 bg-white">
                     <div className="mb-8">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">{vino.nombre}</h2>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-gray-600 mb-4">

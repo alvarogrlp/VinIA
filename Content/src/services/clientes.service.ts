@@ -6,8 +6,14 @@ type ClienteUpdate = Partial<ClienteInsert>;
 
 export const clientesService = {
   /**
-   * Obtener todos los clientes activos
-   * Si se pasa userId y el rol es Comercial, filtra por asignaciones
+   * Retrieves all active clients.
+   * 
+   * Supports optional filtering by user ID (for Commercial role assignments)
+   * and role context.
+   * 
+   * @param userId - Optional ID of the user to filter assignments.
+   * @param role - Optional role context (e.g., 'Comercial', 'Admin').
+   * @returns List of clients.
    */
   async getAll(userId?: string, role?: string) {
     const queryParams = new URLSearchParams();
@@ -90,13 +96,18 @@ export const clientesService = {
   },
 
   /**
-   * Obtener datos para el mapa
+   * Retrieves specific data optimized for map visualization.
+   * 
+   * Includes coordinates and assignment status for the requesting user.
+   * 
+   * @param userId - Optional ID to check 'assignedToMe' status.
+   * @returns List of map-ready client objects.
    */
   async getMapData(userId?: string) {
     const queryParams = new URLSearchParams();
     if (userId) queryParams.append('userId', userId);
 
     const data = await api.get(`/clientes/map-data?${queryParams.toString()}`);
-    return data as any[]; // Typed loosely for now, or define interface
+    return data as any[];
   },
 };

@@ -16,10 +16,14 @@ public class Asignacion {
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Cliente cliente;
 
     @ManyToOne
     @JoinColumn(name = "comercial_id", nullable = false)
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Usuario comercial;
 
     @Column(name = "fecha_asignacion")

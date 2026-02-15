@@ -271,6 +271,8 @@ export const NuevoPedido = () => {
 
   // --- RENDER HELPERS ---
 
+  const [showMobileCart, setShowMobileCart] = useState(false);
+
   if (!clienteSeleccionadoId) {
     // Legacy Selection Screen (Keep it simple)
     const clientesFiltrados = clientes.filter(c => c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) || c.cif.includes(busquedaCliente)).slice(0, 5);
@@ -313,7 +315,7 @@ export const NuevoPedido = () => {
   const cliente = clientes.find(c => c.id === clienteSeleccionadoId);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] -m-6 animate-fade-in bg-secondary-50 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-theme(spacing.20))] lg:h-[calc(100vh-2rem)] -m-4 lg:-m-8 animate-fade-in bg-secondary-50 overflow-hidden relative">
       <ConfirmModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -338,22 +340,20 @@ export const NuevoPedido = () => {
           <button onClick={() => setClienteSeleccionadoId(null)} className="p-2 hover:bg-secondary-100 rounded-full transition-colors text-secondary-500">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-secondary-900 flex items-center gap-2">
-              <User className="w-5 h-5 text-primary-600" />
-              {cliente?.nombre}
+          <div className="overflow-hidden">
+            <h1 className="text-xl font-bold text-secondary-900 flex items-center gap-2 truncate">
+              <User className="w-5 h-5 text-primary-600 shrink-0" />
+              <span className="truncate">{cliente?.nombre}</span>
             </h1>
-            <p className="text-sm text-secondary-500">{cliente?.direccion}, {cliente?.ciudad}</p>
+            <p className="text-sm text-secondary-500 truncate">{cliente?.direccion}, {cliente?.ciudad}</p>
           </div>
         </div>
-
-        {/* Mobile View Toggle could go here, for now desktop focus */}
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
 
-        {/* LEFT COLUMN: CATALOG (70%) */}
-        <div className="flex-1 flex flex-col min-w-0 bg-secondary-50/50">
+        {/* LEFT COLUMN: CATALOG */}
+        <div className={`flex-1 flex flex-col min-w-0 bg-secondary-50/50 min-h-0 lg:flex ${showMobileCart ? 'hidden' : 'flex'}`}>
           {/* Search Bar */}
           <div className="p-4 bg-white/80 backdrop-blur-sm border-b border-secondary-200 sticky top-0 z-10">
             <div className="relative max-w-2xl mx-auto">
@@ -369,26 +369,26 @@ export const NuevoPedido = () => {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 content-start">
+          <div className="flex-1 overflow-y-auto p-4 content-start pb-24 lg:pb-4">
             {/* Productos Habituales */}
             {productosHabituales.length > 0 && !busquedaVino && (
-              <div className="mb-8">
+              <div className="mb-8 pl-1">
                 <h3 className="text-sm font-bold text-secondary-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <History className="w-4 h-4" /> Productos Habituales
                 </h3>
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+                <div className="flex gap-3 overflow-x-auto pb-4 snap-x pr-4 -ml-4 px-4 scrollbar-hide">
                   {productosHabituales.map((item, idx) => (
                     <button
                       key={idx}
                       onClick={() => handleAgregarDesdeHistorial(item)}
-                      className="snap-start min-w-[160px] w-[160px] bg-white p-3 rounded-xl border border-secondary-200 hover:border-primary-500 hover:shadow-md transition-all text-left flex flex-col gap-2 group"
+                      className="snap-start min-w-[180px] w-[180px] bg-white p-3 rounded-xl border border-secondary-200 hover:border-primary-500 hover:shadow-md transition-all text-left flex flex-col gap-2 group shrink-0"
                     >
-                      <div className="aspect-square bg-secondary-100 rounded-lg overflow-hidden relative">
+                      <div className="aspect-square bg-secondary-100 rounded-lg overflow-hidden relative w-full">
                         {item.imagen ? <img src={item.imagen} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-secondary-300"><History className="w-8 h-8" /></div>}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-medium">Add +</div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-secondary-900 text-sm line-clamp-2 leading-tight">{item.nombre}</p>
+                      <div className="w-full">
+                        <p className="font-semibold text-secondary-900 text-sm line-clamp-2 leading-snug h-10">{item.nombre}</p>
                         <p className="text-xs text-secondary-500 mt-1">Pedido {item.vecesPedido} veces</p>
                       </div>
                     </button>
@@ -398,20 +398,20 @@ export const NuevoPedido = () => {
             )}
 
             {/* Catalog Grid */}
-            <h3 className="text-sm font-bold text-secondary-500 uppercase tracking-wider mb-3">Catálogo</h3>
+            <h3 className="text-sm font-bold text-secondary-500 uppercase tracking-wider mb-3 pl-1">Catálogo</h3>
             {cargandoVinos ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <div key={i} className="aspect-[3/4] bg-gray-200 rounded-xl animate-pulse" />)}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4 pb-24 lg:pb-20">
                 {vinos.map(vino => (
                   <div key={vino.id} onClick={() => handleAgregarVino(vino)} className="group bg-white rounded-xl border border-secondary-200 overflow-hidden cursor-pointer hover:shadow-lg hover:border-primary-300 transition-all flex flex-col">
-                    <div className="aspect-[4/5] bg-secondary-100 relative overflow-hidden">
+                    <div className="aspect-[3/4] bg-secondary-100 relative overflow-hidden">
                       {vino.imagen_url ? (
                         <img src={vino.imagen_url} alt={vino.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-secondary-300"><Box className="w-12 h-12" /></div>
+                        <div className="w-full h-full flex items-center justify-center text-secondary-300"><Box className="w-10 h-10" /></div>
                       )}
 
                       {/* Info Button Overlay */}
@@ -422,26 +422,26 @@ export const NuevoPedido = () => {
                         }}
                         className="absolute top-2 left-2 p-1.5 bg-white/90 backdrop-blur rounded-full text-secondary-500 hover:text-primary-600 shadow-sm transition-colors z-10"
                       >
-                        <Info className="w-4 h-4" />
+                        <Info className="w-3.5 h-3.5" />
                       </button>
 
                       {vino.stock < (vino.stock_minimo || 10) && (
-                        <span className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                        <span className="absolute top-2 right-2 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
                           {vino.stock === 0 ? 'AGOTADO' : 'POCO STOCK'}
                         </span>
                       )}
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center">
-                        <span className="bg-white text-secondary-900 font-bold text-xs py-1 px-3 rounded-full shadow-sm flex items-center gap-1">
+                        <span className="bg-white text-secondary-900 font-bold text-[10px] py-1 px-3 rounded-full shadow-sm flex items-center gap-1">
                           <Plus className="w-3 h-3" /> Añadir
                         </span>
                       </div>
                     </div>
-                    <div className="p-3 flex-1 flex flex-col">
-                      <h4 className="font-bold text-secondary-900 leading-tight mb-1">{vino.nombre}</h4>
-                      <p className="text-xs text-secondary-500 mb-2 line-clamp-1">{vino.bodega}</p>
+                    <div className="p-2.5 flex-1 flex flex-col">
+                      <h4 className="font-bold text-secondary-900 text-sm leading-tight mb-1 line-clamp-2 md:line-clamp-1">{vino.nombre}</h4>
+                      <p className="text-[10px] text-secondary-500 mb-2 line-clamp-1">{vino.bodega}</p>
                       <div className="mt-auto flex items-center justify-between">
                         <span className="text-sm font-bold text-primary-700">{formatearPrecio(vino.precio_unitario)}</span>
-                        <span className="text-xs text-secondary-400 font-medium bg-secondary-100 px-1.5 py-0.5 rounded">{vino.ano}</span>
+                        <span className="text-[10px] text-secondary-400 font-medium bg-secondary-100 px-1.5 py-0.5 rounded">{vino.ano}</span>
                       </div>
                     </div>
                   </div>
@@ -456,12 +456,19 @@ export const NuevoPedido = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: CART (30% / Fixed Width) */}
-        <div className="w-[420px] bg-white border-l border-secondary-200 flex flex-col shadow-2xl z-20 shrink-0">
+        {/* RIGHT COLUMN: CART (With Mobile Full Screen Support) */}
+        <div className={`w-full lg:w-[420px] bg-white border-l border-secondary-200 flex flex-col shadow-2xl z-30 shrink-0
+          ${showMobileCart ? 'fixed inset-0 flex' : 'hidden'} lg:flex lg:static lg:h-auto`}>
 
           {/* Cart Header */}
           <div className="p-4 border-b border-secondary-100 bg-secondary-50 flex items-center justify-between">
             <h2 className="font-bold text-secondary-900 flex items-center gap-2">
+              <button
+                onClick={() => setShowMobileCart(false)}
+                className="lg:hidden p-1 mr-2 hover:bg-secondary-200 rounded-full"
+              >
+                <ArrowLeft className="w-5 h-5 text-secondary-600" />
+              </button>
               <ShoppingCart className="w-5 h-5 text-primary-600" />
               Carrito
               <span className="bg-primary-100 text-primary-700 text-xs py-0.5 px-2 rounded-full">{pedidoActual?.lineas.length || 0}</span>
@@ -485,7 +492,7 @@ export const NuevoPedido = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-1">
                       <h4 className="font-bold text-sm text-secondary-900 line-clamp-2 leading-tight pr-6">{linea.vinoNombre}</h4>
-                      <button onClick={() => eliminarLineaPedido(linea.id)} className="text-secondary-300 hover:text-red-500 p-1 -mr-2 -mt-2 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => eliminarLineaPedido(linea.id)} className="text-secondary-300 hover:text-red-500 p-1 -mr-2 -mt-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4" /></button>
                     </div>
                     <p className="text-xs text-secondary-500 mb-2">{formatearPrecio(linea.precioUnitario)} ud. • {linea.anada}</p>
 
@@ -604,6 +611,29 @@ export const NuevoPedido = () => {
         </div>
 
       </div>
+
+      {/* MOBILE BOTTOM BAR (FLOATING) */}
+      {!showMobileCart && (
+        <div className="lg:hidden absolute bottom-4 left-4 right-4 z-40 animate-slide-up">
+          <button
+            onClick={() => setShowMobileCart(true)}
+            className="w-full bg-secondary-900 text-white rounded-xl shadow-2xl p-4 flex items-center justify-between hover:bg-secondary-800 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <ShoppingCart className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-sm">{pedidoActual?.lineas.length || 0} artículos</p>
+                <p className="text-xs text-white/70">Ver carrito y finalizar</p>
+              </div>
+            </div>
+            <div className="font-bold text-lg">
+              {formatearPrecio(pedidoActual?.total || 0)}
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -27,7 +27,6 @@ export interface AISearchResult {
 export const aiService = {
     getRecommendations: async (clienteId: string): Promise<AIRecommendation[]> => {
         const response = await api.get(`/ai/recommendations/${clienteId}`);
-        console.log('🤖 AI Recommendations Response:', response, 'Type:', typeof response);
         // Response is the payload.
         if (Array.isArray(response)) return response;
         if (typeof response === 'string') {

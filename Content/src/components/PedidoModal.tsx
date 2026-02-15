@@ -100,35 +100,37 @@ export const PedidoModal = ({ pedido, onClose, onCambiarEstado, rol }: PedidoMod
                             <ShoppingBag className="w-4 h-4" /> Productos
                         </h3>
                         <div className="border border-secondary-200 rounded-lg overflow-hidden">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-secondary-50 text-secondary-500 font-medium border-b border-secondary-200">
-                                    <tr>
-                                        <th className="p-3">Producto</th>
-                                        <th className="p-3 text-center">Cantidad</th>
-                                        <th className="p-3 text-right">Precio</th>
-                                        <th className="p-3 text-right">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-secondary-100">
-                                    {pedido.lineas.map((linea, idx) => (
-                                        <tr key={idx}>
-                                            <td className="p-3">
-                                                <p className="font-medium text-secondary-900">{linea.vinoNombre || linea.vino?.nombre}</p>
-                                                <p className="text-xs text-secondary-500">{linea.vino?.bodega}</p>
-                                            </td>
-                                            <td className="p-3 text-center">{linea.cantidad}</td>
-                                            <td className="p-3 text-right">{formatearPrecio(linea.precioUnitario)}</td>
-                                            <td className="p-3 text-right font-medium">{formatearPrecio(linea.subtotal)}</td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-secondary-50 text-secondary-500 font-medium border-b border-secondary-200">
+                                        <tr>
+                                            <th className="p-3">Producto</th>
+                                            <th className="p-3 text-center">Cantidad</th>
+                                            <th className="p-3 text-right">Precio</th>
+                                            <th className="p-3 text-right">Total</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot className="bg-secondary-50 font-bold text-secondary-900">
-                                    <tr>
-                                        <td colSpan={3} className="p-3 text-right">Total</td>
-                                        <td className="p-3 text-right">{formatearPrecio(pedido.total)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-secondary-100">
+                                        {pedido.lineas.map((linea, idx) => (
+                                            <tr key={idx}>
+                                                <td className="p-3">
+                                                    <p className="font-medium text-secondary-900">{linea.vinoNombre || linea.vino?.nombre}</p>
+                                                    <p className="text-xs text-secondary-500">{linea.vino?.bodega}</p>
+                                                </td>
+                                                <td className="p-3 text-center">{linea.cantidad}</td>
+                                                <td className="p-3 text-right">{formatearPrecio(linea.precioUnitario)}</td>
+                                                <td className="p-3 text-right font-medium">{formatearPrecio(linea.subtotal)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="bg-secondary-50 font-bold text-secondary-900">
+                                        <tr>
+                                            <td colSpan={3} className="p-3 text-right">Total</td>
+                                            <td className="p-3 text-right">{formatearPrecio(pedido.total)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
                     </div>
 

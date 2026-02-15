@@ -26,8 +26,6 @@ public class AuthController {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
-        System.out.println("Login attempt: username='" + username + "'");
-
         Optional<Usuario> userOpt = authService.login(username, password);
 
         if (userOpt.isPresent()) {

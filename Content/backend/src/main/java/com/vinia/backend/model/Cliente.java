@@ -95,5 +95,7 @@ public class Cliente {
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Usuario usuario;
 }

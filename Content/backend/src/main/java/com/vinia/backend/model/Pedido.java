@@ -20,10 +20,16 @@ public class Pedido {
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("usuario")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Cliente cliente;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("pedidos")
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private Usuario usuario;
 
     @Column(name = "fecha")
@@ -83,7 +89,9 @@ public class Pedido {
     private LocalDateTime fechaDescargaAlbaran;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
-    @com.fasterxml.jackson.annotation.JsonIgnoreProperties("pedido")
+    @com.fasterxml.jackson.annotation.JsonManagedReference
+    @lombok.ToString.Exclude
+    @lombok.EqualsAndHashCode.Exclude
     private List<LineaPedido> lineas;
 
     @Column(name = "created_at")

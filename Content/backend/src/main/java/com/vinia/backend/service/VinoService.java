@@ -6,6 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
+/**
+ * Service for managing the Wine Catalog (Vinos).
+ * 
+ * Provides CRUD operations for wines and tracks modifications using the
+ * AuditService.
+ */
 @Service
 public class VinoService {
 
@@ -33,12 +39,25 @@ public class VinoService {
                 .orElseThrow(() -> new RuntimeException("Vino no encontrado"));
     }
 
+    /**
+     * Saves a new wine or updates an existing one.
+     * Logs the 'SAVE' action to the audit log.
+     * 
+     * @param vino The wine to save.
+     * @return The saved wine.
+     */
     public Vino save(Vino vino) {
         Vino saved = vinoRepository.save(vino);
         auditService.log(getCurrentUsername(), "SAVE", "Vino", saved.getId(), "Nombre: " + saved.getNombre());
         return saved;
     }
 
+    /**
+     * Deletes a wine by its ID.
+     * Logs the 'DELETE' action to the audit log.
+     * 
+     * @param id The ID of the wine to delete.
+     */
     public void deleteById(String id) {
         vinoRepository.deleteById(id);
         auditService.log(getCurrentUsername(), "DELETE", "Vino", id, null);

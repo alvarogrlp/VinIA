@@ -13,7 +13,6 @@ public class AuthService {
     private UsuarioRepository usuarioRepository;
 
     public Optional<Usuario> login(String username, String password) {
-        System.out.println("AuthService: login attempt for " + username);
         Optional<Usuario> userOpt = usuarioRepository.findByUsername(username);
         if (userOpt.isPresent()) {
             Usuario user = userOpt.get();

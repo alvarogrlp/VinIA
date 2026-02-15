@@ -13,6 +13,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.math.BigDecimal;
 
+/**
+ * Service for processing Orders (Pedidos).
+ * 
+ * Manages the lifecycle of an order, from creation to finalization.
+ * Enforces business rules such as stock validation and status transitions.
+ * Integrates with AuditService for tracking critical actions.
+ */
 @Service
 public class PedidoService {
 
@@ -69,6 +76,18 @@ public class PedidoService {
         }
     }
 
+    /**
+     * Creates a new order.
+     * 
+     * - Generates a sequential order number (PED-XXXXXX).
+     * - Validates and deducts stock for all line items.
+     * - Checks client credit limit (Risk) if the order is not a Draft.
+     * - Persists the order and updates client risk data.
+     * 
+     * @param pedido The order object containing lines and client info.
+     * @return The created, persisted Order.
+     * @throws RuntimeException If stock is insufficient or data is invalid.
+     */
     @Transactional
     public Pedido createPedido(Pedido pedido) {
         // 1. Fetch Client
@@ -127,6 +146,16 @@ public class PedidoService {
         return saved;
     }
 
+    /**
+     * Updates an existing order's details.
+     * 
+     * Allows modifying line items, quantities, and general info.
+     * Re-calculates totals and validates business rules.
+     * 
+     * @param id      The ID of the order to update.
+     * @param details The new order data.
+     * @return The updated order.
+     */
     @Transactional
     public Pedido updatePedido(String id, Pedido details) {
         Pedido pedido = findById(id);
@@ -179,6 +208,18 @@ public class PedidoService {
         return saved;
     }
 
+    /**
+     * Updates an order's status and triggers associated side effects.
+     * 
+     * - Validates state transitions.
+     * - Updates client credit risk when moving from Draft to Active.
+     * - Restores stock if the order is cancelled.
+     * - Blocks orders if credit limits are exceeded during confirmation.
+     * 
+     * @param id             The order ID.
+     * @param nuevoEstadoStr The new status as a string.
+     * @return The updated order.
+     */
     @Transactional
     public Pedido updateStatus(String id, String nuevoEstadoStr) {
         Pedido pedido = findById(id);
@@ -186,7 +227,7 @@ public class PedidoService {
         try {
             nuevoEstado = EstadoPedido.valueOf(nuevoEstadoStr);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Estado inválido: " + nuevoEstadoStr);
+            throw new RuntimeException("Invalid status: " + nuevoEstadoStr);
         }
 
         EstadoPedido oldState = pedido.getEstado();
@@ -261,6 +302,13 @@ public class PedidoService {
     }
 
     @Transactional
+    /**
+     * Deletes an order permanently or cancels it.
+     * 
+     * If the order was not already cancelled, stock is restored.
+     * 
+     * @param id The ID of the order to delete.
+     */
     public void deletePedido(String id) {
         Pedido pedido = findById(id);
 

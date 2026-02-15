@@ -272,7 +272,7 @@ export const AdminDashboard = () => {
                         </div>
 
                         {/* Modal Content - Scrollable */}
-                        <div className="p-8 overflow-y-auto custom-scrollbar">
+                        <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar">
 
                             {/* KPIs del Usuario */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -321,7 +321,7 @@ export const AdminDashboard = () => {
                                         <h3 className="text-xl font-bold text-secondary-900">Evolución de Ventas</h3>
                                     </div>
 
-                                    <div className="flex bg-secondary-100 p-1 rounded-lg">
+                                    <div className="flex bg-secondary-100 p-1 rounded-lg overflow-x-auto max-w-full">
                                         <button
                                             onClick={() => setTimeFrame('week')}
                                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${timeFrame === 'week' ? 'bg-white text-primary-700 shadow-sm' : 'text-secondary-600 hover:text-secondary-900'}`}
@@ -343,50 +343,52 @@ export const AdminDashboard = () => {
                                     </div>
                                 </div>
 
-                                <div className="h-[350px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={getChartData(selectedUser.id)} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#b8945a" stopOpacity={0.2} />
-                                                    <stop offset="95%" stopColor="#b8945a" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis
-                                                dataKey="name"
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tick={{ fill: '#6b7280', fontSize: 12 }}
-                                                dy={10}
-                                            />
-                                            <YAxis
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tick={{ fill: '#6b7280', fontSize: 12 }}
-                                                tickFormatter={(value) => `${value / 1000}k€`}
-                                                width={60}
-                                            />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: '#fff',
-                                                    border: 'none',
-                                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                                                    borderRadius: '8px'
-                                                }}
-                                                formatter={(value: any) => [formatearPrecio(Number(value) || 0), 'Ventas']}
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="ventas"
-                                                stroke="#b8945a"
-                                                strokeWidth={3}
-                                                fillOpacity={1}
-                                                fill="url(#colorVentas)"
-                                                activeDot={{ r: 8, strokeWidth: 0, fill: '#7d6238' }}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                                <div className="w-full overflow-x-auto">
+                                    <div className="h-[350px] min-w-[600px] md:min-w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={getChartData(selectedUser.id)} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#b8945a" stopOpacity={0.2} />
+                                                        <stop offset="95%" stopColor="#b8945a" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                                <XAxis
+                                                    dataKey="name"
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                                    dy={10}
+                                                />
+                                                <YAxis
+                                                    axisLine={false}
+                                                    tickLine={false}
+                                                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                                                    tickFormatter={(value) => `${value / 1000}k€`}
+                                                    width={60}
+                                                />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: '#fff',
+                                                        border: 'none',
+                                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                    formatter={(value: any) => [formatearPrecio(Number(value) || 0), 'Ventas']}
+                                                />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="ventas"
+                                                    stroke="#b8945a"
+                                                    strokeWidth={3}
+                                                    fillOpacity={1}
+                                                    fill="url(#colorVentas)"
+                                                    activeDot={{ r: 8, strokeWidth: 0, fill: '#7d6238' }}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
                                 </div>
                             </div>
 

@@ -6,21 +6,33 @@ import { clientesService } from '../services/clientes.service';
 import { MapPin, Phone, Navigation } from 'lucide-react';
 import L from 'leaflet';
 
-// Custom icons using Leaflet DivIcon with SVG
+/**
+ * Creates a custom Leaflet icon representing a wine glass.
+ * 
+ * The icon styling dynamically changes based on assignment status:
+ * - Assigned clients get a "filled" wine glass with a red gradient.
+ * - Unassigned clients get an "empty" gray glass.
+ * 
+ * @param isAssigned - Boolean indicating if the client is assigned to the current user.
+ * @returns A Leaflet DivIcon containing the SVG.
+ */
 const createWineIcon = (isAssigned: boolean) => {
-    // Wine color (red/burgundy) for assigned, Gray for unassigned
     const strokeColor = isAssigned ? '#be123c' : '#6b7280';
-    // Fill with wine color if assigned, transparent if not (empty glass)
-    const fillColor = isAssigned ? '#be123c' : 'none';
-    // Slightly larger stroke for unassigned to make it visible
-    const strokeWidth = isAssigned ? '1.5' : '2';
+    const gradientId = `wine-gradient-${isAssigned ? 'assigned' : 'unassigned'}`;
+    const liquidColor = '#be123c';
 
     const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-md filter">
+    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${strokeColor}" stroke-width="${isAssigned ? '1.5' : '2'}" stroke-linecap="round" stroke-linejoin="round" class="drop-shadow-md filter">
+        <defs>
+            <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="55%" stop-color="${liquidColor}" stop-opacity="0" />
+                <stop offset="55%" stop-color="${liquidColor}" stop-opacity="1" />
+            </linearGradient>
+        </defs>
         <path d="M8 22h8" />
-        <path d="M7 10h10" />
+        ${isAssigned ? '<path d="M7 10h10" />' : ''}
         <path d="M12 15v7" />
-        <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" fill="${fillColor}" fill-opacity="${isAssigned ? '0.8' : '0'}" />
+        <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" fill="${isAssigned ? `url(#${gradientId})` : 'none'}" />
     </svg>`;
 
     return L.divIcon({
@@ -45,6 +57,13 @@ interface ClientMapData {
     assignedToMe: boolean;
 }
 
+/**
+ * Commercial Map Component.
+ * 
+ * Displays a map interface identifying client locations.
+ * Differentiates between clients assigned to the signed-in commercial agent and others.
+ * Provides navigation and contact shortcuts via popups.
+ */
 export const MapaComercial = () => {
     const { usuario } = useAuthStore();
     const [clients, setClients] = useState<ClientMapData[]>([]);
@@ -84,7 +103,7 @@ export const MapaComercial = () => {
                 </div>
                 <div className="flex gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span className="w-3 h-3 rounded-full bg-[#be123c]"></span>
                         <span className="text-secondary-700">Mis Clientes</span>
                     </div>
                     <div className="flex items-center gap-2">
