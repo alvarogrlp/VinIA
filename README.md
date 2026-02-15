@@ -1,5 +1,15 @@
 # VinIA
 
+<div align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
+  <img src="https://img.shields.io/badge/AI-8E75B2?style=for-the-badge" alt="AI" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+</div>
+
 ## Descripción del Proyecto
 
 VinIA es una plataforma de gestión comercial especializada, desarrollada para optimizar el flujo de trabajo de los representantes de ventas en la industria vinícola.
@@ -7,6 +17,8 @@ VinIA es una plataforma de gestión comercial especializada, desarrollada para o
 El proyecto nació para abordar una carencia específica en el mercado: el software empresarial suele ser potente pero carece de usabilidad para el usuario final en campo. Basándose en una visión directa de los desafíos diarios de los profesionales de ventas, VinIA se centra en la simplicidad, la accesibilidad y la eficiencia. La interfaz está diseñada para minimizar el tiempo administrativo, permitiendo a los agentes comerciales centrarse en las relaciones con los clientes y las ventas, impulsando en última instancia el crecimiento de los ingresos.
 
 Esta herramienta se está desarrollando actualmente con la retroalimentación continua de profesionales activos del sector para garantizar que cumple con los estándares de accesibilidad y las necesidades operativas del mundo real.
+
+> **📱 Mobile First:** La aplicación ha sido diseñada priorizando la experiencia móvil. Es completamente funcional en smartphones y tablets, permitiendo a los comerciales operar con total libertad desde cualquier lugar.
 
 ## Demostraciones del Proyecto
 
@@ -42,12 +54,24 @@ Aunque la iteración actual proporciona una base sólida para la gestión comerc
 
 **Fecha Objetivo de Finalización:** Junio de 2026.
 
-## Tecnologías Utilizadas
+## Tecnologías Usadas
 
-La aplicación utiliza tecnologías estándar en la industria para garantizar que sea rápida, segura y fiable.
+El proyecto utiliza un stack moderno y robusto para garantizar rendimiento, escalabilidad y una excelente experiencia de usuario.
 
-*   **Frontend (Interfaz de Usuario)**: Desarrollado con **React** y **TypeScript**. Estas tecnologías permiten crear una experiencia visual moderna y fluida, similar a usar una aplicación móvil nativa, asegurando que funcione perfectamente en tablets y ordenadores.
-*   **Backend (Sistema Central)**: Funciona con **Spring Boot (Java)**. Es la tecnología de confianza para grandes empresas, elegida por su capacidad para manejar datos de forma segura y estable, garantizando que el sistema esté siempre disponible.
+### Frontend
+*   **React 18**: Biblioteca principal para la construcción de la interfaz.
+*   **TypeScript**: Superset de JavaScript que añade tipado estático y seguridad.
+*   **Vite**: Herramienta de construcción y servidor de desarrollo de última generación.
+*   **TailwindCSS**: Framework de utilidades para un diseño rápido y responsivo.
+*   **Zustand**: Gestión de estado ligera y flexible.
+*   **Lucide React**: Conjunto de iconos vectoriales limpios y consistentes.
+*   **Recharts**: Librería de gráficos composables para visualización de datos.
+
+### Backend
+*   **Java 17 & Spring Boot 3**: Framework empresarial para el desarrollo de microservicios.
+*   **Spring AI**: Capa de abstracción para integrar modelos de IA (Gemini/OpenAI).
+*   **H2 Database**: Base de datos SQL embebida de alto rendimiento.
+*   **Maven**: Herramienta de gestión de proyectos y dependencias.
 
 ## Alcance y Enfoque del Desarrollo
 
@@ -61,58 +85,55 @@ Es importante notar que, aunque la aplicación incluye roles de **Almacén** y *
 *   Node.js 18+
 *   Java JDK 17+
 *   Maven
-*   **Google AI Studio API Key** (Opcional, gratuita - solo para funcionalidades de IA)
+*   **Google AI Studio API Key** (Gratuita - necesaria para los módulos de IA)
 
-### 🤖 Configuración de Inteligencia Artificial (Opcional)
+### Configuración de Inteligencia Artificial (Google AI Studio)
 
-Las funcionalidades de IA (Chatbot, Recomendaciones, Análisis) son **opcionales**. La aplicación funciona perfectamente sin ellas.
+Para obtener tu clave de API y habilitar las funciones inteligentes (Chat, Recomendaciones), sigue estos pasos sencillos:
 
-**Para habilitar IA:**
+1.  **Accede a Google AI Studio**:
+    Ve a [https://aistudio.google.com/](https://aistudio.google.com/) e inicia sesión con tu cuenta de Google.
 
-1.  Accede a [Google AI Studio](https://aistudio.google.com/app/apikey).
-2.  Pulsa en **"Create API key"** (es gratuito).
-3.  Copia la clave generada.
-4.  Configura la variable de entorno:
-    ```powershell
-    # Windows PowerShell
-    $env:SPRING_AI_GOOGLE_AI_GEMINI_API_KEY="tu-clave-aqui"
-    
-    # O usa el script automático
-    cd Content/backend
-    .\setup-api-key.ps1
+2.  **Obtener la Clave**:
+    *   Haz clic en el botón azul **"Get API key"** (normalmente arriba a la izquierda).
+    *   Pulsa en **"Create API key"**.
+    *   Selecciona un proyecto de Google Cloud existente o deja que cree uno nuevo automáticamente ("Create API key in new project").
+    *   Copia la clave que empieza por `AIza...`.
+
+3.  **Configurar en el Proyecto**:
+    Abre el archivo `Content/backend/src/main/resources/application.properties` y pega tu clave:
+    ```properties
+    spring.ai.openai.api-key=TU_CLAVE_COPIADA_AQUI
     ```
 
-Para más detalles, consulta `Content/backend/AI_SETUP.md`.
+4.  **Modelo Recomendado**:
+    Asegúrate de que esta línea esté configurada (ya viene por defecto):
+    ```properties
+    spring.ai.openai.chat.options.model=gemma-3-27b-it
+    ```
+    *Este modelo ofrece el mejor equilibrio entre razonamiento y velocidad para este caso de uso.*
 
-### Instalación
+### Instalación y Ejecución
 
 1.  **Instalar Dependencias del Frontend**
     ```bash
     cd Content
     npm install
     ```
-    *(Nota: Durante el `npm install`, se descargarán automáticamente las imágenes del catálogo mediante un script de PowerShell).*
 
 2.  **Ejecutar la Aplicación**
-    
-    **Opción A: Con IA habilitada** (recomendado)
+    Usa el comando correspondiente a tu sistema operativo. Esto lanzará tanto el Backend (puerto 8080) como el Frontend (puerto 5173) simultáneamente.
+
+    **Windows (PowerShell):**
     ```powershell
-    .\start-with-ai.ps1
+    npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend; mvn spring-boot:run" "cd Content; npm run dev"
     ```
-    
-    **Opción B: Sin IA**
-    ```powershell
-    .\start.ps1
-    ```
-    
-    **Opción C: Manual**
+
+    **Mac / Linux:**
     ```bash
-    # Configurar API key (opcional)
-    $env:SPRING_AI_GOOGLE_AI_GEMINI_API_KEY="tu-clave-aqui"
-    
-    # Arrancar backend y frontend
     npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend && mvn spring-boot:run" "cd Content && npm run dev"
     ```
 
-    *   **URL de la Aplicación**: [http://localhost:5173](http://localhost:5173)
-    *   **API del Backend**: [http://localhost:8080](http://localhost:8080)
+    *   **Acceso**: Abre [http://localhost:5173](http://localhost:5173) en tu navegador.
+
+
