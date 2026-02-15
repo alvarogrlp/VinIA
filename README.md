@@ -8,6 +8,8 @@
   <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java" />
   <img src="https://img.shields.io/badge/AI-8E75B2?style=for-the-badge" alt="AI" />
   <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/JUnit_5-25A162?style=for-the-badge&logo=junit5&logoColor=white" alt="JUnit 5" />
+  <img src="https://img.shields.io/badge/Mockito-78C2AD?style=for-the-badge" alt="Mockito" />
 </div>
 
 ## Descripción del Proyecto
@@ -72,6 +74,7 @@ El proyecto utiliza un stack moderno y robusto para garantizar rendimiento, esca
 *   **Spring AI**: Capa de abstracción para integrar modelos de IA (Gemini/OpenAI).
 *   **H2 Database**: Base de datos SQL embebida de alto rendimiento.
 *   **Maven**: Herramienta de gestión de proyectos y dependencias.
+*   **JUnit 5, Mockito & Spring Security Test**: Testing profesional unitario, de integración y seguridad.
 
 ## Alcance y Enfoque del Desarrollo
 
