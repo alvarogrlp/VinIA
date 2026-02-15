@@ -116,6 +116,16 @@ Para obtener tu clave de API y habilitar las funciones inteligentes (Chat, Recom
     ```
     *Este modelo ofrece el mejor equilibrio entre razonamiento y velocidad para este caso de uso.*
 
+### Credenciales de Acceso (Prueba)
+
+Para explorar las diferentes funcionalidades y roles del sistema, puedes utilizar estas credenciales preestablecidas:
+
+| Rol | Usuario | Contraseña |
+| :--- | :--- | :--- |
+| **Comercial** | `carlos` | `1234` |
+| **Almacén** | `almacen` | `almacen` |
+| **Administrador** | `admin` | `admin` |
+
 ### Instalación y Ejecución
 
 1.  **Instalar Dependencias del Frontend**
@@ -129,7 +139,7 @@ Para obtener tu clave de API y habilitar las funciones inteligentes (Chat, Recom
 
     **Windows (PowerShell):**
     ```powershell
-    npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content/backend; mvn spring-boot:run" "cd Content; npm run dev"
+    npx concurrently --names "BACK,FRONT" --prefix-colors "blue,green" "cd Content\backend && mvn spring-boot:run" "cd Content && npm run dev"
     ```
 
     **Mac / Linux:**
