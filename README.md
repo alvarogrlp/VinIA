@@ -40,12 +40,18 @@ Esta herramienta se está desarrollando actualmente con la retroalimentación co
           <img src="Resources/Images/Logo.png" width="180" alt="Demo 2"/>
         </a>
       </td>
+      <td align="center" style="padding: 20px; border: none;">
+        <p><strong>Demo Final: Trailer de la Version Final</strong><br/><em>18 de Febrero, 2026</em></p>
+        <a href="https://www.youtube.com/watch?v=BAE3c7ehvqg">
+          <img src="Resources/Images/Logo.png" width="180" alt="Demo Final"/>
+        </a>
+      </td>
     </tr>
   </table>
   <p><em>Haz clic en los logos para ver las demostraciones en YouTube</em></p>
 </div>
 
-> **Estado Actual:** El módulo de Inteligencia Artificial ya cuenta con **múltiples funcionalidades operativas** (análisis de clientes, recomendaciones, chat interactivo), aunque el proyecto sigue en desarrollo activo para refinar y ampliar estas capacidades. **En los videos aun no se muestran las funcionalidades de la IA**
+> **Estado Actual:** El modulo de Inteligencia Artificial ya cuenta con **multiples funcionalidades operativas** (analisis de clientes, recomendaciones, chat interactivo), aunque el proyecto sigue en desarrollo activo para refinar y ampliar estas capacidades. **El trailer final incluye un ejemplo de flujo con IA, pero no muestra todo el alcance del modulo**
 
 ## Visión Estratégica y Hoja de Ruta
 
@@ -55,7 +61,7 @@ Aunque la iteración actual proporciona una base sólida para la gestión comerc
 *   **Recomendaciones Inteligentes**: Proporcionando información basada en datos para clientes específicos.
 *   **Soporte a la Decisión**: Mejorando la precisión de las ventas mediante análisis en tiempo real.
 
-**Fecha Objetivo de Finalización:** Junio de 2026.
+**Fecha Objetivo de Finalización:** Junio de 2026. Finalmente se terminó el 18 de febrero de 2026.
 
 ## Tecnologías Usadas
 
